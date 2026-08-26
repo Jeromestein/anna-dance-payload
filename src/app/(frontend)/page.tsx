@@ -1,20 +1,27 @@
 import Link from 'next/link'
 
+import { FacultyCards } from '@/components/FacultyCards'
+import { getPublicFaculty } from '@/lib/faculty'
+
+export const dynamic = 'force-dynamic'
+
 const completedItems = [
   'Payload 3.88.0 and Next.js 16.3.3 are pinned',
-  'Images media library is configured',
-  'Faculty fields and safe publishing controls are configured',
-  'Supabase Storage adapter is server-only and opt-in',
+  'The isolated Supabase database is connected',
+  'The Payload administrator is created and verified',
+  'Faculty fields and publishing controls are ready',
 ]
 
 const pendingItems = [
-  'Create the isolated Supabase project',
-  'Add its PostgreSQL and S3 credentials',
-  'Create the first Payload administrator',
+  'Create the dedicated Supabase Storage bucket',
+  'Add server-only S3 credentials',
   'Test image upload and the complete Faculty workflow',
+  'Deploy an isolated preview',
 ]
 
-export default function HomePage() {
+export default async function HomePage() {
+  const faculty = await getPublicFaculty()
+
   return (
     <div className="pocShell">
       <header className="pocHeader">
@@ -22,11 +29,11 @@ export default function HomePage() {
           <p className="eyebrow">Anna Dance Academy</p>
           <h1>Lightweight CMS proof of concept</h1>
           <p className="lede">
-            A safe, isolated workspace for testing teacher profiles and reusable website photos
-            before connecting anything to the current website.
+            This homepage now contains a real Faculty section. Editors manage teacher content in
+            Payload while Next.js keeps the layout, colors, and responsive behavior controlled.
           </p>
         </div>
-        <span className="statusPill">Local setup</span>
+        <span className="statusPill">Connected POC</span>
       </header>
 
       <main className="pocGrid">
@@ -60,7 +67,7 @@ export default function HomePage() {
         </section>
 
         <section className="panel pendingPanel">
-          <p className="sectionLabel">Needs the new Supabase project</p>
+          <p className="sectionLabel">Next test steps</p>
           <ul className="numberList">
             {pendingItems.map((item, index) => (
               <li key={item}>
@@ -80,6 +87,24 @@ export default function HomePage() {
           </p>
         </section>
       </main>
+
+      <section aria-labelledby="homepage-faculty-heading" className="homepageFacultySection">
+        <div className="facultySectionHeader">
+          <div>
+            <p className="sectionLabel">Editable homepage section</p>
+            <h2 id="homepage-faculty-heading">Meet the Faculty</h2>
+            <p>
+              Each card reads Name, Title, Introduction, and Profile photo from Payload. Only
+              published profiles with “Show on website” enabled appear here.
+            </p>
+          </div>
+          <Link className="secondaryButton" href="/admin/collections/faculty">
+            Edit Faculty content
+          </Link>
+        </div>
+
+        <FacultyCards members={faculty} />
+      </section>
     </div>
   )
 }

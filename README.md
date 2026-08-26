@@ -29,7 +29,7 @@ The dependency lockfile is committed so future installs use the tested dependenc
 
 | Route | Purpose |
 | --- | --- |
-| `/` | POC status and setup boundary |
+| `/` | POC status plus the editable homepage Faculty section |
 | `/admin` | Payload administrator interface |
 | `/admin/collections/images` | Reusable Images library |
 | `/admin/collections/faculty` | Faculty create, edit, order, publish, hide, and Trash workflow |
@@ -86,9 +86,9 @@ The database connection and Payload secret are stored only in the Git-ignored lo
 5. Add the five `S3_*` variables from `.env.example` to `.env`.
 6. Restart the development server after changing `.env`.
 
-The S3 adapter remains disabled unless all five values are present. Without them, Payload stores
-local development uploads in `/media`, which is intentionally ignored by Git. Supabase S3 access
-keys bypass Storage RLS and must never be sent to the browser.
+The S3 adapter remains disabled unless all five values are present. Without them, this Images
+collection stores local development uploads in `/images`, which is intentionally ignored by Git.
+Supabase S3 access keys bypass Storage RLS and must never be sent to the browser.
 
 ## Faculty publishing behavior
 
@@ -154,9 +154,11 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Restrict writes to Payload administrators.
 - [x] Restrict public reads to published and visible records.
 - [x] Create a responsive Faculty preview page with fixed card design.
+- [x] Render the same editable Faculty collection as a section on the homepage.
 - [x] Create the Payload test administrator.
-- [ ] Add, edit, reorder, hide, trash, and restore a real test profile.
-- [ ] Confirm changes appear without a frontend redeployment.
+- [x] Add, publish, and edit a real test profile.
+- [ ] Reorder, hide, trash, and restore a real test profile.
+- [x] Confirm changes appear without a frontend redeployment.
 
 ### Acceptance
 
@@ -169,6 +171,7 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Verify the POC overview at desktop and mobile widths with no horizontal overflow.
 - [x] Verify the overview, admin, and Faculty preview in a desktop browser.
 - [x] Verify the Faculty preview at a mobile viewport.
+- [x] Verify the homepage Faculty section with live CMS data at desktop and mobile widths.
 - [ ] Deploy an isolated preview and repeat the workflow.
 - [ ] Record findings, limitations, and expected recurring costs.
 

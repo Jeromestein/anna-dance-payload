@@ -262,6 +262,41 @@ p {
   margin-bottom: 0;
 }
 
+.homepageFacultySection {
+  margin-top: 72px;
+  padding-top: 56px;
+  border-top: 1px solid var(--line);
+}
+
+.facultySectionHeader {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 36px;
+  margin-bottom: 28px;
+}
+
+.facultySectionHeader > div {
+  max-width: 720px;
+}
+
+.facultySectionHeader h2 {
+  margin-bottom: 14px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.35rem, 5vw, 4.6rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.facultySectionHeader p:last-child {
+  margin-bottom: 0;
+  font-size: 1.02rem;
+}
+
+.facultySectionHeader .secondaryButton {
+  flex: 0 0 auto;
+}
+
 .previewHeader {
   align-items: flex-end;
 }
@@ -322,6 +357,12 @@ p {
   font-size: clamp(1.5rem, 2.4vw, 2.15rem);
 }
 
+.facultyContent h3 {
+  margin: 0 0 12px;
+  font-size: clamp(1.5rem, 2.4vw, 2.15rem);
+  line-height: 1.16;
+}
+
 .facultyContent p:last-child {
   margin-bottom: 0;
 }
@@ -341,11 +382,26 @@ p {
   margin-top: 14px;
 }
 
+.facultyEmptyState {
+  margin-top: 0;
+}
+
+.facultyEmptyState h3 {
+  margin: 0 0 12px;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  line-height: 1.16;
+}
+
 @media (max-width: 900px) {
   .pocHeader,
   .previewHeader {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .facultySectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .pocGrid,
@@ -395,7 +451,8 @@ p {
   }
 
   .buttonRow,
-  .previewHeader .buttonRow {
+  .previewHeader .buttonRow,
+  .facultySectionHeader .secondaryButton {
     width: 100%;
   }
 
