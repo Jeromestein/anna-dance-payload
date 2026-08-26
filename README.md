@@ -6,8 +6,8 @@ connected to the current website or its Supabase project.
 The first test covers two content areas:
 
 - **Images**: an upload library with reusable JPEG, PNG, and WebP files.
-- **Faculty**: teacher records with Name, Title, Introduction, Profile photo, visibility, ordering,
-  publishing, and Trash.
+- **Faculty**: teacher records with Name, Title, Specialties, Description, Profile photo, visibility,
+  ordering, publishing, and Trash.
 
 The frontend owns the card layout. Editors change content but cannot change CSS, columns, colors,
 or responsive behavior.
@@ -155,7 +155,7 @@ A checked item means the implementation exists and has been verified at the leve
 ### Faculty collection
 
 - [x] Create the Faculty collection.
-- [x] Add required `name`, `title`, `introduction`, and `profilePhoto` fields.
+- [x] Add required `name`, `title`, `introduction`, `description`, and `profilePhoto` fields.
 - [x] Reuse photos through the Images collection.
 - [x] Add Publish/Draft workflow.
 - [x] Add a plain-language **Show on website** control.

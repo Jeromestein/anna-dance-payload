@@ -50,10 +50,21 @@ export const Faculty: CollectionConfig = {
     {
       name: 'introduction',
       type: 'textarea',
-      label: 'Introduction',
+      label: 'Specialties / focus',
       required: true,
       admin: {
-        description: 'A short profile shown below the teacher’s name and title.',
+        description: 'A short line such as Chinese Dance · Choreography · Competition Coaching.',
+        rows: 2,
+      },
+    },
+    {
+      name: 'description',
+      type: 'textarea',
+      label: 'Description',
+      defaultValue: '',
+      required: true,
+      admin: {
+        description: 'The full teacher introduction shown at the bottom of the profile card.',
         rows: 6,
       },
     },

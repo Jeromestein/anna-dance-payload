@@ -53,7 +53,10 @@ export function FacultyCards({
             <div className="facultyContent">
               <p className="facultyTitle">{member.title}</p>
               <h3>{member.name}</h3>
-              <p className="facultyDescription">{member.introduction}</p>
+              <p className="facultySpecialties">{member.introduction}</p>
+              {member.description ? (
+                <p className="facultyDescription">{member.description}</p>
+              ) : null}
             </div>
           </article>
         )

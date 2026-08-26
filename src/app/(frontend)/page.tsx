@@ -41,8 +41,8 @@ export default async function HomePage() {
           <p className="sectionLabel">Try the workflow</p>
           <h2>Simple content editing, fixed website design</h2>
           <p>
-            Editors fill in Name, Title, Introduction, and Profile photo. The preview keeps the card
-            layout and responsive behavior under developer control.
+            Editors fill in Name, Title, Specialties, Description, and Profile photo. The preview
+            keeps the card layout and responsive behavior under developer control.
           </p>
           <div className="buttonRow">
             <Link className="primaryButton" href="/admin">

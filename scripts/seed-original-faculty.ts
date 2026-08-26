@@ -14,6 +14,8 @@ if (!sourceRepository) {
 
 const facultyMembers = [
   {
+    description:
+      'With more than 15 years in dance education, choreography, performance, and artistic direction, Anna builds training around each dancer’s foundation, personality, and goals.',
     introduction: 'Chinese Dance · Choreography · Competition Coaching',
     name: 'Anna Liu',
     photo: 'public/images/anna-liu/anna-liu-ballet-closeup.jpg',
@@ -22,6 +24,8 @@ const facultyMembers = [
     title: 'Founder & Artistic Director',
   },
   {
+    description:
+      'Alinuer joins selected classes, rehearsals, and performance projects as the Academy’s schedule and student needs evolve each term.',
     introduction: 'Selected Classes · Rehearsals · Performance Projects',
     name: 'Alinuer Wumaer',
     photo: 'public/images/faculty/alinuer-wumaer.jpg',
@@ -30,6 +34,8 @@ const facultyMembers = [
     title: 'Teaching Artist',
   },
   {
+    description:
+      'Grace supports selected classes, rehearsals, and performance projects, with teaching assignments shaped around each term’s program needs.',
     introduction: 'Selected Classes · Rehearsals · Performance Projects',
     name: 'Grace Leung',
     photo: 'public/images/faculty/grace-leung.jpg',
@@ -92,6 +98,7 @@ try {
       existingProfiles.docs[0] ?? (index === 0 ? sampleProfile.docs[0] : undefined)
     const data = {
       _status: 'published' as const,
+      description: member.description,
       introduction: member.introduction,
       name: member.name,
       profilePhoto: image.id,

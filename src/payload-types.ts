@@ -134,9 +134,13 @@ export interface Faculty {
    */
   title: string;
   /**
-   * A short profile shown below the teacher’s name and title.
+   * A short line such as Chinese Dance · Choreography · Competition Coaching.
    */
   introduction: string;
+  /**
+   * The full teacher introduction shown at the bottom of the profile card.
+   */
+  description: string;
   /**
    * Choose an existing photo from Images or upload a new one.
    */
@@ -310,6 +314,7 @@ export interface FacultySelect<T extends boolean = true> {
   name?: T;
   title?: T;
   introduction?: T;
+  description?: T;
   profilePhoto?: T;
   showOnWebsite?: T;
   updatedAt?: T;
