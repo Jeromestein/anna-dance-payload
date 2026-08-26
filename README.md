@@ -60,6 +60,16 @@ ownership of student and guardian accounts and all operational records.
 6. Run `pnpm dev` and open `http://localhost:3000/admin`.
 7. Create a separate test administrator when Payload shows the first-user screen.
 
+To copy the original three Faculty profiles and photos into this isolated POC, run:
+
+```sh
+pnpm payload run scripts/seed-original-faculty.ts "/path/to/Anna Dance Academy"
+```
+
+The seed is repeatable: it updates matching Faculty and Images records instead of creating
+duplicates. It copies the photos into this POC's configured media storage and does not modify the
+source repository.
+
 Use the database connection shown by the new Supabase project's **Connect** dialog. A direct
 connection is preferred for migrations when the environment supports IPv6. The Session pooler on
 port `5432` is the fallback for IPv4-only environments. Do not use an unverified connection string.
@@ -155,6 +165,8 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Restrict public reads to published and visible records.
 - [x] Create a responsive Faculty preview page with fixed card design.
 - [x] Render the same editable Faculty collection as a section on the homepage.
+- [x] Port the original homepage Faculty heading, card, and mobile-scroll design into the POC.
+- [x] Import and publish the original three Faculty profiles and photos in the isolated POC.
 - [x] Create the Payload test administrator.
 - [x] Add, publish, and edit a real test profile.
 - [ ] Reorder, hide, trash, and restore a real test profile.

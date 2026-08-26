@@ -5,7 +5,7 @@
   --teal-deep: #345c6a;
   --berry: #bd316b;
   --berry-soft: #fae9f0;
-  --ivory: #fbf8f5;
+  --ivory: #faf8f5;
   --paper: #fffdfb;
   --line: #e8e0dd;
   --shadow: 0 24px 70px rgba(39, 70, 79, 0.12);
@@ -19,8 +19,7 @@ html {
   min-height: 100%;
   background: var(--ivory);
   color: var(--ink);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  font-family: var(--font-sans), Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -40,7 +39,7 @@ a {
 
 .pocShell,
 .previewShell {
-  width: min(1180px, calc(100% - 40px));
+  width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
   padding: 48px 0 72px;
 }
@@ -55,8 +54,7 @@ a {
   padding: 44px;
   border-radius: 34px;
   background:
-    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.2), transparent 32%),
-    var(--teal);
+    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.2), transparent 32%), var(--teal);
   box-shadow: var(--shadow);
   color: white;
 }
@@ -91,7 +89,7 @@ p {
 h1 {
   max-width: 820px;
   margin-bottom: 16px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Georgia, 'Times New Roman', serif;
   font-size: clamp(2.5rem, 6vw, 5.2rem);
   font-weight: 500;
   letter-spacing: -0.045em;
@@ -148,9 +146,7 @@ p {
   flex-direction: column;
   justify-content: center;
   min-height: 430px;
-  background:
-    linear-gradient(155deg, rgba(250, 233, 240, 0.8), transparent 48%),
-    var(--paper);
+  background: linear-gradient(155deg, rgba(250, 233, 240, 0.8), transparent 48%), var(--paper);
 }
 
 .primaryPanel p:not(.sectionLabel) {
@@ -263,38 +259,51 @@ p {
 }
 
 .homepageFacultySection {
-  margin-top: 72px;
-  padding-top: 56px;
-  border-top: 1px solid var(--line);
+  padding: 120px 0;
 }
 
 .facultySectionHeader {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 36px;
-  margin-bottom: 28px;
+  gap: 40px;
+  margin-bottom: 58px;
 }
 
 .facultySectionHeader > div {
-  max-width: 720px;
+  max-width: 780px;
+}
+
+.homepageFacultySection .sectionLabel {
+  margin-bottom: 20px;
+  color: #c74783;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
 }
 
 .facultySectionHeader h2 {
-  margin-bottom: 14px;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2.35rem, 5vw, 4.6rem);
-  font-weight: 500;
+  margin: 0;
+  color: #073f52;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(3rem, 5.1vw, 5rem);
+  font-weight: 600;
   letter-spacing: -0.04em;
+  line-height: 1.02;
 }
 
-.facultySectionHeader p:last-child {
-  margin-bottom: 0;
-  font-size: 1.02rem;
+.facultySectionHeader h2 em {
+  color: #c74783;
+  font-weight: 500;
 }
 
-.facultySectionHeader .secondaryButton {
-  flex: 0 0 auto;
+.facultySectionCopy {
+  max-width: 410px;
+  margin: 0 0 5px;
+  color: #42636d;
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .previewHeader {
@@ -315,28 +324,39 @@ p {
 .facultyGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+  gap: 16px;
 }
 
 .facultyCard {
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 30px;
-  background: var(--paper);
+  padding: 14px 14px 30px;
+  border: 1px solid rgba(130, 116, 142, 0.18);
+  border-radius: 44px;
+  background: rgba(255, 252, 248, 0.64);
 }
 
 .facultyPhotoFrame {
-  aspect-ratio: 4 / 5;
-  margin: 14px 14px 0;
+  aspect-ratio: 4 / 5.25;
+  margin: 0 0 28px;
   overflow: hidden;
-  border-radius: 22px;
+  border-radius: 32px;
   background: #edf1f1;
 }
 
 .facultyPhotoFrame img {
   width: 100%;
   height: 100%;
+  filter: saturate(0.75);
   object-fit: cover;
+}
+
+.facultyCard:first-child .facultyPhotoFrame img,
+.facultyCard:nth-child(2) .facultyPhotoFrame img {
+  object-position: center 28%;
+}
+
+.facultyCard:nth-child(3) .facultyPhotoFrame img {
+  object-position: center 22%;
 }
 
 .photoPlaceholder {
@@ -349,7 +369,7 @@ p {
 }
 
 .facultyContent {
-  padding: 26px 26px 30px;
+  padding: 0 14px;
 }
 
 .facultyContent h2 {
@@ -358,9 +378,11 @@ p {
 }
 
 .facultyContent h3 {
-  margin: 0 0 12px;
-  font-size: clamp(1.5rem, 2.4vw, 2.15rem);
-  line-height: 1.16;
+  margin: 0 0 8px;
+  color: #073f52;
+  font-size: 1.65rem;
+  font-weight: 600;
+  line-height: 1.15;
 }
 
 .facultyContent p:last-child {
@@ -368,7 +390,19 @@ p {
 }
 
 .facultyTitle {
-  margin-bottom: 8px;
+  margin: 0 0 9px;
+  color: #a8326a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.facultyDescription {
+  margin: 0;
+  color: #42636d;
+  font-size: 0.95rem;
+  line-height: 1.7;
 }
 
 .emptyState {
@@ -392,16 +426,17 @@ p {
   line-height: 1.16;
 }
 
+@media (max-width: 1000px) {
+  .homepageFacultySection .facultyGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .pocHeader,
   .previewHeader {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .facultySectionHeader {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .pocGrid,
@@ -421,10 +456,10 @@ p {
   }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 680px) {
   .pocShell,
   .previewShell {
-    width: min(100% - 24px, 1180px);
+    width: min(100% - 36px, 1180px);
     padding: 20px 0 42px;
   }
 
@@ -444,6 +479,45 @@ p {
     grid-template-columns: 1fr;
   }
 
+  .homepageFacultySection {
+    padding: 68px 0;
+  }
+
+  .facultySectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 36px;
+  }
+
+  .facultySectionHeader h2 {
+    font-size: clamp(2.5rem, 11vw, 3.6rem);
+  }
+
+  .homepageFacultySection .facultyGrid {
+    grid-template-columns: none;
+    grid-auto-columns: min(84vw, 370px);
+    grid-auto-flow: column;
+    gap: 14px;
+    padding: 6px 4px 18px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: 4px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .homepageFacultySection .facultyGrid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .homepageFacultySection .facultyCard {
+    scroll-snap-align: start;
+  }
+
+  .homepageFacultySection .facultyPhotoFrame {
+    aspect-ratio: 4 / 4.8;
+  }
+
   .panel,
   .emptyState {
     padding: 26px 22px;
@@ -451,8 +525,7 @@ p {
   }
 
   .buttonRow,
-  .previewHeader .buttonRow,
-  .facultySectionHeader .secondaryButton {
+  .previewHeader .buttonRow {
     width: 100%;
   }
 

@@ -41,8 +41,8 @@ export default async function HomePage() {
           <p className="sectionLabel">Try the workflow</p>
           <h2>Simple content editing, fixed website design</h2>
           <p>
-            Editors fill in Name, Title, Introduction, and Profile photo. The preview keeps the
-            card layout and responsive behavior under developer control.
+            Editors fill in Name, Title, Introduction, and Profile photo. The preview keeps the card
+            layout and responsive behavior under developer control.
           </p>
           <div className="buttonRow">
             <Link className="primaryButton" href="/admin">
@@ -91,16 +91,17 @@ export default async function HomePage() {
       <section aria-labelledby="homepage-faculty-heading" className="homepageFacultySection">
         <div className="facultySectionHeader">
           <div>
-            <p className="sectionLabel">Editable homepage section</p>
-            <h2 id="homepage-faculty-heading">Meet the Faculty</h2>
-            <p>
-              Each card reads Name, Title, Introduction, and Profile photo from Payload. Only
-              published profiles with “Show on website” enabled appear here.
-            </p>
+            <p className="sectionLabel">Our teaching team</p>
+            <h2 id="homepage-faculty-heading">
+              Founder-led.
+              <br />
+              <em>Thoughtfully supported.</em>
+            </h2>
           </div>
-          <Link className="secondaryButton" href="/admin/collections/faculty">
-            Edit Faculty content
-          </Link>
+          <p className="facultySectionCopy">
+            Anna leads the Academy’s artistic direction, with teaching artists joining selected
+            classes, rehearsals, and performance projects as needs evolve each term.
+          </p>
         </div>
 
         <FacultyCards members={faculty} />

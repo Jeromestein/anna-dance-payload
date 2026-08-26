@@ -53,7 +53,7 @@ export function FacultyCards({
             <div className="facultyContent">
               <p className="facultyTitle">{member.title}</p>
               <h3>{member.name}</h3>
-              <p>{member.introduction}</p>
+              <p className="facultyDescription">{member.introduction}</p>
             </div>
           </article>
         )
