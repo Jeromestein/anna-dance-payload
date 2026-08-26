@@ -70,6 +70,13 @@ The seed is repeatable: it updates matching Faculty and Images records instead o
 duplicates. It copies the photos into this POC's configured media storage and does not modify the
 source repository.
 
+After enabling or changing remote media storage, re-upload the existing image records without
+creating duplicates:
+
+```sh
+pnpm payload run scripts/seed-original-faculty.ts "/path/to/Anna Dance Academy" refresh-media
+```
+
 Use the database connection shown by the new Supabase project's **Connect** dialog. A direct
 connection is preferred for migrations when the environment supports IPv6. The Session pooler on
 port `5432` is the fallback for IPv4-only environments. Do not use an unverified connection string.
@@ -86,6 +93,10 @@ admin and Faculty preview require a working PostgreSQL connection.
 - Local connection: Supabase Session pooler on port `5432`
 
 The database connection and Payload secret are stored only in the Git-ignored local `.env` file.
+
+The dedicated public Storage bucket is connected through server-only S3 credentials. The original
+three Faculty photos and their generated image sizes have been migrated and verified through the
+Payload file proxy. Credential values remain only in the Git-ignored local `.env` file.
 
 ## Supabase Storage setup
 
@@ -147,9 +158,11 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Restrict create, update, and delete operations to Payload administrators.
 - [x] Configure Trash for recoverable deletion.
 - [x] Add a conditional Supabase-compatible S3 adapter.
-- [ ] Create the dedicated Supabase Storage bucket.
-- [ ] Enable S3 and add server-only credentials.
-- [ ] Upload an image through Payload and verify it in Supabase Storage.
+- [x] Create the dedicated Supabase Storage bucket.
+- [x] Enable S3 and add server-only credentials.
+- [x] Migrate the three existing Faculty images through Payload and verify all generated files in
+  Supabase Storage.
+- [ ] Upload a new image through the Payload administrator Media Library.
 - [ ] Confirm uploaded files persist after a fresh preview deployment.
 
 ### Faculty collection

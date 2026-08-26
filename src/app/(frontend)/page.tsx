@@ -10,13 +10,13 @@ const completedItems = [
   'The isolated Supabase database is connected',
   'The Payload administrator is created and verified',
   'Faculty fields and publishing controls are ready',
+  'Faculty media is stored in the isolated Supabase Storage bucket',
 ]
 
 const pendingItems = [
-  'Create the dedicated Supabase Storage bucket',
-  'Add server-only S3 credentials',
-  'Test image upload and the complete Faculty workflow',
-  'Deploy an isolated preview',
+  'Test a new upload from the administrator Media Library',
+  'Test reordering, hiding, Trash, and restore',
+  'Deploy an isolated preview and confirm media persistence',
 ]
 
 export default async function HomePage() {

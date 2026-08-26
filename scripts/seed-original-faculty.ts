@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 import config from '../src/payload.config'
 
 const sourceRepository = process.argv[2]
+const refreshMedia = process.argv.includes('refresh-media')
 
 if (!sourceRepository) {
   throw new Error(
@@ -48,6 +49,10 @@ const facultyMembers = [
 const payload = await getPayload({ config })
 
 try {
+  if (refreshMedia) {
+    payload.logger.info('Refreshing existing Images records in configured media storage')
+  }
+
   const sampleProfile = await payload.find({
     collection: 'faculty',
     limit: 1,
@@ -71,9 +76,22 @@ try {
       },
     })
 
-    const image =
-      existingImages.docs[0] ??
-      (await payload.create({
+    const existingImage = existingImages.docs[0]
+    const image = existingImage
+      ? refreshMedia
+        ? await payload.update({
+            id: existingImage.id,
+            collection: 'images',
+            data: {
+              altText: member.photoAlt,
+              title: member.photoTitle,
+            },
+            filePath: path.join(sourceRepository, member.photo),
+            overrideAccess: true,
+            overwriteExistingFiles: true,
+          })
+        : existingImage
+      : await payload.create({
         collection: 'images',
         data: {
           altText: member.photoAlt,
@@ -81,7 +99,7 @@ try {
         },
         filePath: path.join(sourceRepository, member.photo),
         overrideAccess: true,
-      }))
+      })
 
     const existingProfiles = await payload.find({
       collection: 'faculty',
