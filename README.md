@@ -67,6 +67,16 @@ port `5432` is the fallback for IPv4-only environments. Do not use an unverified
 The local `.env` initially contains a deliberately non-production localhost placeholder. The CMS
 admin and Faculty preview require a working PostgreSQL connection.
 
+### Verified test environment
+
+- Supabase project: `anna-dance-payload-poc`
+- Project reference: `hsitmgmcekzobksgtjoj`
+- Region: West US (North California), `us-west-1`
+- Purpose: isolated Payload database and media-storage proof of concept
+- Local connection: Supabase Session pooler on port `5432`
+
+The database connection and Payload secret are stored only in the Git-ignored local `.env` file.
+
 ## Supabase Storage setup
 
 1. In the new Supabase project, create a dedicated bucket named `anna-dance-payload-poc`.
@@ -114,8 +124,8 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Pin Payload, Next.js, React, and adapter versions.
 - [x] Commit a dependency lockfile.
 - [x] Document the separation from the current website and Supabase project.
-- [ ] Create the new Supabase project dedicated to this POC.
-- [ ] Record the Supabase project region and environment purpose.
+- [x] Create the new Supabase project dedicated to this POC.
+- [x] Record the Supabase project region and environment purpose.
 - [ ] Confirm the current Anna Dance Academy Supabase project remains unchanged.
 
 ### Images library
@@ -144,21 +154,21 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Restrict writes to Payload administrators.
 - [x] Restrict public reads to published and visible records.
 - [x] Create a responsive Faculty preview page with fixed card design.
-- [ ] Create the Payload test administrator.
+- [x] Create the Payload test administrator.
 - [ ] Add, edit, reorder, hide, trash, and restore a real test profile.
 - [ ] Confirm changes appear without a frontend redeployment.
 
 ### Acceptance
 
-- [ ] Connect only to the new Supabase PostgreSQL database.
+- [x] Connect only to the new Supabase PostgreSQL database.
 - [ ] Confirm Payload schema changes affect only the new project.
-- [ ] Confirm administrator login works.
+- [x] Confirm administrator login works.
 - [ ] Confirm image selection works from a Faculty profile.
 - [ ] Confirm hidden, draft, and trashed profiles do not render publicly.
 - [x] Run lint and TypeScript checks successfully.
 - [x] Verify the POC overview at desktop and mobile widths with no horizontal overflow.
-- [ ] Verify the overview, admin, and Faculty preview in a desktop browser.
-- [ ] Verify the Faculty preview at a mobile viewport.
+- [x] Verify the overview, admin, and Faculty preview in a desktop browser.
+- [x] Verify the Faculty preview at a mobile viewport.
 - [ ] Deploy an isolated preview and repeat the workflow.
 - [ ] Record findings, limitations, and expected recurring costs.
 
