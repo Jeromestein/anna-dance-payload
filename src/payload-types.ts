@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     faculty: Faculty;
     images: Image;
+    videos: Video;
     users: User;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -79,6 +80,7 @@ export interface Config {
   collectionsSelect: {
     faculty: FacultySelect<false> | FacultySelect<true>;
     images: ImagesSelect<false> | ImagesSelect<true>;
+    videos: VideosSelect<false> | VideosSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -203,6 +205,38 @@ export interface Image {
   };
 }
 /**
+ * Upload MP4 or WebM videos once, then reuse them in website sections.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "videos".
+ */
+export interface Video {
+  id: number;
+  /**
+   * A short internal name, such as “Spring recital highlights”.
+   */
+  title: string;
+  /**
+   * Briefly describe the video for accessibility and future reuse.
+   */
+  description: string;
+  /**
+   * Choose an image shown before the visitor plays the video.
+   */
+  posterImage?: (number | null) | Image;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  deletedAt?: string | null;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -258,6 +292,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'images';
         value: number | Image;
+      } | null)
+    | ({
+        relationTo: 'videos';
+        value: number | Video;
       } | null)
     | ({
         relationTo: 'users';
@@ -366,6 +404,26 @@ export interface ImagesSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "videos_select".
+ */
+export interface VideosSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  posterImage?: T;
+  prefix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  deletedAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -10,11 +10,11 @@ const completedItems = [
   'The isolated Supabase database is connected',
   'The Payload administrator is created and verified',
   'Faculty fields and publishing controls are ready',
-  'Faculty media is stored in the isolated Supabase Storage bucket',
+  'Images and Videos are stored in the isolated Supabase Storage bucket',
 ]
 
 const pendingItems = [
-  'Test a new upload from the administrator Media Library',
+  'Build the editable photo-and-video wall',
   'Test reordering, hiding, Trash, and restore',
   'Deploy an isolated preview and confirm media persistence',
 ]

@@ -3,9 +3,10 @@
 This repository is an isolated test of a small, structured CMS for Anna Dance Academy. It is not
 connected to the current website or its Supabase project.
 
-The first test covers two content areas:
+The first test covers three content areas:
 
 - **Images**: an upload library with reusable JPEG, PNG, and WebP files.
+- **Videos**: a separate MP4 and WebM library with an optional cover image selected from Images.
 - **Faculty**: teacher records with Name, Title, Specialties, Description, Profile photo, visibility,
   ordering, publishing, and Trash.
 
@@ -32,6 +33,7 @@ The dependency lockfile is committed so future installs use the tested dependenc
 | `/` | POC status plus the editable homepage Faculty section |
 | `/admin` | Payload administrator interface |
 | `/admin/collections/images` | Reusable Images library |
+| `/admin/collections/videos` | Reusable Videos library |
 | `/admin/collections/faculty` | Faculty create, edit, order, publish, hide, and Trash workflow |
 | `/faculty-preview` | Public-style Faculty card preview |
 
@@ -96,7 +98,9 @@ The database connection and Payload secret are stored only in the Git-ignored lo
 
 The dedicated public Storage bucket is connected through server-only S3 credentials. The original
 three Faculty photos and their generated image sizes have been migrated and verified through the
-Payload file proxy. Credential values remain only in the Git-ignored local `.env` file.
+Payload file proxy. A generated one-second MP4 has also been uploaded through the administrator,
+stored under `videos/`, and read back through Payload. Credential values remain only in the
+Git-ignored local `.env` file.
 
 ## Supabase Storage setup
 
@@ -107,9 +111,11 @@ Payload file proxy. Credential values remain only in the Git-ignored local `.env
 5. Add the five `S3_*` variables from `.env.example` to `.env`.
 6. Restart the development server after changing `.env`.
 
-The S3 adapter remains disabled unless all five values are present. Without them, this Images
-collection stores local development uploads in `/images`, which is intentionally ignored by Git.
-Supabase S3 access keys bypass Storage RLS and must never be sent to the browser.
+The S3 adapter remains disabled unless all five values are present. Without them, the Images and
+Videos collections store local development uploads in `/images` and `/videos`, which are
+intentionally ignored by Git. With S3 enabled, images use the `images/` prefix and videos use the
+`videos/` prefix in the same isolated bucket. Uploads are limited to 50 MB to match the bucket
+configuration. Supabase S3 access keys bypass Storage RLS and must never be sent to the browser.
 
 ## Faculty publishing behavior
 
@@ -164,6 +170,19 @@ A checked item means the implementation exists and has been verified at the leve
   Supabase Storage.
 - [ ] Upload a new image through the Payload administrator Media Library.
 - [ ] Confirm uploaded files persist after a fresh preview deployment.
+
+### Videos library
+
+- [x] Create a separate Videos upload collection in the Media Library.
+- [x] Restrict uploads to MP4 and WebM files.
+- [x] Require a plain-language video name and accessible description.
+- [x] Add an optional cover image selected from Images.
+- [x] Restrict create, update, and delete operations to Payload administrators.
+- [x] Configure Trash for recoverable deletion.
+- [x] Store videos under the `videos/` S3 prefix.
+- [x] Match the Payload upload limit to the 50 MB Supabase bucket limit.
+- [x] Upload a generated test video through the Payload administrator and verify it in Supabase
+  Storage.
 
 ### Faculty collection
 

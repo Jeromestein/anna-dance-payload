@@ -9,6 +9,7 @@ import sharp from 'sharp'
 import { Faculty } from './collections/Faculty'
 import { Images } from './collections/Images'
 import { Users } from './collections/Users'
+import { Videos } from './collections/Videos'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -28,7 +29,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Faculty, Images, Users],
+  collections: [Faculty, Images, Videos, Users],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -48,6 +49,9 @@ export default buildConfig({
         images: {
           prefix: 'images',
         },
+        videos: {
+          prefix: 'videos',
+        },
       },
       config: {
         credentials: {
@@ -61,4 +65,11 @@ export default buildConfig({
       enabled: isSupabaseStorageConfigured,
     }),
   ],
+  upload: {
+    abortOnLimit: true,
+    limits: {
+      fileSize: 50 * 1024 * 1024,
+    },
+    responseOnLimit: 'The file is larger than the 50 MB media-library limit.',
+  },
 })
