@@ -3,39 +3,42 @@
 This repository is an isolated test of a small, structured CMS for Anna Dance Academy. It is not
 connected to the current website or its Supabase project.
 
-The first test covers three content areas:
+The first test covers four content areas:
 
 - **Images**: an upload library with reusable JPEG, PNG, and WebP files.
 - **Videos**: a separate MP4 and WebM library with an optional cover image selected from Images.
 - **Faculty**: teacher records with Name, Title, Specialties, Description, Profile photo, visibility,
   ordering, publishing, and Trash.
+- **Homepage Gallery**: an ordered photo-and-video wall whose media is selected from the two
+  libraries.
 
 The frontend owns the card layout. Editors change content but cannot change CSS, columns, colors,
 or responsive behavior.
 
 ## Pinned versions
 
-| Package | Version |
-| --- | --- |
-| Payload CMS | `3.88.0` |
-| Payload Next adapter | `3.88.0` |
-| Payload Postgres adapter | `3.88.0` |
+| Package                    | Version  |
+| -------------------------- | -------- |
+| Payload CMS                | `3.88.0` |
+| Payload Next adapter       | `3.88.0` |
+| Payload Postgres adapter   | `3.88.0` |
 | Payload S3 storage adapter | `3.88.0` |
-| Next.js | `16.3.3` |
-| React / React DOM | `19.2.6` |
+| Next.js                    | `16.3.3` |
+| React / React DOM          | `19.2.6` |
 
 The dependency lockfile is committed so future installs use the tested dependency graph.
 
 ## Routes
 
-| Route | Purpose |
-| --- | --- |
-| `/` | POC status plus the editable homepage Faculty section |
-| `/admin` | Payload administrator interface |
-| `/admin/collections/images` | Reusable Images library |
-| `/admin/collections/videos` | Reusable Videos library |
-| `/admin/collections/faculty` | Faculty create, edit, order, publish, hide, and Trash workflow |
-| `/faculty-preview` | Public-style Faculty card preview |
+| Route                             | Purpose                                                           |
+| --------------------------------- | ----------------------------------------------------------------- |
+| `/`                               | POC status plus editable Faculty and mixed-media Gallery sections |
+| `/admin`                          | Payload administrator interface                                   |
+| `/admin/collections/images`       | Reusable Images library                                           |
+| `/admin/collections/videos`       | Reusable Videos library                                           |
+| `/admin/collections/faculty`      | Faculty create, edit, order, publish, hide, and Trash workflow    |
+| `/admin/globals/homepage-gallery` | Homepage Gallery heading, selected media, captions, and order     |
+| `/faculty-preview`                | Public-style Faculty card preview                                 |
 
 ## Isolation rules
 
@@ -77,6 +80,13 @@ creating duplicates:
 
 ```sh
 pnpm payload run scripts/seed-original-faculty.ts "/path/to/Anna Dance Academy" refresh-media
+```
+
+After the Faculty images and generated video test record exist, populate the editable homepage
+gallery with the verified sample selection:
+
+```sh
+pnpm payload run scripts/seed-homepage-gallery.ts
 ```
 
 Use the database connection shown by the new Supabase project's **Connect** dialog. A direct
@@ -128,6 +138,22 @@ This lets an editor hide a teacher without deleting the profile. Trash is a soft
 so an editor can restore a record during the POC. Drag-and-drop ordering is enabled in the Faculty
 list.
 
+## Homepage Gallery behavior
+
+Editors open **Website Content > Homepage Gallery** and can:
+
+1. edit the section's small heading, heading, and introduction;
+2. add up to 12 rows;
+3. choose **Image** or **Video** in each row;
+4. select an existing media item or create a new one in the corresponding library;
+5. add an optional caption; and
+6. drag rows into the desired display order.
+
+The homepage owns the responsive visual treatment. Desktop uses a fixed asymmetric wall, while
+mobile uses horizontally scrollable cards. Editors cannot change columns, cropping rules, colors,
+or responsive breakpoints. Drafts and versions allow changes to be reviewed or restored before
+publishing.
+
 ## Verification commands
 
 Run these after code changes:
@@ -167,7 +193,7 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Create the dedicated Supabase Storage bucket.
 - [x] Enable S3 and add server-only credentials.
 - [x] Migrate the three existing Faculty images through Payload and verify all generated files in
-  Supabase Storage.
+      Supabase Storage.
 - [ ] Upload a new image through the Payload administrator Media Library.
 - [ ] Confirm uploaded files persist after a fresh preview deployment.
 
@@ -182,7 +208,7 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Store videos under the `videos/` S3 prefix.
 - [x] Match the Payload upload limit to the 50 MB Supabase bucket limit.
 - [x] Upload a generated test video through the Payload administrator and verify it in Supabase
-  Storage.
+      Storage.
 
 ### Faculty collection
 
@@ -204,6 +230,20 @@ A checked item means the implementation exists and has been verified at the leve
 - [ ] Reorder, hide, trash, and restore a real test profile.
 - [x] Confirm changes appear without a frontend redeployment.
 
+### Homepage Gallery
+
+- [x] Create one focused Homepage Gallery editing screen.
+- [x] Add editable section heading and introduction fields.
+- [x] Add sortable rows that switch between Image and Video selection.
+- [x] Reuse media from the Images and Videos libraries.
+- [x] Allow optional captions without exposing layout controls.
+- [x] Add Draft/Publish workflow and retain 20 versions.
+- [x] Render mixed S3-backed images and videos on the homepage.
+- [x] Create a fixed asymmetric desktop wall.
+- [x] Create a horizontally scrollable mobile wall without page overflow.
+- [x] Seed and publish three images plus one generated test video.
+- [ ] Replace the generated test video with final approved media.
+
 ### Acceptance
 
 - [x] Connect only to the new Supabase PostgreSQL database.
@@ -216,12 +256,14 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Verify the overview, admin, and Faculty preview in a desktop browser.
 - [x] Verify the Faculty preview at a mobile viewport.
 - [x] Verify the homepage Faculty section with live CMS data at desktop and mobile widths.
+- [x] Verify the Homepage Gallery editor with image rows, a video row, and sortable controls.
+- [x] Verify the published Gallery at desktop and mobile widths with no horizontal page overflow.
 - [ ] Deploy an isolated preview and repeat the workflow.
 - [ ] Record findings, limitations, and expected recurring costs.
 
 ### Later phases
 
-- [ ] Add a Videos collection and document video-hosting limits.
+- [x] Add a Videos collection and document video-hosting limits.
 - [ ] Add Classes after the Faculty workflow is accepted.
-- [ ] Test a controlled video section that selects an item from Videos.
+- [x] Test a controlled homepage section that selects an item from Videos.
 - [ ] Decide whether Payload stays separate or moves into the existing Next.js application.

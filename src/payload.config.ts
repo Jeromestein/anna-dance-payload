@@ -10,6 +10,7 @@ import { Faculty } from './collections/Faculty'
 import { Images } from './collections/Images'
 import { Users } from './collections/Users'
 import { Videos } from './collections/Videos'
+import { HomepageGallery } from './globals/HomepageGallery'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -31,6 +32,7 @@ export default buildConfig({
   },
   collections: [Faculty, Images, Videos, Users],
   editor: lexicalEditor(),
+  globals: [HomepageGallery],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

@@ -91,8 +91,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'homepage-gallery': HomepageGallery;
+  };
+  globalsSelect: {
+    'homepage-gallery': HomepageGallerySelect<false> | HomepageGallerySelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -486,6 +490,64 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Choose photos and videos for the homepage gallery, then drag the rows into the order you want.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage-gallery".
+ */
+export interface HomepageGallery {
+  id: number;
+  eyebrow: string;
+  heading: string;
+  introduction: string;
+  /**
+   * Add up to 12 items. Choose the media type first, select a file, then drag rows to reorder the wall.
+   */
+  items?:
+    | {
+        mediaType: 'image' | 'video';
+        /**
+         * Choose an existing image or upload a new one.
+         */
+        image?: (number | null) | Image;
+        /**
+         * Choose an existing video or upload a new one.
+         */
+        video?: (number | null) | Video;
+        /**
+         * A short line shown over the bottom of this item.
+         */
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage-gallery_select".
+ */
+export interface HomepageGallerySelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  introduction?: T;
+  items?:
+    | T
+    | {
+        mediaType?: T;
+        image?: T;
+        video?: T;
+        caption?: T;
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

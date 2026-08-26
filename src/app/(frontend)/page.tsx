@@ -1,7 +1,9 @@
 import Link from 'next/link'
 
 import { FacultyCards } from '@/components/FacultyCards'
+import { GalleryWall } from '@/components/GalleryWall'
 import { getPublicFaculty } from '@/lib/faculty'
+import { getHomepageGallery } from '@/lib/gallery'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,16 +13,17 @@ const completedItems = [
   'The Payload administrator is created and verified',
   'Faculty fields and publishing controls are ready',
   'Images and Videos are stored in the isolated Supabase Storage bucket',
+  'Homepage Gallery supports ordered image and video selections',
 ]
 
 const pendingItems = [
-  'Build the editable photo-and-video wall',
+  'Replace the generated test video with final gallery media',
   'Test reordering, hiding, Trash, and restore',
   'Deploy an isolated preview and confirm media persistence',
 ]
 
 export default async function HomePage() {
-  const faculty = await getPublicFaculty()
+  const [faculty, gallery] = await Promise.all([getPublicFaculty(), getHomepageGallery()])
 
   return (
     <div className="pocShell">
@@ -106,6 +109,8 @@ export default async function HomePage() {
 
         <FacultyCards members={faculty} />
       </section>
+
+      <GalleryWall gallery={gallery} />
     </div>
   )
 }
