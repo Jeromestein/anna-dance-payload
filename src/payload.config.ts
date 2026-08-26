@@ -1,15 +1,25 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { s3Storage } from '@payloadcms/storage-s3'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
+import { Faculty } from './collections/Faculty'
+import { Images } from './collections/Images'
 import { Users } from './collections/Users'
-import { Media } from './collections/Media'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+const isSupabaseStorageConfigured = [
+  process.env.S3_BUCKET,
+  process.env.S3_ENDPOINT,
+  process.env.S3_REGION,
+  process.env.S3_ACCESS_KEY_ID,
+  process.env.S3_SECRET_ACCESS_KEY,
+].every(Boolean)
 
 export default buildConfig({
   admin: {
@@ -18,7 +28,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media],
+  collections: [Faculty, Images, Users],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -30,5 +40,25 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [],
+  plugins: [
+    s3Storage({
+      alwaysInsertFields: true,
+      bucket: process.env.S3_BUCKET || '',
+      collections: {
+        images: {
+          prefix: 'images',
+        },
+      },
+      config: {
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+        },
+        endpoint: process.env.S3_ENDPOINT,
+        forcePathStyle: true,
+        region: process.env.S3_REGION || '',
+      },
+      enabled: isSupabaseStorageConfigured,
+    }),
+  ],
 })

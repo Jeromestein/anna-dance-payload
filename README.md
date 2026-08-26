@@ -1,67 +1,170 @@
-# Payload Blank Template
+# Anna Dance Academy Payload CMS Proof of Concept
 
-This template comes configured with the bare minimum to get started on anything you need.
+This repository is an isolated test of a small, structured CMS for Anna Dance Academy. It is not
+connected to the current website or its Supabase project.
 
-## Quick start
+The first test covers two content areas:
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+- **Images**: an upload library with reusable JPEG, PNG, and WebP files.
+- **Faculty**: teacher records with Name, Title, Introduction, Profile photo, visibility, ordering,
+  publishing, and Trash.
 
-## Quick Start - local setup
+The frontend owns the card layout. Editors change content but cannot change CSS, columns, colors,
+or responsive behavior.
 
-To spin up this template locally, follow these steps:
+## Pinned versions
 
-### Clone
+| Package | Version |
+| --- | --- |
+| Payload CMS | `3.88.0` |
+| Payload Next adapter | `3.88.0` |
+| Payload Postgres adapter | `3.88.0` |
+| Payload S3 storage adapter | `3.88.0` |
+| Next.js | `16.3.3` |
+| React / React DOM | `19.2.6` |
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+The dependency lockfile is committed so future installs use the tested dependency graph.
 
-### Development
+## Routes
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+| Route | Purpose |
+| --- | --- |
+| `/` | POC status and setup boundary |
+| `/admin` | Payload administrator interface |
+| `/admin/collections/images` | Reusable Images library |
+| `/admin/collections/faculty` | Faculty create, edit, order, publish, hide, and Trash workflow |
+| `/faculty-preview` | Public-style Faculty card preview |
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+## Isolation rules
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+This POC must use a new Supabase project created only for the Payload test.
 
-#### Docker (Optional)
+Do not:
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+- use the current Anna Dance Academy Supabase connection string;
+- reuse the current website's Storage buckets or S3 credentials;
+- modify student, guardian, booking, payment, profile, or authentication data;
+- expose S3 credentials through `NEXT_PUBLIC_*` variables or browser code; or
+- treat a local test as proof that a deployed environment works.
 
-To do so, follow these steps:
+Payload owns only POC administrator login and CMS marketing content. The existing application keeps
+ownership of student and guardian accounts and all operational records.
 
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+## Local setup
 
-## How it works
+1. Create a new Supabase project for this test.
+2. Copy `.env.example` to `.env`.
+3. Replace every placeholder with values from the new project.
+4. Generate a long random `PAYLOAD_SECRET`.
+5. Run `pnpm install`.
+6. Run `pnpm dev` and open `http://localhost:3000/admin`.
+7. Create a separate test administrator when Payload shows the first-user screen.
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+Use the database connection shown by the new Supabase project's **Connect** dialog. A direct
+connection is preferred for migrations when the environment supports IPv6. The Session pooler on
+port `5432` is the fallback for IPv4-only environments. Do not use an unverified connection string.
 
-### Collections
+The local `.env` initially contains a deliberately non-production localhost placeholder. The CMS
+admin and Faculty preview require a working PostgreSQL connection.
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+## Supabase Storage setup
 
-- #### Users (Authentication)
+1. In the new Supabase project, create a dedicated bucket named `anna-dance-payload-poc`.
+2. Open **Storage > S3 Configuration** and enable the S3 protocol.
+3. Generate a server-only S3 access key pair.
+4. Copy the endpoint and region exactly as displayed by Supabase.
+5. Add the five `S3_*` variables from `.env.example` to `.env`.
+6. Restart the development server after changing `.env`.
 
-  Users are auth-enabled collections that have access to the admin panel.
+The S3 adapter remains disabled unless all five values are present. Without them, Payload stores
+local development uploads in `/media`, which is intentionally ignored by Git. Supabase S3 access
+keys bypass Storage RLS and must never be sent to the browser.
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/3.x/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+## Faculty publishing behavior
 
-- #### Media
+A Faculty profile appears on the public preview only when both conditions are true:
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+1. The record is **Published**.
+2. **Show on website** is enabled.
 
-### Docker
+This lets an editor hide a teacher without deleting the profile. Trash is a soft-delete workflow,
+so an editor can restore a record during the POC. Drag-and-drop ordering is enabled in the Faculty
+list.
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+## Verification commands
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+Run these after code changes:
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+```sh
+pnpm generate:types
+pnpm lint
+pnpm typecheck
+```
 
-## Questions
+Do not run a production build as part of this POC unless the repository instructions change.
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+## Implementation checklist
+
+A checked item means the implementation exists and has been verified at the level stated.
+
+### Project foundation
+
+- [x] Create a separate project and Git repository.
+- [x] Use the official blank Payload template with PostgreSQL.
+- [x] Pin Payload, Next.js, React, and adapter versions.
+- [x] Commit a dependency lockfile.
+- [x] Document the separation from the current website and Supabase project.
+- [ ] Create the new Supabase project dedicated to this POC.
+- [ ] Record the Supabase project region and environment purpose.
+- [ ] Confirm the current Anna Dance Academy Supabase project remains unchanged.
+
+### Images library
+
+- [x] Create an Images upload collection.
+- [x] Restrict uploads to JPEG, PNG, and WebP files.
+- [x] Generate thumbnail and Faculty card image sizes.
+- [x] Require an internal image name and accessible image description.
+- [x] Restrict create, update, and delete operations to Payload administrators.
+- [x] Configure Trash for recoverable deletion.
+- [x] Add a conditional Supabase-compatible S3 adapter.
+- [ ] Create the dedicated Supabase Storage bucket.
+- [ ] Enable S3 and add server-only credentials.
+- [ ] Upload an image through Payload and verify it in Supabase Storage.
+- [ ] Confirm uploaded files persist after a fresh preview deployment.
+
+### Faculty collection
+
+- [x] Create the Faculty collection.
+- [x] Add required `name`, `title`, `introduction`, and `profilePhoto` fields.
+- [x] Reuse photos through the Images collection.
+- [x] Add Publish/Draft workflow.
+- [x] Add a plain-language **Show on website** control.
+- [x] Add drag-and-drop ordering.
+- [x] Add Trash and restore support.
+- [x] Restrict writes to Payload administrators.
+- [x] Restrict public reads to published and visible records.
+- [x] Create a responsive Faculty preview page with fixed card design.
+- [ ] Create the Payload test administrator.
+- [ ] Add, edit, reorder, hide, trash, and restore a real test profile.
+- [ ] Confirm changes appear without a frontend redeployment.
+
+### Acceptance
+
+- [ ] Connect only to the new Supabase PostgreSQL database.
+- [ ] Confirm Payload schema changes affect only the new project.
+- [ ] Confirm administrator login works.
+- [ ] Confirm image selection works from a Faculty profile.
+- [ ] Confirm hidden, draft, and trashed profiles do not render publicly.
+- [x] Run lint and TypeScript checks successfully.
+- [x] Verify the POC overview at desktop and mobile widths with no horizontal overflow.
+- [ ] Verify the overview, admin, and Faculty preview in a desktop browser.
+- [ ] Verify the Faculty preview at a mobile viewport.
+- [ ] Deploy an isolated preview and repeat the workflow.
+- [ ] Record findings, limitations, and expected recurring costs.
+
+### Later phases
+
+- [ ] Add a Videos collection and document video-hosting limits.
+- [ ] Add Classes after the Faculty workflow is accepted.
+- [ ] Test a controlled video section that selects an item from Videos.
+- [ ] Decide whether Payload stays separate or moves into the existing Next.js application.
