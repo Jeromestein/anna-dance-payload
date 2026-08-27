@@ -137,9 +137,21 @@ pnpm payload run scripts/seed-social-profiles.ts
 The seed uses the Facebook and Instagram platform homepages plus a clearly marked POC WeChat ID.
 Replace all three with client-confirmed profiles before any public launch.
 
-Use the database connection shown by the new Supabase project's **Connect** dialog. A direct
-connection is preferred for migrations when the environment supports IPv6. The Session pooler on
-port `5432` is the fallback for IPv4-only environments. Do not use an unverified connection string.
+Use the database connection shown by the new Supabase project's **Connect** dialog. The correct
+connection mode depends on the runtime:
+
+- Local development uses the Session pooler on port `5432` because the development server is a
+  persistent process.
+- Vercel Production and Preview use the Transaction pooler on port `6543` because serverless
+  instances are temporary and can scale horizontally.
+- Migrations and database administration use a direct connection when IPv6 is available, or the
+  Session pooler when a direct connection is unavailable. Do not run migrations through the
+  Transaction pooler.
+
+Keep the variable name `DATABASE_URL` in every environment, but assign the environment-appropriate
+connection string. Do not copy the local `5432` value into Vercel. When switching from Session to
+Transaction mode on Supabase's shared pooler, the host, username, password, and database remain the
+same; only the port changes from `5432` to `6543`.
 
 The local `.env` initially contains a deliberately non-production localhost placeholder. The CMS
 admin and Faculty preview require a working PostgreSQL connection.
@@ -151,8 +163,12 @@ admin and Faculty preview require a working PostgreSQL connection.
 - Region: West US (North California), `us-west-1`
 - Purpose: isolated Payload database and media-storage proof of concept
 - Local connection: Supabase Session pooler on port `5432`
+- Vercel runtime connection: Supabase Transaction pooler on port `6543`
 
 The database connection and Payload secret are stored only in the Git-ignored local `.env` file.
+Vercel stores its separate runtime value in the project's Environment Variables settings. Updating
+an environment variable does not change an existing deployment; redeploy after changing
+`DATABASE_URL`.
 
 The dedicated public Storage bucket is connected through server-only S3 credentials. The original
 three Faculty photos and their generated image sizes have been migrated and verified through the
@@ -358,6 +374,8 @@ A checked item means the implementation exists and has been verified at the leve
       existing Payload administrator.
 - [x] Configure the Google OAuth provider for the shared Supabase project and register its callback
       URL in Google Cloud.
+- [ ] Configure Vercel Production and Preview `DATABASE_URL` values with the Supabase Transaction
+      pooler on port `6543`, then verify the redeployed Homepage and Payload administrator.
 - [ ] Confirm Payload schema changes affect only the new project.
 - [x] Confirm administrator login works.
 - [ ] Confirm image selection works from a Faculty profile.
