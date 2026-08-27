@@ -1,9 +1,15 @@
-import React from 'react'
+import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
-
-import { SocialFollow } from '@/components/SocialFollow'
+import { FloatingBookingButton } from '@/components/floating-booking-button'
+import { SiteFooter } from '@/components/site-footer'
+import { SiteHeader } from '@/components/site-header'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { createClient } from '@/lib/supabase/server'
 import { getSocialProfiles } from '@/lib/social'
+import { isPayloadAdministrator } from '@/lib/staff/auth'
 
+import './globals.css'
+import './footer.css'
 import './styles.css'
 
 const poppins = Poppins({
@@ -13,30 +19,43 @@ const poppins = Poppins({
   variable: '--font-sans',
 })
 
-export const metadata = {
-  description: 'Isolated Payload CMS proof of concept for Anna Dance Academy.',
-  title: 'Anna Dance CMS POC',
+export const metadata: Metadata = {
+  title: { default: 'Anna Dance Academy', template: '%s | Anna Dance Academy' },
+  description:
+    'Personalized, bilingual Chinese dance training for young dancers ages 2½ and up in Lutz, Florida.',
+  icons: {
+    icon: '/images/branding/anna-dance-academy-mark.png',
+    apple: '/images/branding/anna-dance-academy-mark.png',
+  },
 }
 
-export default async function RootLayout(props: { children: React.ReactNode }) {
-  const { children } = props
-  const socialProfiles = await getSocialProfiles()
+async function getStudentAccountAccess() {
+  if (!isSupabaseConfigured()) return false
+
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase.auth.getClaims()
+
+    return Boolean(data?.claims?.sub)
+  } catch {
+    return false
+  }
+}
+
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const [isAuthenticated, isAdmin, socialProfiles] = await Promise.all([
+    getStudentAccountAccess(),
+    isPayloadAdministrator(),
+    getSocialProfiles(),
+  ])
 
   return (
     <html lang="en">
       <body className={poppins.variable}>
+        <SiteHeader isAdmin={isAdmin} isAuthenticated={isAuthenticated} />
         <main>{children}</main>
-        {socialProfiles?.showInFooter ? (
-          <footer className="siteFooter">
-            <div className="siteFooterInner">
-              <div className="footerIdentity">
-                <p>Anna Dance Academy</p>
-                <span>Teaching, performance, and community.</span>
-              </div>
-              <SocialFollow profiles={socialProfiles} variant="footer" />
-            </div>
-          </footer>
-        ) : null}
+        <SiteFooter socialProfiles={socialProfiles?.showInFooter ? socialProfiles : null} />
+        <FloatingBookingButton />
       </body>
     </html>
   )

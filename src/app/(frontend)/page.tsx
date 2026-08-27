@@ -1,125 +1,203 @@
-import Link from 'next/link'
+import Link from "next/link";
+import { ArrowIcon } from "@/components/arrow-icon";
+import { CtaSection } from "@/components/cta-section";
+import { FacultyCards } from "@/components/FacultyCards";
+import { GalleryWall } from "@/components/GalleryWall";
+import { ProgramFaq } from "@/components/program-faq";
+import { getPublicClasses } from "@/lib/classes";
+import { getPublicFaculty } from "@/lib/faculty";
+import { getMediaGalleryBySlug } from "@/lib/gallery";
+import { getSocialProfiles } from "@/lib/social";
+import "./home.css";
 
-import { FacultyCards } from '@/components/FacultyCards'
-import { GalleryWall } from '@/components/GalleryWall'
-import { getPublicFaculty } from '@/lib/faculty'
-import { getMediaGalleryBySlug } from '@/lib/gallery'
-import { getSocialProfiles } from '@/lib/social'
-
-export const dynamic = 'force-dynamic'
-
-const completedItems = [
-  'Payload 3.88.0 and Next.js 16.3.3 are pinned',
-  'The isolated Supabase database is connected',
-  'The Payload administrator is created and verified',
-  'Faculty fields and publishing controls are ready',
-  'Images and Videos are stored in the isolated Supabase Storage bucket',
-  'Next.js pages reference reusable Media Galleries by slug',
-]
-
-const pendingItems = [
-  'Test reordering, hiding, Trash, and restore',
-  'Deploy an isolated preview and confirm media persistence',
-]
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [faculty, gallery, socialProfiles] = await Promise.all([
+  const [classes, faculty, gallery, socialProfiles] = await Promise.all([
+    getPublicClasses(),
     getPublicFaculty(),
-    getMediaGalleryBySlug('home-studio'),
+    getMediaGalleryBySlug("home-studio"),
     getSocialProfiles(),
-  ])
+  ]);
 
   return (
-    <div className="pocShell">
-      <header className="pocHeader">
-        <div>
-          <p className="eyebrow">Anna Dance Academy</p>
-          <h1>Lightweight CMS proof of concept</h1>
-          <p className="lede">
-            This homepage now contains a real Faculty section. Editors manage teacher content in
-            Payload while Next.js keeps the layout, colors, and responsive behavior controlled.
-          </p>
-        </div>
-        <span className="statusPill">Connected POC</span>
-      </header>
-
-      <main className="pocGrid">
-        <section className="panel primaryPanel">
-          <p className="sectionLabel">Try the workflow</p>
-          <h2>Simple content editing, fixed website design</h2>
-          <p>
-            Editors fill in Name, Title, Specialties, Description, and Profile photo. The preview
-            keeps the card layout and responsive behavior under developer control.
-          </p>
-          <div className="buttonRow">
-            <Link className="primaryButton" href="/admin">
-              Open CMS admin
-            </Link>
-            <Link className="secondaryButton" href="/faculty-preview">
-              View Faculty preview
-            </Link>
-            <Link className="secondaryButton" href="/about">
-              View About gallery
-            </Link>
+    <>
+      <section className="home-hero">
+        <div className="hero-photo" />
+        <video
+          className="hero-video"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          poster="/images/home/anna-dance-home-video-poster.jpg"
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          <source
+            src="/videos/anna-dance-home-hero-mobile.mp4"
+            type="video/mp4"
+            media="(max-width: 900px)"
+          />
+          <source src="/videos/anna-dance-home-hero.mp4" type="video/mp4" />
+        </video>
+        <div className="hero-wash" />
+        <div className="page-shell hero-content">
+          <p className="eyebrow eyebrow-light">Bilingual dance education · Ages 2½+</p>
+          <h1>Rooted in Chinese dance.<br /><em>Choreographed for every child.</em></h1>
+          <p className="hero-copy">Personalized training in Lutz, Florida, combining Chinese classical and ethnic folk traditions with original choreography, strong foundations, and meaningful stage experience.</p>
+          <div className="hero-actions">
+            <Link href="/schedule#book" className="button button-light">Request placement <ArrowIcon /></Link>
+            <Link href="/classes" className="hero-text-link">Explore programs</Link>
           </div>
-        </section>
+        </div>
+        <div className="hero-scroll"><span /> Scroll to discover</div>
+      </section>
 
-        <section className="panel">
-          <p className="sectionLabel">Ready in code</p>
-          <ul className="checkList">
-            {completedItems.map((item) => (
-              <li key={item}>
-                <span aria-hidden="true">✓</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="panel pendingPanel">
-          <p className="sectionLabel">Next test steps</p>
-          <ul className="numberList">
-            {pendingItems.map((item, index) => (
-              <li key={item}>
-                <span aria-hidden="true">{index + 1}</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="panel boundaryPanel">
-          <p className="sectionLabel">Isolation boundary</p>
-          <h2>The existing Anna Dance site remains untouched</h2>
-          <p>
-            This project has its own repository, Payload administrator, database connection, and
-            media credentials. It must never use the current production Supabase project.
-          </p>
-        </section>
-      </main>
-
-      <section aria-labelledby="homepage-faculty-heading" className="homepageFacultySection">
-        <div className="facultySectionHeader">
+      <section className="intro-section section-space">
+        <div className="page-shell intro-grid">
           <div>
-            <p className="sectionLabel">Our teaching team</p>
-            <h2 id="homepage-faculty-heading">
-              Founder-led.
-              <br />
-              <em>Thoughtfully supported.</em>
-            </h2>
+            <p className="eyebrow">Founder-led in Lutz, Florida</p>
+            <h2 className="display-title">Training shaped around<br /><em>every dancer.</em></h2>
           </div>
-          <p className="facultySectionCopy">
-            Anna leads the Academy’s artistic direction, with teaching artists joining selected
-            classes, rehearsals, and performance projects as needs evolve each term.
-          </p>
+          <div className="intro-copy">
+            <p className="lead">Age is only one part of finding the right class.</p>
+            <p>We consider each student’s experience, readiness, personality, goals, and schedule before recommending a placement. Small-group, bilingual instruction gives us room to teach with care and adapt choreography to the dancers in front of us.</p>
+            <Link href="/about" className="text-link">Discover our approach <ArrowIcon /></Link>
+          </div>
         </div>
+        <div className="page-shell value-row" aria-label="Our values">
+          <span><b>01</b> Bilingual instruction</span>
+          <span><b>02</b> Small-group teaching</span>
+          <span><b>03</b> Original choreography</span>
+          <span><b>04</b> Performance pathways</span>
+        </div>
+      </section>
 
-        <FacultyCards members={faculty} />
+      <section className="academy-advantages section-space">
+        <div className="page-shell section-heading-row">
+          <div>
+            <p className="eyebrow">Why Anna Dance Academy</p>
+            <h2 className="display-title">Professional foundations.<br /><em>A personal spotlight.</em></h2>
+          </div>
+          <p className="section-side-copy">Thoughtful training, original choreography, and responsive guidance help each dancer build confidence without losing the joy of movement.</p>
+        </div>
+        <div className="advantage-grid page-shell" role="region" aria-label="Why families choose Anna Dance Academy" tabIndex={0}>
+          <article>
+            <span>01 · Performance</span>
+            <h3>A spotlight for every child</h3>
+            <p>Each student is given a <strong>solo performance opportunity</strong> at Academy recitals, building the confidence to be seen as an individual as well as part of a group.</p>
+          </article>
+          <article>
+            <span>02 · Language</span>
+            <h3>Bilingual excellence</h3>
+            <p>English and Chinese instruction creates a welcoming bridge between <strong>professional dance training</strong> and cultural connection.</p>
+          </article>
+          <article>
+            <span>03 · Foundations</span>
+            <h3>Serious training, taught with joy</h3>
+            <p>Age-appropriate exercises make technical correction, discipline, and strong foundations <strong>engaging for young dancers</strong>.</p>
+          </article>
+          <article>
+            <span>04 · Artistry</span>
+            <h3>East meets West</h3>
+            <p>Original works may blend <strong>Chinese classical and traditional dance</strong> with ballet, jazz, and contemporary stage language.</p>
+          </article>
+          <article>
+            <span>05 · Choreography</span>
+            <h3>Created for the dancer</h3>
+            <p>Music, movement, and feedback are shaped around the student instead of relying on a <strong>one-size-fits-all routine</strong>.</p>
+          </article>
+          <article>
+            <span>06 · Growth</span>
+            <h3>Personalized progress</h3>
+            <p>Training plans respond to each child&apos;s ability, potential, goals, and pace, with <strong>teacher-guided placement</strong> before enrollment.</p>
+          </article>
+          <article>
+            <span>07 · Performance support</span>
+            <h3>Distinctive costumes, thoughtfully sourced</h3>
+            <p>Families benefit from access to <strong>high-quality performance costumes</strong> through the Academy&apos;s established sourcing channels.</p>
+          </article>
+          <article>
+            <span>08 · Communication</span>
+            <h3>Direct, responsive guidance</h3>
+            <p>Placement, class, and performance questions can be discussed directly with the teaching team for a <strong>clearer family experience</strong>.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="classes-preview section-space">
+        <div className="page-shell section-heading-row">
+          <div>
+            <p className="eyebrow">Programs with purpose</p>
+            <h2 className="display-title">Build foundations.<br /><em>Find your stage.</em></h2>
+          </div>
+          <Link href="/classes" className="text-link">Explore all programs <ArrowIcon /></Link>
+        </div>
+        <div className="class-grid page-shell" role="region" aria-label="Class programs" tabIndex={0}>
+          {classes.map((item) => (
+            <article className={`class-card ${item.tone}`} key={item.id}>
+              <div className="class-card-image" style={{ backgroundImage: `url(${item.image})` }} />
+              <div className="class-card-body">
+                <span className="class-age">{item.age}</span>
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
+                <Link href="/classes" aria-label={`Learn more about ${item.title}`}><ArrowIcon /></Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="quote-section">
+        <div className="quote-photo" />
+        <div className="quote-panel">
+          <span className="quote-kicker">Founder-led</span>
+          <blockquote>Every child deserves training shaped around who they are—not a one-size-fits-all routine.</blockquote>
+          <p>Anna Liu · Founder & Artistic Director</p>
+          <Link href="/about" className="text-link text-link-light">Read Anna&apos;s story <ArrowIcon /></Link>
+        </div>
+      </section>
+
+      <section className="faculty-preview section-space">
+        <div className="page-shell section-heading-row">
+          <div>
+            <p className="eyebrow">Our teaching team</p>
+            <h2 className="display-title">Founder-led.<br /><em>Thoughtfully supported.</em></h2>
+          </div>
+          <p className="section-side-copy">Anna leads the Academy’s artistic direction, with teaching artists joining selected classes, rehearsals, and performance projects as needs evolve each term.</p>
+        </div>
+        <div className="page-shell">
+          <FacultyCards members={faculty} />
+        </div>
       </section>
 
       {gallery ? (
-        <GalleryWall gallery={gallery} sectionKey="home-studio" socialProfiles={socialProfiles} />
+        <GalleryWall
+          gallery={gallery}
+          sectionKey="home-studio"
+          socialProfiles={socialProfiles}
+        />
       ) : null}
-    </div>
-  )
+
+      <section className="pathway-section section-space">
+        <div className="page-shell pathway-heading">
+          <div>
+            <p className="eyebrow">Competition pathway</p>
+            <h2 className="display-title">Group training<br /><em>comes first.</em></h2>
+          </div>
+          <p>Competition solo and duet coaching is available only to students who are concurrently enrolled in a Level-Based Group Class. Group training builds the consistency, teamwork, and stage experience that individual competition work depends on.</p>
+        </div>
+        <div className="page-shell pathway-steps" aria-label="Competition training pathway">
+          <article><span>01</span><h3>Placement</h3><p>A teacher recommends the best available group class after speaking with the family.</p></article>
+          <article><span>02</span><h3>Group foundation</h3><p>Weekly 60-minute Level training develops technique, musicality, and stage awareness.</p></article>
+          <article><span>03</span><h3>Personalized coaching</h3><p>Solo or duet works begin with at least ten 60-minute sessions and original choreography.</p></article>
+        </div>
+      </section>
+
+      <ProgramFaq id="faq" />
+      <CtaSection />
+    </>
+  );
 }

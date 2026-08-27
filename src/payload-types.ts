@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     faculty: Faculty;
+    classes: Class;
     'media-galleries': MediaGallery;
     images: Image;
     videos: Video;
@@ -80,6 +81,7 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     faculty: FacultySelect<false> | FacultySelect<true>;
+    classes: ClassesSelect<false> | ClassesSelect<true>;
     'media-galleries': MediaGalleriesSelect<false> | MediaGalleriesSelect<true>;
     images: ImagesSelect<false> | ImagesSelect<true>;
     videos: VideosSelect<false> | VideosSelect<true>;
@@ -211,6 +213,45 @@ export interface Image {
   };
 }
 /**
+ * Add programs and update the class information shown on the website.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "classes".
+ */
+export interface Class {
+  id: number;
+  _order?: string | null;
+  title: string;
+  /**
+   * For example: Ages 2½+ · Placement required or Saturday training.
+   */
+  audience: string;
+  description: string;
+  /**
+   * Choose an existing photo from Images or upload a new one.
+   */
+  image: number | Image;
+  /**
+   * Short points such as Weekly, 60 minutes or English & Chinese.
+   */
+  highlights: {
+    label: string;
+    id?: string | null;
+  }[];
+  /**
+   * Select the soft background color used on the Homepage card.
+   */
+  cardTone: 'blush' | 'cream' | 'sage' | 'lavender';
+  /**
+   * Turn this off to hide the class without deleting it.
+   */
+  showOnWebsite?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  deletedAt?: string | null;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * Create reusable groups of photos and videos. Next.js pages reference each gallery by its stable slug.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -296,11 +337,17 @@ export interface Video {
   height?: number | null;
 }
 /**
+ * Staff accounts that can access the website content system.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
   id: number;
+  /**
+   * Administrators can manage student operations. Content editors only manage website content.
+   */
+  role: 'administrator' | 'content-editor';
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -347,6 +394,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'faculty';
         value: number | Faculty;
+      } | null)
+    | ({
+        relationTo: 'classes';
+        value: number | Class;
       } | null)
     | ({
         relationTo: 'media-galleries';
@@ -417,6 +468,29 @@ export interface FacultySelect<T extends boolean = true> {
   introduction?: T;
   description?: T;
   profilePhoto?: T;
+  showOnWebsite?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  deletedAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "classes_select".
+ */
+export interface ClassesSelect<T extends boolean = true> {
+  _order?: T;
+  title?: T;
+  audience?: T;
+  description?: T;
+  image?: T;
+  highlights?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  cardTone?: T;
   showOnWebsite?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -519,6 +593,7 @@ export interface VideosSelect<T extends boolean = true> {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

@@ -8,6 +8,7 @@ import sharp from 'sharp'
 
 import { Faculty } from './collections/Faculty'
 import { Images } from './collections/Images'
+import { Classes } from './collections/Classes'
 import { MediaGalleries } from './collections/MediaGalleries'
 import { Users } from './collections/Users'
 import { Videos } from './collections/Videos'
@@ -31,7 +32,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Faculty, MediaGalleries, Images, Videos, Users],
+  collections: [Faculty, Classes, MediaGalleries, Images, Videos, Users],
   editor: lexicalEditor(),
   globals: [SocialProfiles],
   secret: process.env.PAYLOAD_SECRET || '',

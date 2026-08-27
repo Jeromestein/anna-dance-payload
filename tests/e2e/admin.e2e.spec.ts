@@ -32,6 +32,12 @@ test.describe('Admin Panel', () => {
     await expect(listViewArtifact).toBeVisible()
   })
 
+  test('can navigate to Classes list view', async () => {
+    await page.goto('http://localhost:3000/admin/collections/classes')
+    await expect(page).toHaveURL('http://localhost:3000/admin/collections/classes')
+    await expect(page.locator('h1', { hasText: 'Classes' }).first()).toBeVisible()
+  })
+
   test('can open the Faculty create form', async () => {
     await page.goto('http://localhost:3000/admin/collections/faculty/create')
     await expect(page).toHaveURL('http://localhost:3000/admin/collections/faculty/create')

@@ -1,9 +1,10 @@
-# Anna Dance Academy Payload CMS Proof of Concept
+# Anna Dance Academy Payload Website
 
-This repository is an isolated test of a small, structured CMS for Anna Dance Academy. It is not
-connected to the current website or its Supabase project.
+This repository is the refactor target for the Anna Dance Academy website. It combines the public
+Next.js site and Payload administrator interface in one application while keeping student accounts
+and operational data in the academy's existing Supabase project.
 
-The first test covers five content areas:
+The CMS currently covers six structured content areas:
 
 - **Images**: an upload library with reusable JPEG, PNG, and WebP files.
 - **Videos**: a separate MP4 and WebM library with an optional cover image selected from Images.
@@ -13,6 +14,8 @@ The first test covers five content areas:
   two libraries and referenced directly by Next.js pages through stable slugs.
 - **Social Profiles**: one reusable set of optional Facebook, Instagram, and WeChat details used by
   galleries, the footer, and future website sections.
+- **Classes**: editable class-program records with audience, summary, highlights, image, visibility,
+  ordering, drafts, and Trash.
 
 The frontend owns the card layout. Editors change content but cannot change CSS, columns, colors,
 or responsive behavior.
@@ -34,40 +37,50 @@ The dependency lockfile is committed so future installs use the tested dependenc
 
 | Route                                | Purpose                                                          |
 | ------------------------------------ | ---------------------------------------------------------------- |
-| `/`                                  | POC status plus Faculty and the `home-studio` Media Gallery      |
-| `/about`                             | About test page using the separate `about-academy` Media Gallery |
+| `/`                                  | Migrated academy homepage with CMS Faculty, Classes, and gallery |
+| `/about`                             | Migrated About page using the `about-academy` Media Gallery      |
+| `/classes`                           | Migrated Classes page using CMS records with safe fallbacks      |
+| `/faculty`                           | Migrated Faculty page using published CMS records                |
+| `/contact`                           | Migrated contact experience                                      |
+| `/schedule`                          | Migrated schedule page                                           |
+| `/login`                             | Student and parent Supabase login                                |
+| `/users/me`                          | Student or parent self-service profile                           |
+| `/users`                             | Payload-administrator-only student directory                     |
 | `/admin`                             | Payload administrator interface                                  |
 | `/admin/collections/images`          | Reusable Images library                                          |
 | `/admin/collections/videos`          | Reusable Videos library                                          |
 | `/admin/collections/faculty`         | Faculty create, edit, order, publish, hide, and Trash workflow   |
+| `/admin/collections/classes`         | Class-program create, edit, order, publish, hide, and Trash      |
 | `/admin/collections/media-galleries` | Create, edit, publish, hide, and reuse mixed-media galleries     |
 | `/admin/globals/social-profiles`     | Edit reusable social links, invitation copy, and WeChat details  |
-| `/faculty-preview`                   | Public-style Faculty card preview                                |
+| `/privacy` and `/terms`              | Migrated legal pages                                             |
 
-## Isolation rules
+## Application and data boundaries
 
-This POC must use a new Supabase project created only for the Payload test.
+The application intentionally uses two separate Supabase projects:
 
-Do not:
+- the dedicated Payload project stores CMS tables and S3-backed website media; and
+- the existing academy project remains the authority for student login and `user_profiles`.
 
-- use the current Anna Dance Academy Supabase connection string;
-- reuse the current website's Storage buckets or S3 credentials;
-- modify student, guardian, booking, payment, profile, or authentication data;
-- expose S3 credentials through `NEXT_PUBLIC_*` variables or browser code; or
-- treat a local test as proof that a deployed environment works.
+Payload staff and student accounts are not merged. An `administrator` Payload account can open the
+student directory without a second administrator login. A `content-editor` can edit website content
+but cannot access student data. Students and parents continue to log in through `/login` and can
+only manage their own profile.
 
-Payload owns only POC administrator login and CMS marketing content. The existing application keeps
-ownership of student and guardian accounts and all operational records.
+The existing academy Supabase service-role key is server-only. It must never use a `NEXT_PUBLIC_*`
+name or be imported by client components. S3 credentials follow the same server-only rule.
 
 ## Local setup
 
-1. Create a new Supabase project for this test.
+1. Keep the dedicated Payload Supabase project for CMS tables and Storage.
 2. Copy `.env.example` to `.env`.
-3. Replace every placeholder with values from the new project.
-4. Generate a long random `PAYLOAD_SECRET`.
-5. Run `pnpm install`.
-6. Run `pnpm dev` and open `http://localhost:3000/admin`.
-7. Create a separate test administrator when Payload shows the first-user screen.
+3. Add Payload database and S3 values from the dedicated project.
+4. Add the public URL/key and server-only service-role key from the existing academy project for
+   student authentication and administrator operations.
+5. Generate a long random `PAYLOAD_SECRET`.
+6. Run `pnpm install`.
+7. Run `pnpm dev` and open `http://localhost:3000/admin`.
+8. Assign Payload staff either the `administrator` or `content-editor` role.
 
 To copy the original three Faculty profiles and photos into this isolated POC, run:
 
@@ -207,10 +220,33 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Use the official blank Payload template with PostgreSQL.
 - [x] Pin Payload, Next.js, React, and adapter versions.
 - [x] Commit a dependency lockfile.
-- [x] Document the separation from the current website and Supabase project.
+- [x] Preserve the original repository and use this project as the refactor target.
+- [x] Document the separation between CMS and student operational data.
 - [x] Create the new Supabase project dedicated to this POC.
 - [x] Record the Supabase project region and environment purpose.
-- [ ] Confirm the current Anna Dance Academy Supabase project remains unchanged.
+- [x] Confirm the current Anna Dance Academy source repository remains unchanged.
+
+### Public website migration
+
+- [x] Migrate the shared header, footer, booking button, fonts, palette, and responsive shell.
+- [x] Migrate Homepage, About, Classes, Faculty, Contact, Schedule, Privacy, and Terms routes.
+- [x] Preserve the original visual design while replacing hard-coded Faculty with Payload records.
+- [x] Add editable Classes with a safe static fallback until CMS records are created.
+- [x] Render separate slug-addressed galleries on Homepage and About.
+- [x] Migrate student login, password recovery, account callback, and self-service profile routes.
+- [x] Verify Homepage, About, Classes, Faculty, and gallery layouts in a local browser.
+
+### Staff and student access
+
+- [x] Add `administrator` and `content-editor` roles to Payload staff accounts.
+- [x] Allow only Payload administrators to access `/users` and `/users/[id]`.
+- [x] Keep student and parent login under the academy Supabase project.
+- [x] Keep student self-service updates restricted to the signed-in student's own profile.
+- [x] Add a server-only Supabase administration client for student-directory operations.
+- [x] Remove the legacy Supabase `admin` role as an authorization source.
+- [x] Redirect unauthenticated `/users` requests to Payload login.
+- [ ] Add the academy Supabase public values and server-only service-role key to the local environment.
+- [ ] Verify the administrator directory against real academy student data after configuration.
 
 ### Images library
 
@@ -291,7 +327,8 @@ A checked item means the implementation exists and has been verified at the leve
 
 ### Acceptance
 
-- [x] Connect only to the new Supabase PostgreSQL database.
+- [x] Keep Payload CMS tables and S3 media in the dedicated Supabase project.
+- [ ] Connect student authentication and profiles to the existing academy Supabase project.
 - [ ] Confirm Payload schema changes affect only the new project.
 - [x] Confirm administrator login works.
 - [ ] Confirm image selection works from a Faculty profile.
@@ -313,7 +350,9 @@ A checked item means the implementation exists and has been verified at the leve
 ### Later phases
 
 - [x] Add a Videos collection and document video-hosting limits.
-- [ ] Add Classes after the Faculty workflow is accepted.
+- [x] Add Classes after the Faculty workflow is accepted.
 - [x] Test a controlled homepage section that selects an item from Videos.
 - [x] Generalize the homepage-only Gallery into reusable slug-addressed galleries.
-- [ ] Decide whether Payload stays separate or moves into the existing Next.js application.
+- [x] Decide to use this unified Next.js + Payload project as the refactor target.
+- [ ] Seed editable class records and images after confirming the intended production media set.
+- [ ] Configure deployment environment variables and run preview-deployment acceptance checks.
