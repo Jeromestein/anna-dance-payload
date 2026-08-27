@@ -33,6 +33,13 @@ or responsive behavior.
 
 The dependency lockfile is committed so future installs use the tested dependency graph.
 
+## Documentation
+
+The migrated project documentation is organized in the
+[documentation index](docs/README.md). It includes the original business and website plan,
+lightweight CMS design, legacy roadmap and design notes, authentication test procedures, media
+library notes, content references, and the original Apple Pages biography source.
+
 ## Routes
 
 | Route                                | Purpose                                                          |
