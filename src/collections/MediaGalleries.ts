@@ -144,6 +144,17 @@ export const MediaGalleries: CollectionConfig = {
       ],
     },
     {
+      name: 'showSocialLinks',
+      type: 'checkbox',
+      label: 'Show social links with this gallery',
+      defaultValue: true,
+      admin: {
+        description:
+          'Adds the reusable Social Profiles invitation to this gallery. Empty social platforms remain hidden.',
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'showOnWebsite',
       type: 'checkbox',
       label: 'Available on website',

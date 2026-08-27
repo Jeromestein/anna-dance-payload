@@ -33,4 +33,18 @@ describe('API', () => {
     expect(galleries).toBeDefined()
     expect(galleries.docs).toHaveLength(2)
   })
+
+  it('loads the reusable social profiles settings', async () => {
+    const socialProfiles = await payload.findGlobal({
+      slug: 'social-profiles',
+      depth: 1,
+      overrideAccess: true,
+    })
+
+    expect(socialProfiles).toBeDefined()
+    expect(socialProfiles.showInFooter).toBe(true)
+    expect(socialProfiles.facebookUrl).toBeTruthy()
+    expect(socialProfiles.instagramUrl).toBeTruthy()
+    expect(socialProfiles.wechatId).toBeTruthy()
+  })
 })

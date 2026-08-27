@@ -79,6 +79,7 @@ try {
         },
       ],
       slug: 'home-studio',
+      showSocialLinks: true,
     },
     {
       eyebrow: 'The Academy in motion',
@@ -109,6 +110,7 @@ try {
         },
       ],
       slug: 'about-academy',
+      showSocialLinks: true,
     },
   ]
 

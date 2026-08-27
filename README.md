@@ -3,7 +3,7 @@
 This repository is an isolated test of a small, structured CMS for Anna Dance Academy. It is not
 connected to the current website or its Supabase project.
 
-The first test covers four content areas:
+The first test covers five content areas:
 
 - **Images**: an upload library with reusable JPEG, PNG, and WebP files.
 - **Videos**: a separate MP4 and WebM library with an optional cover image selected from Images.
@@ -11,6 +11,8 @@ The first test covers four content areas:
   ordering, publishing, and Trash.
 - **Media Galleries**: reusable, ordered photo-and-video groups whose media is selected from the
   two libraries and referenced directly by Next.js pages through stable slugs.
+- **Social Profiles**: one reusable set of optional Facebook, Instagram, and WeChat details used by
+  galleries, the footer, and future website sections.
 
 The frontend owns the card layout. Editors change content but cannot change CSS, columns, colors,
 or responsive behavior.
@@ -39,6 +41,7 @@ The dependency lockfile is committed so future installs use the tested dependenc
 | `/admin/collections/videos`          | Reusable Videos library                                          |
 | `/admin/collections/faculty`         | Faculty create, edit, order, publish, hide, and Trash workflow   |
 | `/admin/collections/media-galleries` | Create, edit, publish, hide, and reuse mixed-media galleries     |
+| `/admin/globals/social-profiles`     | Edit reusable social links, invitation copy, and WeChat details  |
 | `/faculty-preview`                   | Public-style Faculty card preview                                |
 
 ## Isolation rules
@@ -89,6 +92,15 @@ the Homepage and About page:
 ```sh
 pnpm payload run scripts/seed-media-galleries.ts
 ```
+
+Create the reusable social-links demonstration data separately:
+
+```sh
+pnpm payload run scripts/seed-social-profiles.ts
+```
+
+The seed uses the Facebook and Instagram platform homepages plus a clearly marked POC WeChat ID.
+Replace all three with client-confirmed profiles before any public launch.
 
 Use the database connection shown by the new Supabase project's **Connect** dialog. A direct
 connection is preferred for migrations when the environment supports IPv6. The Session pooler on
@@ -159,6 +171,19 @@ The homepage owns the responsive visual treatment. Desktop uses a fixed asymmetr
 mobile uses horizontally scrollable cards. Editors cannot change columns, cropping rules, colors,
 or responsive breakpoints. Drafts and versions allow changes to be reviewed or restored before
 publishing.
+
+## Social Profiles
+
+Editors open **Website Content > Social Profiles** and manage one shared set of invitation copy and
+platform details. Facebook and Instagram appear only when their URL is filled. WeChat appears when
+either a WeChat ID or QR-code image is filled. If every platform is empty, the complete social
+component stays hidden.
+
+Each Media Gallery has a **Show social links with this gallery** checkbox. When enabled, the social
+invitation becomes the final card in the gallery wall. The separate **Show in website footer**
+checkbox controls the compact footer version. Both placements read the same Social Profiles record,
+so editors update the links only once. Future developer-controlled sections can reuse the same
+component without introducing page-placement records.
 
 ## Verification commands
 
@@ -254,6 +279,16 @@ A checked item means the implementation exists and has been verified at the leve
       `Home — Studio Moments`.
 - [x] Seed and publish `About — Academy in Motion` with a different media order and copy.
 
+### Reusable Social Profiles
+
+- [x] Add one Social Profiles Global with editable invitation heading and message.
+- [x] Add optional Facebook, Instagram, WeChat ID, and WeChat QR-code fields.
+- [x] Hide individual platforms when their corresponding fields are empty.
+- [x] Add a per-Gallery switch for the reusable social invitation.
+- [x] Reuse the same Social Profiles data in the Gallery wall and website footer.
+- [ ] Verify the Social Profiles editor and platform visibility controls in Payload.
+- [x] Verify the Gallery social card, footer icons, and WeChat dialog at desktop and mobile widths.
+
 ### Acceptance
 
 - [x] Connect only to the new Supabase PostgreSQL database.
@@ -271,6 +306,7 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Verify the published Homepage Gallery at desktop and mobile widths with no horizontal page
       overflow.
 - [x] Verify the About Gallery at desktop and mobile widths with no horizontal page overflow.
+- [x] Verify empty Social Profiles fields do not render public links.
 - [ ] Deploy an isolated preview and repeat the workflow.
 - [ ] Record findings, limitations, and expected recurring costs.
 

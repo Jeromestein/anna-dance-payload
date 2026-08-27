@@ -1,10 +1,12 @@
 import Link from 'next/link'
 
-import type { Image, MediaGallery, Video } from '@/payload-types'
+import { SocialFollow } from '@/components/SocialFollow'
+import type { Image, MediaGallery, SocialProfile, Video } from '@/payload-types'
 
 type GalleryWallProps = {
   gallery: MediaGallery
   sectionKey: string
+  socialProfiles?: SocialProfile | null
 }
 
 type GalleryRow = NonNullable<MediaGallery['items']>[number]
@@ -27,7 +29,7 @@ function getVideo(video: number | Video | null | undefined): Video | null {
   return typeof video === 'object' && video !== null ? video : null
 }
 
-export function GalleryWall({ gallery, sectionKey }: GalleryWallProps) {
+export function GalleryWall({ gallery, sectionKey, socialProfiles }: GalleryWallProps) {
   const items: ResolvedGalleryItem[] = []
   const headingId = `media-gallery-${sectionKey}-heading`
 
@@ -89,6 +91,9 @@ export function GalleryWall({ gallery, sectionKey }: GalleryWallProps) {
               </figure>
             )
           })}
+          {gallery.showSocialLinks && socialProfiles ? (
+            <SocialFollow profiles={socialProfiles} variant="gallery" />
+          ) : null}
         </div>
       ) : (
         <div className="emptyState galleryEmptyState">

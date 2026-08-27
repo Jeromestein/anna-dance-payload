@@ -59,70 +59,73 @@ export type SupportedTimezones =
   | 'Pacific/Guam'
   | 'Pacific/Noumea'
   | 'Pacific/Auckland'
-  | 'Pacific/Fiji'
+  | 'Pacific/Fiji';
 
 export interface Config {
   auth: {
-    users: UserAuthOperations
-  }
-  blocks: {}
+    users: UserAuthOperations;
+  };
+  blocks: {};
   collections: {
-    faculty: Faculty
-    'media-galleries': MediaGallery
-    images: Image
-    videos: Video
-    users: User
-    'payload-kv': PayloadKv
-    'payload-locked-documents': PayloadLockedDocument
-    'payload-preferences': PayloadPreference
-    'payload-migrations': PayloadMigration
-  }
-  collectionsJoins: {}
+    faculty: Faculty;
+    'media-galleries': MediaGallery;
+    images: Image;
+    videos: Video;
+    users: User;
+    'payload-kv': PayloadKv;
+    'payload-locked-documents': PayloadLockedDocument;
+    'payload-preferences': PayloadPreference;
+    'payload-migrations': PayloadMigration;
+  };
+  collectionsJoins: {};
   collectionsSelect: {
-    faculty: FacultySelect<false> | FacultySelect<true>
-    'media-galleries': MediaGalleriesSelect<false> | MediaGalleriesSelect<true>
-    images: ImagesSelect<false> | ImagesSelect<true>
-    videos: VideosSelect<false> | VideosSelect<true>
-    users: UsersSelect<false> | UsersSelect<true>
-    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
-    'payload-locked-documents':
-      PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>
-    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>
-    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>
-  }
+    faculty: FacultySelect<false> | FacultySelect<true>;
+    'media-galleries': MediaGalleriesSelect<false> | MediaGalleriesSelect<true>;
+    images: ImagesSelect<false> | ImagesSelect<true>;
+    videos: VideosSelect<false> | VideosSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
+    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
+    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
+    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
+  };
   db: {
-    defaultIDType: number
-  }
-  fallbackLocale: null
-  globals: {}
-  globalsSelect: {}
-  locale: null
+    defaultIDType: number;
+  };
+  fallbackLocale: null;
+  globals: {
+    'social-profiles': SocialProfile;
+  };
+  globalsSelect: {
+    'social-profiles': SocialProfilesSelect<false> | SocialProfilesSelect<true>;
+  };
+  locale: null;
   widgets: {
-    collections: CollectionsWidget
-  }
-  user: User
+    collections: CollectionsWidget;
+  };
+  user: User;
   jobs: {
-    tasks: unknown
-    workflows: unknown
-  }
+    tasks: unknown;
+    workflows: unknown;
+  };
 }
 export interface UserAuthOperations {
   forgotPassword: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
   login: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
   registerFirstUser: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
   unlock: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
 }
 /**
  * Add teachers and update the profile information shown on the website.
@@ -131,33 +134,33 @@ export interface UserAuthOperations {
  * via the `definition` "faculty".
  */
 export interface Faculty {
-  id: number
-  _order?: string | null
-  name: string
+  id: number;
+  _order?: string | null;
+  name: string;
   /**
    * For example: Founder & Artistic Director or Teaching Artist.
    */
-  title: string
+  title: string;
   /**
    * A short line such as Chinese Dance · Choreography · Competition Coaching.
    */
-  introduction: string
+  introduction: string;
   /**
    * The full teacher introduction shown at the bottom of the profile card.
    */
-  description: string
+  description: string;
   /**
    * Choose an existing photo from Images or upload a new one.
    */
-  profilePhoto: number | Image
+  profilePhoto: number | Image;
   /**
    * Turn this off to hide the profile without deleting it.
    */
-  showOnWebsite?: boolean | null
-  updatedAt: string
-  createdAt: string
-  deletedAt?: string | null
-  _status?: ('draft' | 'published') | null
+  showOnWebsite?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  deletedAt?: string | null;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Upload website photos once, then reuse them in Faculty and other sections.
@@ -166,46 +169,46 @@ export interface Faculty {
  * via the `definition` "images".
  */
 export interface Image {
-  id: number
+  id: number;
   /**
    * A short internal name, such as “Anna studio portrait”.
    */
-  title: string
+  title: string;
   /**
    * Describe the image for visitors who use a screen reader.
    */
-  altText: string
-  prefix?: string | null
-  updatedAt: string
-  createdAt: string
-  deletedAt?: string | null
-  url?: string | null
-  thumbnailURL?: string | null
-  filename?: string | null
-  mimeType?: string | null
-  filesize?: number | null
-  width?: number | null
-  height?: number | null
-  focalX?: number | null
-  focalY?: number | null
+  altText: string;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  deletedAt?: string | null;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
   sizes?: {
     thumbnail?: {
-      url?: string | null
-      width?: number | null
-      height?: number | null
-      mimeType?: string | null
-      filesize?: number | null
-      filename?: string | null
-    }
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
     facultyCard?: {
-      url?: string | null
-      width?: number | null
-      height?: number | null
-      mimeType?: string | null
-      filesize?: number | null
-      filename?: string | null
-    }
-  }
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * Create reusable groups of photos and videos. Next.js pages reference each gallery by its stable slug.
@@ -214,47 +217,51 @@ export interface Image {
  * via the `definition` "media-galleries".
  */
 export interface MediaGallery {
-  id: number
+  id: number;
   /**
    * Used only in the CMS, for example “Home — Studio Moments” or “Classes — Highlights”.
    */
-  internalName: string
+  internalName: string;
   /**
    * Used by the website code, for example “home-studio” or “about-academy”. Do not change it after the page is connected.
    */
-  slug: string
-  eyebrow: string
-  heading: string
-  introduction: string
+  slug: string;
+  eyebrow: string;
+  heading: string;
+  introduction: string;
   /**
    * Add up to 12 items. Choose the media type first, select a file, then drag rows to reorder the wall.
    */
   items?:
     | {
-        mediaType: 'image' | 'video'
+        mediaType: 'image' | 'video';
         /**
          * Choose an existing image or upload a new one.
          */
-        image?: (number | null) | Image
+        image?: (number | null) | Image;
         /**
          * Choose an existing video or upload a new one.
          */
-        video?: (number | null) | Video
+        video?: (number | null) | Video;
         /**
          * A short line shown over the bottom of this item.
          */
-        caption?: string | null
-        id?: string | null
+        caption?: string | null;
+        id?: string | null;
       }[]
-    | null
+    | null;
+  /**
+   * Adds the reusable Social Profiles invitation to this gallery. Empty social platforms remain hidden.
+   */
+  showSocialLinks?: boolean | null;
   /**
    * Turn this off to hide this gallery everywhere without deleting it.
    */
-  showOnWebsite?: boolean | null
-  updatedAt: string
-  createdAt: string
-  deletedAt?: string | null
-  _status?: ('draft' | 'published') | null
+  showOnWebsite?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  deletedAt?: string | null;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Upload MP4 or WebM videos once, then reuse them in website sections.
@@ -263,310 +270,362 @@ export interface MediaGallery {
  * via the `definition` "videos".
  */
 export interface Video {
-  id: number
+  id: number;
   /**
    * A short internal name, such as “Spring recital highlights”.
    */
-  title: string
+  title: string;
   /**
    * Briefly describe the video for accessibility and future reuse.
    */
-  description: string
+  description: string;
   /**
    * Choose an image shown before the visitor plays the video.
    */
-  posterImage?: (number | null) | Image
-  prefix?: string | null
-  updatedAt: string
-  createdAt: string
-  deletedAt?: string | null
-  url?: string | null
-  thumbnailURL?: string | null
-  filename?: string | null
-  mimeType?: string | null
-  filesize?: number | null
-  width?: number | null
-  height?: number | null
+  posterImage?: (number | null) | Image;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  deletedAt?: string | null;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
-  id: number
-  updatedAt: string
-  createdAt: string
-  email: string
-  resetPasswordToken?: string | null
-  resetPasswordExpiration?: string | null
-  salt?: string | null
-  hash?: string | null
-  loginAttempts?: number | null
-  lockUntil?: string | null
+  id: number;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
   sessions?:
     | {
-        id: string
-        createdAt?: string | null
-        expiresAt: string
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
       }[]
-    | null
-  password?: string | null
-  collection: 'users'
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: number
-  key: string
+  id: number;
+  key: string;
   data:
     | {
-        [k: string]: unknown
+        [k: string]: unknown;
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null
+    | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: number
+  id: number;
   document?:
     | ({
-        relationTo: 'faculty'
-        value: number | Faculty
+        relationTo: 'faculty';
+        value: number | Faculty;
       } | null)
     | ({
-        relationTo: 'media-galleries'
-        value: number | MediaGallery
+        relationTo: 'media-galleries';
+        value: number | MediaGallery;
       } | null)
     | ({
-        relationTo: 'images'
-        value: number | Image
+        relationTo: 'images';
+        value: number | Image;
       } | null)
     | ({
-        relationTo: 'videos'
-        value: number | Video
+        relationTo: 'videos';
+        value: number | Video;
       } | null)
     | ({
-        relationTo: 'users'
-        value: number | User
-      } | null)
-  globalSlug?: string | null
+        relationTo: 'users';
+        value: number | User;
+      } | null);
+  globalSlug?: string | null;
   user: {
-    relationTo: 'users'
-    value: number | User
-  }
-  updatedAt: string
-  createdAt: string
+    relationTo: 'users';
+    value: number | User;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: number
+  id: number;
   user: {
-    relationTo: 'users'
-    value: number | User
-  }
-  key?: string | null
+    relationTo: 'users';
+    value: number | User;
+  };
+  key?: string | null;
   value?:
     | {
-        [k: string]: unknown
+        [k: string]: unknown;
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null
-  updatedAt: string
-  createdAt: string
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: number
-  name?: string | null
-  batch?: number | null
-  updatedAt: string
-  createdAt: string
+  id: number;
+  name?: string | null;
+  batch?: number | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "faculty_select".
  */
 export interface FacultySelect<T extends boolean = true> {
-  _order?: T
-  name?: T
-  title?: T
-  introduction?: T
-  description?: T
-  profilePhoto?: T
-  showOnWebsite?: T
-  updatedAt?: T
-  createdAt?: T
-  deletedAt?: T
-  _status?: T
+  _order?: T;
+  name?: T;
+  title?: T;
+  introduction?: T;
+  description?: T;
+  profilePhoto?: T;
+  showOnWebsite?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  deletedAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media-galleries_select".
  */
 export interface MediaGalleriesSelect<T extends boolean = true> {
-  internalName?: T
-  slug?: T
-  eyebrow?: T
-  heading?: T
-  introduction?: T
+  internalName?: T;
+  slug?: T;
+  eyebrow?: T;
+  heading?: T;
+  introduction?: T;
   items?:
     | T
     | {
-        mediaType?: T
-        image?: T
-        video?: T
-        caption?: T
-        id?: T
-      }
-  showOnWebsite?: T
-  updatedAt?: T
-  createdAt?: T
-  deletedAt?: T
-  _status?: T
+        mediaType?: T;
+        image?: T;
+        video?: T;
+        caption?: T;
+        id?: T;
+      };
+  showSocialLinks?: T;
+  showOnWebsite?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  deletedAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "images_select".
  */
 export interface ImagesSelect<T extends boolean = true> {
-  title?: T
-  altText?: T
-  prefix?: T
-  updatedAt?: T
-  createdAt?: T
-  deletedAt?: T
-  url?: T
-  thumbnailURL?: T
-  filename?: T
-  mimeType?: T
-  filesize?: T
-  width?: T
-  height?: T
-  focalX?: T
-  focalY?: T
+  title?: T;
+  altText?: T;
+  prefix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  deletedAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
   sizes?:
     | T
     | {
         thumbnail?:
           | T
           | {
-              url?: T
-              width?: T
-              height?: T
-              mimeType?: T
-              filesize?: T
-              filename?: T
-            }
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
         facultyCard?:
           | T
           | {
-              url?: T
-              width?: T
-              height?: T
-              mimeType?: T
-              filesize?: T
-              filename?: T
-            }
-      }
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "videos_select".
  */
 export interface VideosSelect<T extends boolean = true> {
-  title?: T
-  description?: T
-  posterImage?: T
-  prefix?: T
-  updatedAt?: T
-  createdAt?: T
-  deletedAt?: T
-  url?: T
-  thumbnailURL?: T
-  filename?: T
-  mimeType?: T
-  filesize?: T
-  width?: T
-  height?: T
+  title?: T;
+  description?: T;
+  posterImage?: T;
+  prefix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  deletedAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
-  updatedAt?: T
-  createdAt?: T
-  email?: T
-  resetPasswordToken?: T
-  resetPasswordExpiration?: T
-  salt?: T
-  hash?: T
-  loginAttempts?: T
-  lockUntil?: T
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
   sessions?:
     | T
     | {
-        id?: T
-        createdAt?: T
-        expiresAt?: T
-      }
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
-  key?: T
-  data?: T
+  key?: T;
+  data?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
-  document?: T
-  globalSlug?: T
-  user?: T
-  updatedAt?: T
-  createdAt?: T
+  document?: T;
+  globalSlug?: T;
+  user?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences_select".
  */
 export interface PayloadPreferencesSelect<T extends boolean = true> {
-  user?: T
-  key?: T
-  value?: T
-  updatedAt?: T
-  createdAt?: T
+  user?: T;
+  key?: T;
+  value?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations_select".
  */
 export interface PayloadMigrationsSelect<T extends boolean = true> {
-  name?: T
-  batch?: T
-  updatedAt?: T
-  createdAt?: T
+  name?: T;
+  batch?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * Manage one reusable set of social links for galleries, the footer, and other website sections. Empty platforms stay hidden.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-profiles".
+ */
+export interface SocialProfile {
+  id: number;
+  heading: string;
+  message: string;
+  /**
+   * Leave blank to hide Facebook everywhere.
+   */
+  facebookUrl?: string | null;
+  /**
+   * Leave blank to hide Instagram everywhere.
+   */
+  instagramUrl?: string | null;
+  /**
+   * Leave both WeChat fields blank to hide WeChat everywhere.
+   */
+  wechatId?: string | null;
+  /**
+   * Upload a QR code so visitors can scan it from the website.
+   */
+  wechatQrCode?: (number | null) | Image;
+  /**
+   * Gallery display is controlled separately on each Media Gallery.
+   */
+  showInFooter?: boolean | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-profiles_select".
+ */
+export interface SocialProfilesSelect<T extends boolean = true> {
+  heading?: T;
+  message?: T;
+  facebookUrl?: T;
+  instagramUrl?: T;
+  wechatId?: T;
+  wechatQrCode?: T;
+  showInFooter?: T;
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -574,17 +633,18 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface CollectionsWidget {
   data?: {
-    [k: string]: unknown
-  }
-  width: 'full'
+    [k: string]: unknown;
+  };
+  width: 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "auth".
  */
 export interface Auth {
-  [k: string]: unknown
+  [k: string]: unknown;
 }
+
 
 declare module 'payload' {
   export interface GeneratedTypes extends Config {}

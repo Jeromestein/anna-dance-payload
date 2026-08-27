@@ -2,11 +2,15 @@ import Link from 'next/link'
 
 import { GalleryWall } from '@/components/GalleryWall'
 import { getMediaGalleryBySlug } from '@/lib/gallery'
+import { getSocialProfiles } from '@/lib/social'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AboutPage() {
-  const gallery = await getMediaGalleryBySlug('about-academy')
+  const [gallery, socialProfiles] = await Promise.all([
+    getMediaGalleryBySlug('about-academy'),
+    getSocialProfiles(),
+  ])
 
   return (
     <div className="pocShell aboutPage">
@@ -34,7 +38,7 @@ export default async function AboutPage() {
       </section>
 
       {gallery ? (
-        <GalleryWall gallery={gallery} sectionKey="about-academy" />
+        <GalleryWall gallery={gallery} sectionKey="about-academy" socialProfiles={socialProfiles} />
       ) : (
         <section className="emptyState aboutGalleryEmptyState">
           <p className="sectionLabel">Gallery not found</p>

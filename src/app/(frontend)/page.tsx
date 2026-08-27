@@ -4,6 +4,7 @@ import { FacultyCards } from '@/components/FacultyCards'
 import { GalleryWall } from '@/components/GalleryWall'
 import { getPublicFaculty } from '@/lib/faculty'
 import { getMediaGalleryBySlug } from '@/lib/gallery'
+import { getSocialProfiles } from '@/lib/social'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,9 +23,10 @@ const pendingItems = [
 ]
 
 export default async function HomePage() {
-  const [faculty, gallery] = await Promise.all([
+  const [faculty, gallery, socialProfiles] = await Promise.all([
     getPublicFaculty(),
     getMediaGalleryBySlug('home-studio'),
+    getSocialProfiles(),
   ])
 
   return (
@@ -115,7 +117,9 @@ export default async function HomePage() {
         <FacultyCards members={faculty} />
       </section>
 
-      {gallery ? <GalleryWall gallery={gallery} sectionKey="home-studio" /> : null}
+      {gallery ? (
+        <GalleryWall gallery={gallery} sectionKey="home-studio" socialProfiles={socialProfiles} />
+      ) : null}
     </div>
   )
 }
