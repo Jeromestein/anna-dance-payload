@@ -453,7 +453,7 @@ p {
 }
 
 .mediaGallerySection {
-  padding: 20px 0 120px;
+  padding: 20px 0 80px;
 }
 
 .gallerySectionHeader {
@@ -555,11 +555,11 @@ p {
 .socialFollow--gallery {
   grid-column: 1 / -1;
   display: grid;
-  min-height: 280px;
+  min-height: 190px;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 50px;
-  padding: 38px;
+  align-items: center;
+  gap: 36px;
+  padding: 26px 30px;
   overflow: hidden;
   border-radius: 28px;
   background:
@@ -603,15 +603,25 @@ p {
 }
 
 .socialFollow--gallery .socialFollowCopy > p:last-child {
-  max-width: 430px;
+  max-width: 520px;
   margin: 0;
   color: rgba(255, 255, 255, 0.78);
-  line-height: 1.65;
+  line-height: 1.5;
 }
 
 .socialFollow--gallery .socialIconRow {
   flex-wrap: nowrap;
   justify-content: flex-end;
+  margin-top: 0;
+}
+
+.socialFollow--gallery .socialFollowLabel {
+  margin-bottom: 8px;
+}
+
+.socialFollow--gallery h3 {
+  margin-bottom: 8px;
+  font-size: clamp(1.7rem, 2.4vw, 2.4rem);
 }
 
 .socialIconRow {
