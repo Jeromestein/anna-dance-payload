@@ -10,9 +10,7 @@ The first test covers four content areas:
 - **Faculty**: teacher records with Name, Title, Specialties, Description, Profile photo, visibility,
   ordering, publishing, and Trash.
 - **Media Galleries**: reusable, ordered photo-and-video groups whose media is selected from the
-  two libraries.
-- **Gallery Placements**: fixed website positions that each select a Media Gallery without
-  exposing page layout controls.
+  two libraries and referenced directly by Next.js pages through stable slugs.
 
 The frontend owns the card layout. Editors change content but cannot change CSS, columns, colors,
 or responsive behavior.
@@ -32,16 +30,16 @@ The dependency lockfile is committed so future installs use the tested dependenc
 
 ## Routes
 
-| Route                                | Purpose                                                            |
-| ------------------------------------ | ------------------------------------------------------------------ |
-| `/`                                  | POC status plus editable Faculty and placed Media Gallery sections |
-| `/admin`                             | Payload administrator interface                                    |
-| `/admin/collections/images`          | Reusable Images library                                            |
-| `/admin/collections/videos`          | Reusable Videos library                                            |
-| `/admin/collections/faculty`         | Faculty create, edit, order, publish, hide, and Trash workflow     |
-| `/admin/collections/media-galleries` | Create, edit, publish, hide, and reuse mixed-media galleries       |
-| `/admin/globals/gallery-placements`  | Choose a gallery for each fixed website position                   |
-| `/faculty-preview`                   | Public-style Faculty card preview                                  |
+| Route                                | Purpose                                                          |
+| ------------------------------------ | ---------------------------------------------------------------- |
+| `/`                                  | POC status plus Faculty and the `home-studio` Media Gallery      |
+| `/about`                             | About test page using the separate `about-academy` Media Gallery |
+| `/admin`                             | Payload administrator interface                                  |
+| `/admin/collections/images`          | Reusable Images library                                          |
+| `/admin/collections/videos`          | Reusable Videos library                                          |
+| `/admin/collections/faculty`         | Faculty create, edit, order, publish, hide, and Trash workflow   |
+| `/admin/collections/media-galleries` | Create, edit, publish, hide, and reuse mixed-media galleries     |
+| `/faculty-preview`                   | Public-style Faculty card preview                                |
 
 ## Isolation rules
 
@@ -85,8 +83,8 @@ creating duplicates:
 pnpm payload run scripts/seed-original-faculty.ts "/path/to/Anna Dance Academy" refresh-media
 ```
 
-After the Faculty images and generated video test record exist, create the reusable sample gallery
-and assign it to the homepage position:
+After the Faculty images and Dunhuang video exist, create the two reusable sample galleries used by
+the Homepage and About page:
 
 ```sh
 pnpm payload run scripts/seed-media-galleries.ts
@@ -141,7 +139,7 @@ This lets an editor hide a teacher without deleting the profile. Trash is a soft
 so an editor can restore a record during the POC. Drag-and-drop ordering is enabled in the Faculty
 list.
 
-## Media Galleries and placements
+## Media Galleries and page references
 
 Editors open **Website Content > Media Galleries** and can:
 
@@ -150,12 +148,12 @@ Editors open **Website Content > Media Galleries** and can:
 3. add up to 12 sortable Image or Video rows;
 4. select existing media or create a new item in the corresponding library;
 5. add optional captions; and
-6. publish, hide, Trash, or restore galleries without changing frontend layout code.
+6. publish, hide, Trash, or restore galleries without changing frontend layout code; and
+7. keep the developer-provided **Page reference** stable after a page is connected.
 
-Editors then open **Website Content > Gallery Placements** and choose which gallery appears in each
-fixed page position. A single gallery can be selected in multiple positions, so one update can
-refresh every place that references it. The current POC renders **Homepage — after Faculty** and
-reserves positions for the Faculty, Classes, and About pages.
+Next.js owns the placement and requests a Gallery by its stable reference. The Homepage uses
+`home-studio`; the About test page uses `about-academy`. Another page can reuse either reference or
+request its own Gallery without adding a separate placement model.
 
 The homepage owns the responsive visual treatment. Desktop uses a fixed asymmetric wall, while
 mobile uses horizontally scrollable cards. Editors cannot change columns, cropping rules, colors,
@@ -242,17 +240,19 @@ A checked item means the implementation exists and has been verified at the leve
 
 - [x] Replace the single Homepage Gallery Global with a reusable Media Galleries Collection.
 - [x] Add an internal CMS name, editable heading, introduction, and visibility fields.
+- [x] Add a unique, stable Page reference used directly by Next.js page code.
 - [x] Add sortable rows that switch between Image and Video selection.
 - [x] Reuse media from the Images and Videos libraries.
 - [x] Allow optional captions without exposing layout controls.
 - [x] Add Draft/Publish, visibility, Trash, and version workflows.
-- [x] Add Gallery Placements with fixed Homepage, Faculty, Classes, and About positions.
-- [x] Allow one gallery to be selected in multiple positions.
-- [x] Render the homepage placement using the reusable gallery component.
+- [x] Remove the extra Gallery Placements Global.
+- [x] Render `home-studio` directly on the Homepage using the reusable gallery component.
+- [x] Create an About page that directly renders a different `about-academy` Gallery.
 - [x] Create a fixed asymmetric desktop wall.
 - [x] Create a horizontally scrollable mobile wall without page overflow.
 - [x] Migrate the existing three-image and Dunhuang-performance video selection to
       `Home — Studio Moments`.
+- [x] Seed and publish `About — Academy in Motion` with a different media order and copy.
 
 ### Acceptance
 
@@ -267,9 +267,10 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Verify the Faculty preview at a mobile viewport.
 - [x] Verify the homepage Faculty section with live CMS data at desktop and mobile widths.
 - [ ] Verify the Media Galleries editor with image rows, a video row, and sortable controls.
-- [ ] Verify Gallery Placements can reuse the same gallery in more than one position.
-- [x] Verify the published homepage placement at desktop and mobile widths with no horizontal page
+- [x] Verify the Homepage resolves `home-studio` and About resolves `about-academy`.
+- [x] Verify the published Homepage Gallery at desktop and mobile widths with no horizontal page
       overflow.
+- [x] Verify the About Gallery at desktop and mobile widths with no horizontal page overflow.
 - [ ] Deploy an isolated preview and repeat the workflow.
 - [ ] Record findings, limitations, and expected recurring costs.
 
@@ -278,5 +279,5 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Add a Videos collection and document video-hosting limits.
 - [ ] Add Classes after the Faculty workflow is accepted.
 - [x] Test a controlled homepage section that selects an item from Videos.
-- [x] Generalize the homepage-only gallery into reusable galleries with fixed placement slots.
+- [x] Generalize the homepage-only Gallery into reusable slug-addressed galleries.
 - [ ] Decide whether Payload stays separate or moves into the existing Next.js application.

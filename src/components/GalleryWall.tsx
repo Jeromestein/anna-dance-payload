@@ -4,7 +4,7 @@ import type { Image, MediaGallery, Video } from '@/payload-types'
 
 type GalleryWallProps = {
   gallery: MediaGallery
-  placement: string
+  sectionKey: string
 }
 
 type GalleryRow = NonNullable<MediaGallery['items']>[number]
@@ -27,9 +27,9 @@ function getVideo(video: number | Video | null | undefined): Video | null {
   return typeof video === 'object' && video !== null ? video : null
 }
 
-export function GalleryWall({ gallery, placement }: GalleryWallProps) {
+export function GalleryWall({ gallery, sectionKey }: GalleryWallProps) {
   const items: ResolvedGalleryItem[] = []
-  const headingId = `media-gallery-${placement}-heading`
+  const headingId = `media-gallery-${sectionKey}-heading`
 
   for (const item of gallery.items || []) {
     if (item.mediaType === 'video') {
@@ -96,7 +96,7 @@ export function GalleryWall({ gallery, placement }: GalleryWallProps) {
           <h3>Choose the first photo or video</h3>
           <p>
             Add a row in this Media Gallery, choose a file from the Media Library, and publish the
-            change. Every website position using it will update automatically.
+            change. Every Next.js page using its reference will update automatically.
           </p>
           <Link className="primaryButton" href={`/admin/collections/media-galleries/${gallery.id}`}>
             Edit Media Gallery

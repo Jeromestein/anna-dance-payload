@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { FacultyCards } from '@/components/FacultyCards'
 import { GalleryWall } from '@/components/GalleryWall'
 import { getPublicFaculty } from '@/lib/faculty'
-import { getGalleryForPlacement } from '@/lib/gallery'
+import { getMediaGalleryBySlug } from '@/lib/gallery'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,11 +13,10 @@ const completedItems = [
   'The Payload administrator is created and verified',
   'Faculty fields and publishing controls are ready',
   'Images and Videos are stored in the isolated Supabase Storage bucket',
-  'Reusable Media Galleries and fixed page placements are ready',
+  'Next.js pages reference reusable Media Galleries by slug',
 ]
 
 const pendingItems = [
-  'Connect the reserved Faculty, Classes, and About placements to their page routes',
   'Test reordering, hiding, Trash, and restore',
   'Deploy an isolated preview and confirm media persistence',
 ]
@@ -25,7 +24,7 @@ const pendingItems = [
 export default async function HomePage() {
   const [faculty, gallery] = await Promise.all([
     getPublicFaculty(),
-    getGalleryForPlacement('homepageAfterFaculty'),
+    getMediaGalleryBySlug('home-studio'),
   ])
 
   return (
@@ -56,6 +55,9 @@ export default async function HomePage() {
             </Link>
             <Link className="secondaryButton" href="/faculty-preview">
               View Faculty preview
+            </Link>
+            <Link className="secondaryButton" href="/about">
+              View About gallery
             </Link>
           </div>
         </section>
@@ -113,7 +115,7 @@ export default async function HomePage() {
         <FacultyCards members={faculty} />
       </section>
 
-      {gallery ? <GalleryWall gallery={gallery} placement="homepage-after-faculty" /> : null}
+      {gallery ? <GalleryWall gallery={gallery} sectionKey="home-studio" /> : null}
     </div>
   )
 }

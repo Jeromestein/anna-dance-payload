@@ -9,9 +9,9 @@ export const MediaGalleries: CollectionConfig = {
     plural: 'Media Galleries',
   },
   admin: {
-    defaultColumns: ['internalName', 'showOnWebsite', '_status', 'updatedAt'],
+    defaultColumns: ['internalName', 'slug', 'showOnWebsite', '_status', 'updatedAt'],
     description:
-      'Create reusable groups of photos and videos, then assign each group to one or more website positions.',
+      'Create reusable groups of photos and videos. Next.js pages reference each gallery by its stable slug.',
     group: 'Website Content',
     useAsTitle: 'internalName',
   },
@@ -42,6 +42,18 @@ export const MediaGalleries: CollectionConfig = {
       admin: {
         description:
           'Used only in the CMS, for example “Home — Studio Moments” or “Classes — Highlights”.',
+      },
+    },
+    {
+      name: 'slug',
+      type: 'text',
+      label: 'Page reference',
+      required: true,
+      unique: true,
+      admin: {
+        description:
+          'Used by the website code, for example “home-studio” or “about-academy”. Do not change it after the page is connected.',
+        position: 'sidebar',
       },
     },
     {

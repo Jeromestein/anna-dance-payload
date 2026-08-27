@@ -2,29 +2,21 @@ import { getPayload } from 'payload'
 
 import config from '@/payload.config'
 
-export type GalleryPlacementKey =
-  'homepageAfterFaculty' | 'facultyAfterTeam' | 'classesAfterOverview' | 'aboutAfterStory'
-
-export async function getGalleryForPlacement(placement: GalleryPlacementKey) {
+export async function getMediaGalleryBySlug(slug: string) {
   const payload = await getPayload({ config })
 
-  const placements = await payload.findGlobal({
-    slug: 'gallery-placements',
+  const result = await payload.find({
+    collection: 'media-galleries',
     depth: 2,
     draft: false,
+    limit: 1,
     overrideAccess: false,
+    where: {
+      slug: {
+        equals: slug,
+      },
+    },
   })
 
-  const gallery = placements[placement]
-
-  if (
-    typeof gallery !== 'object' ||
-    gallery === null ||
-    gallery._status !== 'published' ||
-    !gallery.showOnWebsite
-  ) {
-    return null
-  }
-
-  return gallery
+  return result.docs[0] || null
 }

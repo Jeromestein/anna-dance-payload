@@ -18,19 +18,19 @@ describe('API', () => {
     expect(users).toBeDefined()
   })
 
-  it('loads reusable media galleries and their fixed placements', async () => {
+  it('loads reusable media galleries by stable page reference', async () => {
     const galleries = await payload.find({
       collection: 'media-galleries',
-      limit: 1,
+      limit: 10,
       overrideAccess: true,
-    })
-    const placements = await payload.findGlobal({
-      slug: 'gallery-placements',
-      depth: 1,
-      overrideAccess: true,
+      where: {
+        slug: {
+          in: ['home-studio', 'about-academy'],
+        },
+      },
     })
 
     expect(galleries).toBeDefined()
-    expect(placements).toBeDefined()
+    expect(galleries.docs).toHaveLength(2)
   })
 })
