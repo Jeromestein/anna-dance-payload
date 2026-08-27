@@ -17,4 +17,20 @@ describe('API', () => {
     })
     expect(users).toBeDefined()
   })
+
+  it('loads reusable media galleries and their fixed placements', async () => {
+    const galleries = await payload.find({
+      collection: 'media-galleries',
+      limit: 1,
+      overrideAccess: true,
+    })
+    const placements = await payload.findGlobal({
+      slug: 'gallery-placements',
+      depth: 1,
+      overrideAccess: true,
+    })
+
+    expect(galleries).toBeDefined()
+    expect(placements).toBeDefined()
+  })
 })

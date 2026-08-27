@@ -1,20 +1,49 @@
-import type { GlobalConfig } from 'payload'
+import type { CollectionConfig } from 'payload'
 
 import { authenticated } from '../access/authenticated'
 
-export const HomepageGallery: GlobalConfig = {
-  slug: 'homepage-gallery',
-  label: 'Homepage Gallery',
+export const MediaGalleries: CollectionConfig = {
+  slug: 'media-galleries',
+  labels: {
+    singular: 'Media Gallery',
+    plural: 'Media Galleries',
+  },
   admin: {
+    defaultColumns: ['internalName', 'showOnWebsite', '_status', 'updatedAt'],
     description:
-      'Choose photos and videos for the homepage gallery, then drag the rows into the order you want.',
+      'Create reusable groups of photos and videos, then assign each group to one or more website positions.',
     group: 'Website Content',
+    useAsTitle: 'internalName',
   },
   access: {
-    read: () => true,
+    create: authenticated,
+    delete: authenticated,
+    read: ({ req }) => {
+      if (req.user) return true
+
+      return {
+        _status: {
+          equals: 'published',
+        },
+        showOnWebsite: {
+          equals: true,
+        },
+      }
+    },
     update: authenticated,
   },
   fields: [
+    {
+      name: 'internalName',
+      type: 'text',
+      label: 'Internal name',
+      required: true,
+      unique: true,
+      admin: {
+        description:
+          'Used only in the CMS, for example “Home — Studio Moments” or “Classes — Highlights”.',
+      },
+    },
     {
       name: 'eyebrow',
       type: 'text',
@@ -33,8 +62,6 @@ export const HomepageGallery: GlobalConfig = {
       name: 'introduction',
       type: 'textarea',
       label: 'Introduction',
-      defaultValue:
-        'A glimpse into classes, rehearsals, performances, and the everyday joy of learning together.',
       required: true,
       admin: {
         rows: 3,
@@ -104,9 +131,20 @@ export const HomepageGallery: GlobalConfig = {
         },
       ],
     },
+    {
+      name: 'showOnWebsite',
+      type: 'checkbox',
+      label: 'Available on website',
+      defaultValue: true,
+      admin: {
+        description: 'Turn this off to hide this gallery everywhere without deleting it.',
+        position: 'sidebar',
+      },
+    },
   ],
+  trash: true,
   versions: {
     drafts: true,
-    max: 20,
+    maxPerDoc: 20,
   },
 }

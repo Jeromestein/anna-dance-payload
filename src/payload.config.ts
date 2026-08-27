@@ -8,9 +8,10 @@ import sharp from 'sharp'
 
 import { Faculty } from './collections/Faculty'
 import { Images } from './collections/Images'
+import { MediaGalleries } from './collections/MediaGalleries'
 import { Users } from './collections/Users'
 import { Videos } from './collections/Videos'
-import { HomepageGallery } from './globals/HomepageGallery'
+import { GalleryPlacements } from './globals/GalleryPlacements'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -30,9 +31,9 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Faculty, Images, Videos, Users],
+  collections: [Faculty, MediaGalleries, Images, Videos, Users],
   editor: lexicalEditor(),
-  globals: [HomepageGallery],
+  globals: [GalleryPlacements],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

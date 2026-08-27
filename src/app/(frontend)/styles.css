@@ -436,7 +436,7 @@ p {
   line-height: 1.16;
 }
 
-.homepageGallerySection {
+.mediaGallerySection {
   padding: 20px 0 120px;
 }
 
@@ -598,7 +598,7 @@ p {
     padding: 68px 0;
   }
 
-  .homepageGallerySection {
+  .mediaGallerySection {
     padding: 0 0 68px;
   }
 

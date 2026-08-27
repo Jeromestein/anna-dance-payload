@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     faculty: Faculty;
+    'media-galleries': MediaGallery;
     images: Image;
     videos: Video;
     users: User;
@@ -79,6 +80,7 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     faculty: FacultySelect<false> | FacultySelect<true>;
+    'media-galleries': MediaGalleriesSelect<false> | MediaGalleriesSelect<true>;
     images: ImagesSelect<false> | ImagesSelect<true>;
     videos: VideosSelect<false> | VideosSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -92,10 +94,10 @@ export interface Config {
   };
   fallbackLocale: null;
   globals: {
-    'homepage-gallery': HomepageGallery;
+    'gallery-placements': GalleryPlacement;
   };
   globalsSelect: {
-    'homepage-gallery': HomepageGallerySelect<false> | HomepageGallerySelect<true>;
+    'gallery-placements': GalleryPlacementsSelect<false> | GalleryPlacementsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -209,6 +211,51 @@ export interface Image {
   };
 }
 /**
+ * Create reusable groups of photos and videos, then assign each group to one or more website positions.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media-galleries".
+ */
+export interface MediaGallery {
+  id: number;
+  /**
+   * Used only in the CMS, for example “Home — Studio Moments” or “Classes — Highlights”.
+   */
+  internalName: string;
+  eyebrow: string;
+  heading: string;
+  introduction: string;
+  /**
+   * Add up to 12 items. Choose the media type first, select a file, then drag rows to reorder the wall.
+   */
+  items?:
+    | {
+        mediaType: 'image' | 'video';
+        /**
+         * Choose an existing image or upload a new one.
+         */
+        image?: (number | null) | Image;
+        /**
+         * Choose an existing video or upload a new one.
+         */
+        video?: (number | null) | Video;
+        /**
+         * A short line shown over the bottom of this item.
+         */
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Turn this off to hide this gallery everywhere without deleting it.
+   */
+  showOnWebsite?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  deletedAt?: string | null;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * Upload MP4 or WebM videos once, then reuse them in website sections.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -294,6 +341,10 @@ export interface PayloadLockedDocument {
         value: number | Faculty;
       } | null)
     | ({
+        relationTo: 'media-galleries';
+        value: number | MediaGallery;
+      } | null)
+    | ({
         relationTo: 'images';
         value: number | Image;
       } | null)
@@ -358,6 +409,30 @@ export interface FacultySelect<T extends boolean = true> {
   introduction?: T;
   description?: T;
   profilePhoto?: T;
+  showOnWebsite?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  deletedAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media-galleries_select".
+ */
+export interface MediaGalleriesSelect<T extends boolean = true> {
+  internalName?: T;
+  eyebrow?: T;
+  heading?: T;
+  introduction?: T;
+  items?:
+    | T
+    | {
+        mediaType?: T;
+        image?: T;
+        video?: T;
+        caption?: T;
+        id?: T;
+      };
   showOnWebsite?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -492,58 +567,42 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Choose photos and videos for the homepage gallery, then drag the rows into the order you want.
+ * Choose which reusable Media Gallery appears in each fixed website position. The same gallery can be selected more than once.
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "homepage-gallery".
+ * via the `definition` "gallery-placements".
  */
-export interface HomepageGallery {
+export interface GalleryPlacement {
   id: number;
-  eyebrow: string;
-  heading: string;
-  introduction: string;
   /**
-   * Add up to 12 items. Choose the media type first, select a file, then drag rows to reorder the wall.
+   * Shown directly below the teaching team on the homepage.
    */
-  items?:
-    | {
-        mediaType: 'image' | 'video';
-        /**
-         * Choose an existing image or upload a new one.
-         */
-        image?: (number | null) | Image;
-        /**
-         * Choose an existing video or upload a new one.
-         */
-        video?: (number | null) | Video;
-        /**
-         * A short line shown over the bottom of this item.
-         */
-        caption?: string | null;
-        id?: string | null;
-      }[]
-    | null;
+  homepageAfterFaculty?: (number | null) | MediaGallery;
+  /**
+   * Reserved for the full Faculty page.
+   */
+  facultyAfterTeam?: (number | null) | MediaGallery;
+  /**
+   * Reserved for class photos and videos below the Classes overview.
+   */
+  classesAfterOverview?: (number | null) | MediaGallery;
+  /**
+   * Reserved for history, performance, or studio media on the About page.
+   */
+  aboutAfterStory?: (number | null) | MediaGallery;
   _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "homepage-gallery_select".
+ * via the `definition` "gallery-placements_select".
  */
-export interface HomepageGallerySelect<T extends boolean = true> {
-  eyebrow?: T;
-  heading?: T;
-  introduction?: T;
-  items?:
-    | T
-    | {
-        mediaType?: T;
-        image?: T;
-        video?: T;
-        caption?: T;
-        id?: T;
-      };
+export interface GalleryPlacementsSelect<T extends boolean = true> {
+  homepageAfterFaculty?: T;
+  facultyAfterTeam?: T;
+  classesAfterOverview?: T;
+  aboutAfterStory?: T;
   _status?: T;
   updatedAt?: T;
   createdAt?: T;

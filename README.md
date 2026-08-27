@@ -9,8 +9,10 @@ The first test covers four content areas:
 - **Videos**: a separate MP4 and WebM library with an optional cover image selected from Images.
 - **Faculty**: teacher records with Name, Title, Specialties, Description, Profile photo, visibility,
   ordering, publishing, and Trash.
-- **Homepage Gallery**: an ordered photo-and-video wall whose media is selected from the two
-  libraries.
+- **Media Galleries**: reusable, ordered photo-and-video groups whose media is selected from the
+  two libraries.
+- **Gallery Placements**: fixed website positions that each select a Media Gallery without
+  exposing page layout controls.
 
 The frontend owns the card layout. Editors change content but cannot change CSS, columns, colors,
 or responsive behavior.
@@ -30,15 +32,16 @@ The dependency lockfile is committed so future installs use the tested dependenc
 
 ## Routes
 
-| Route                             | Purpose                                                           |
-| --------------------------------- | ----------------------------------------------------------------- |
-| `/`                               | POC status plus editable Faculty and mixed-media Gallery sections |
-| `/admin`                          | Payload administrator interface                                   |
-| `/admin/collections/images`       | Reusable Images library                                           |
-| `/admin/collections/videos`       | Reusable Videos library                                           |
-| `/admin/collections/faculty`      | Faculty create, edit, order, publish, hide, and Trash workflow    |
-| `/admin/globals/homepage-gallery` | Homepage Gallery heading, selected media, captions, and order     |
-| `/faculty-preview`                | Public-style Faculty card preview                                 |
+| Route                                | Purpose                                                            |
+| ------------------------------------ | ------------------------------------------------------------------ |
+| `/`                                  | POC status plus editable Faculty and placed Media Gallery sections |
+| `/admin`                             | Payload administrator interface                                    |
+| `/admin/collections/images`          | Reusable Images library                                            |
+| `/admin/collections/videos`          | Reusable Videos library                                            |
+| `/admin/collections/faculty`         | Faculty create, edit, order, publish, hide, and Trash workflow     |
+| `/admin/collections/media-galleries` | Create, edit, publish, hide, and reuse mixed-media galleries       |
+| `/admin/globals/gallery-placements`  | Choose a gallery for each fixed website position                   |
+| `/faculty-preview`                   | Public-style Faculty card preview                                  |
 
 ## Isolation rules
 
@@ -82,11 +85,11 @@ creating duplicates:
 pnpm payload run scripts/seed-original-faculty.ts "/path/to/Anna Dance Academy" refresh-media
 ```
 
-After the Faculty images and generated video test record exist, populate the editable homepage
-gallery with the verified sample selection:
+After the Faculty images and generated video test record exist, create the reusable sample gallery
+and assign it to the homepage position:
 
 ```sh
-pnpm payload run scripts/seed-homepage-gallery.ts
+pnpm payload run scripts/seed-media-galleries.ts
 ```
 
 Use the database connection shown by the new Supabase project's **Connect** dialog. A direct
@@ -108,9 +111,9 @@ The database connection and Payload secret are stored only in the Git-ignored lo
 
 The dedicated public Storage bucket is connected through server-only S3 credentials. The original
 three Faculty photos and their generated image sizes have been migrated and verified through the
-Payload file proxy. A generated one-second MP4 has also been uploaded through the administrator,
-stored under `videos/`, and read back through Payload. Credential values remain only in the
-Git-ignored local `.env` file.
+Payload file proxy. A generated one-second MP4 and the 17 MB Dunhuang stage-performance MP4 have
+also been uploaded through the administrator, stored under `videos/`, and read back through
+Payload. Credential values remain only in the Git-ignored local `.env` file.
 
 ## Supabase Storage setup
 
@@ -138,16 +141,21 @@ This lets an editor hide a teacher without deleting the profile. Trash is a soft
 so an editor can restore a record during the POC. Drag-and-drop ordering is enabled in the Faculty
 list.
 
-## Homepage Gallery behavior
+## Media Galleries and placements
 
-Editors open **Website Content > Homepage Gallery** and can:
+Editors open **Website Content > Media Galleries** and can:
 
-1. edit the section's small heading, heading, and introduction;
-2. add up to 12 rows;
-3. choose **Image** or **Video** in each row;
-4. select an existing media item or create a new one in the corresponding library;
-5. add an optional caption; and
-6. drag rows into the desired display order.
+1. create multiple named galleries for different content purposes;
+2. edit each gallery's small heading, heading, and introduction;
+3. add up to 12 sortable Image or Video rows;
+4. select existing media or create a new item in the corresponding library;
+5. add optional captions; and
+6. publish, hide, Trash, or restore galleries without changing frontend layout code.
+
+Editors then open **Website Content > Gallery Placements** and choose which gallery appears in each
+fixed page position. A single gallery can be selected in multiple positions, so one update can
+refresh every place that references it. The current POC renders **Homepage — after Faculty** and
+reserves positions for the Faculty, Classes, and About pages.
 
 The homepage owns the responsive visual treatment. Desktop uses a fixed asymmetric wall, while
 mobile uses horizontally scrollable cards. Editors cannot change columns, cropping rules, colors,
@@ -230,19 +238,21 @@ A checked item means the implementation exists and has been verified at the leve
 - [ ] Reorder, hide, trash, and restore a real test profile.
 - [x] Confirm changes appear without a frontend redeployment.
 
-### Homepage Gallery
+### Reusable Media Galleries
 
-- [x] Create one focused Homepage Gallery editing screen.
-- [x] Add editable section heading and introduction fields.
+- [x] Replace the single Homepage Gallery Global with a reusable Media Galleries Collection.
+- [x] Add an internal CMS name, editable heading, introduction, and visibility fields.
 - [x] Add sortable rows that switch between Image and Video selection.
 - [x] Reuse media from the Images and Videos libraries.
 - [x] Allow optional captions without exposing layout controls.
-- [x] Add Draft/Publish workflow and retain 20 versions.
-- [x] Render mixed S3-backed images and videos on the homepage.
+- [x] Add Draft/Publish, visibility, Trash, and version workflows.
+- [x] Add Gallery Placements with fixed Homepage, Faculty, Classes, and About positions.
+- [x] Allow one gallery to be selected in multiple positions.
+- [x] Render the homepage placement using the reusable gallery component.
 - [x] Create a fixed asymmetric desktop wall.
 - [x] Create a horizontally scrollable mobile wall without page overflow.
-- [x] Seed and publish three images plus one generated test video.
-- [ ] Replace the generated test video with final approved media.
+- [x] Migrate the existing three-image and Dunhuang-performance video selection to
+      `Home — Studio Moments`.
 
 ### Acceptance
 
@@ -256,8 +266,10 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Verify the overview, admin, and Faculty preview in a desktop browser.
 - [x] Verify the Faculty preview at a mobile viewport.
 - [x] Verify the homepage Faculty section with live CMS data at desktop and mobile widths.
-- [x] Verify the Homepage Gallery editor with image rows, a video row, and sortable controls.
-- [x] Verify the published Gallery at desktop and mobile widths with no horizontal page overflow.
+- [ ] Verify the Media Galleries editor with image rows, a video row, and sortable controls.
+- [ ] Verify Gallery Placements can reuse the same gallery in more than one position.
+- [x] Verify the published homepage placement at desktop and mobile widths with no horizontal page
+      overflow.
 - [ ] Deploy an isolated preview and repeat the workflow.
 - [ ] Record findings, limitations, and expected recurring costs.
 
@@ -266,4 +278,5 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Add a Videos collection and document video-hosting limits.
 - [ ] Add Classes after the Faculty workflow is accepted.
 - [x] Test a controlled homepage section that selects an item from Videos.
+- [x] Generalize the homepage-only gallery into reusable galleries with fixed placement slots.
 - [ ] Decide whether Payload stays separate or moves into the existing Next.js application.

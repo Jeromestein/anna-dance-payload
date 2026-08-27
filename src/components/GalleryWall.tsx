@@ -1,12 +1,13 @@
 import Link from 'next/link'
 
-import type { HomepageGallery, Image, Video } from '@/payload-types'
+import type { Image, MediaGallery, Video } from '@/payload-types'
 
 type GalleryWallProps = {
-  gallery: HomepageGallery
+  gallery: MediaGallery
+  placement: string
 }
 
-type GalleryRow = NonNullable<HomepageGallery['items']>[number]
+type GalleryRow = NonNullable<MediaGallery['items']>[number]
 
 type ResolvedGalleryItem =
   | (GalleryRow & {
@@ -26,8 +27,9 @@ function getVideo(video: number | Video | null | undefined): Video | null {
   return typeof video === 'object' && video !== null ? video : null
 }
 
-export function GalleryWall({ gallery }: GalleryWallProps) {
+export function GalleryWall({ gallery, placement }: GalleryWallProps) {
   const items: ResolvedGalleryItem[] = []
+  const headingId = `media-gallery-${placement}-heading`
 
   for (const item of gallery.items || []) {
     if (item.mediaType === 'video') {
@@ -48,11 +50,11 @@ export function GalleryWall({ gallery }: GalleryWallProps) {
   }
 
   return (
-    <section aria-labelledby="homepage-gallery-heading" className="homepageGallerySection">
+    <section aria-labelledby={headingId} className="mediaGallerySection">
       <div className="gallerySectionHeader">
         <div>
           <p className="sectionLabel">{gallery.eyebrow}</p>
-          <h2 id="homepage-gallery-heading">{gallery.heading}</h2>
+          <h2 id={headingId}>{gallery.heading}</h2>
         </div>
         <p>{gallery.introduction}</p>
       </div>
@@ -93,11 +95,11 @@ export function GalleryWall({ gallery }: GalleryWallProps) {
           <p className="sectionLabel">No gallery items yet</p>
           <h3>Choose the first photo or video</h3>
           <p>
-            Add a row in Homepage Gallery, choose a file from the Media Library, and publish the
-            change. The wall will update automatically.
+            Add a row in this Media Gallery, choose a file from the Media Library, and publish the
+            change. Every website position using it will update automatically.
           </p>
-          <Link className="primaryButton" href="/admin/globals/homepage-gallery">
-            Edit Homepage Gallery
+          <Link className="primaryButton" href={`/admin/collections/media-galleries/${gallery.id}`}>
+            Edit Media Gallery
           </Link>
         </div>
       )}
