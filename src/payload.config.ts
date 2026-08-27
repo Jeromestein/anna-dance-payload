@@ -43,6 +43,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
+    tablesFilter: ['!user_profiles', '!student_profiles', '!app_*'],
   }),
   sharp,
   plugins: [

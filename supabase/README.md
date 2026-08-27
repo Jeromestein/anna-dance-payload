@@ -18,3 +18,9 @@ The first migration creates `student_profiles`; a later migration renames it to 
 
 The application's server-only Supabase secret bypasses RLS for the Payload-administrator student
 directory. Never expose it through a `NEXT_PUBLIC_*` variable or commit it to Git.
+
+Payload and application tables share the `public` schema, so table ownership is explicit. The
+Payload Postgres adapter excludes `user_profiles`, the legacy `student_profiles` name, and every
+`app_*` table from development schema synchronization. New operational tables must use the `app_`
+prefix (unless their exact name is also added to the adapter filter) so CMS schema changes cannot
+drop them.

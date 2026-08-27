@@ -120,6 +120,7 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_created_create_user_profile on auth.users;
 create trigger on_auth_user_created_create_user_profile
   after insert on auth.users
   for each row execute function public.handle_new_user_profile();
@@ -141,6 +142,7 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_email_changed_sync_profile on auth.users;
 create trigger on_auth_user_email_changed_sync_profile
   after update of email on auth.users
   for each row execute function public.sync_user_profile_email();

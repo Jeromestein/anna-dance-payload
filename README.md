@@ -83,6 +83,12 @@ The Supabase secret key is server-only. It must never use a `NEXT_PUBLIC_*` name
 client components. S3 credentials follow the same server-only rule. Row Level Security is enabled
 on `user_profiles`; Payload's `public.users` table remains separate from Supabase's `auth.users`.
 
+Payload's development schema synchronization is configured to ignore `user_profiles`, the legacy
+`student_profiles` name, and tables prefixed with `app_`. Use the `app_` prefix for future
+non-Payload operational tables. This ownership boundary prevents Payload from treating student or
+business tables as obsolete CMS tables while preserving automatic schema updates for Payload
+collections.
+
 ## Local setup
 
 1. Use the `anna-dance-payload-poc` Supabase project for CMS tables, Storage, and student Auth.
@@ -258,7 +264,9 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Remove the legacy Supabase `admin` role as an authorization source.
 - [x] Redirect unauthenticated `/users` requests to Payload login.
 - [x] Migrate and apply the six student-profile SQL migrations to the shared project.
-- [ ] Add the shared project's public values and server-only secret key to the local environment.
+- [x] Prevent Payload development schema synchronization from deleting Supabase business tables.
+- [x] Add the shared project's public values and server-only secret key to the local environment.
+- [ ] Resolve the managed Supabase Data API project-level `PGRST002` service error.
 - [ ] Verify the administrator directory against real academy student data after configuration.
 
 ### Images library
