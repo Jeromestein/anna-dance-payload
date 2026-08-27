@@ -89,6 +89,10 @@ non-Payload operational tables. This ownership boundary prevents Payload from tr
 business tables as obsolete CMS tables while preserving automatic schema updates for Payload
 collections.
 
+The Supabase Data API is enabled only for student profile workflows. Payload tables do not grant
+access to the Data API roles; they remain accessible through Payload's direct PostgreSQL connection.
+Future Data API access must be granted explicitly in a reviewed migration.
+
 ## Local setup
 
 1. Use the `anna-dance-payload-poc` Supabase project for CMS tables, Storage, and student Auth.
@@ -266,7 +270,8 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Migrate and apply the six student-profile SQL migrations to the shared project.
 - [x] Prevent Payload development schema synchronization from deleting Supabase business tables.
 - [x] Add the shared project's public values and server-only secret key to the local environment.
-- [ ] Resolve the managed Supabase Data API project-level `PGRST002` service error.
+- [x] Enable the managed Supabase Data API for student profile access.
+- [x] Remove anonymous Data API access from Payload administrator and CMS tables.
 - [ ] Verify the administrator directory against real academy student data after configuration.
 
 ### Images library

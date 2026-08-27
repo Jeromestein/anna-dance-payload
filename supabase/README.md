@@ -24,3 +24,9 @@ Payload Postgres adapter excludes `user_profiles`, the legacy `student_profiles`
 `app_*` table from development schema synchronization. New operational tables must use the `app_`
 prefix (unless their exact name is also added to the adapter filter) so CMS schema changes cannot
 drop them.
+
+The Data API is enabled for student self-service access, but its database roles are intentionally
+restricted. `authenticated` receives only the row-level access required by `user_profiles`, and the
+server-only `service_role` can administer that table. Payload tables are not granted to `anon`,
+`authenticated`, or `service_role`; Payload reaches them through its direct PostgreSQL connection.
+Default Data API grants are also disabled for future tables and functions.
