@@ -55,6 +55,14 @@ export default async function HomePage() {
         <div className="hero-scroll"><span /> Scroll to discover</div>
       </section>
 
+      {gallery ? (
+        <GalleryWall
+          gallery={gallery}
+          sectionKey="home-studio"
+          socialProfiles={socialProfiles}
+        />
+      ) : null}
+
       <section className="intro-section section-space">
         <div className="page-shell intro-grid">
           <div>
@@ -172,14 +180,6 @@ export default async function HomePage() {
           <FacultyCards members={faculty} />
         </div>
       </section>
-
-      {gallery ? (
-        <GalleryWall
-          gallery={gallery}
-          sectionKey="home-studio"
-          socialProfiles={socialProfiles}
-        />
-      ) : null}
 
       <section className="pathway-section section-space">
         <div className="page-shell pathway-heading">
