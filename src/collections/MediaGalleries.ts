@@ -59,23 +59,27 @@ export const MediaGalleries: CollectionConfig = {
     {
       name: 'eyebrow',
       type: 'text',
-      label: 'Small heading',
+      label: 'Small heading (optional)',
       defaultValue: 'Inside the studio',
-      required: true,
+      admin: {
+        description: 'Leave blank to hide the small heading above this gallery.',
+      },
     },
     {
       name: 'heading',
       type: 'text',
-      label: 'Heading',
+      label: 'Heading (optional)',
       defaultValue: 'Movement, moments, and community.',
-      required: true,
+      admin: {
+        description: 'Leave blank to show the gallery without a main heading.',
+      },
     },
     {
       name: 'introduction',
       type: 'textarea',
-      label: 'Introduction',
-      required: true,
+      label: 'Introduction (optional)',
       admin: {
+        description: 'Leave blank to hide the introductory paragraph.',
         rows: 3,
       },
     },

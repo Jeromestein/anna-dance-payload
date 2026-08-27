@@ -32,6 +32,11 @@ function getVideo(video: number | Video | null | undefined): Video | null {
 export function GalleryWall({ gallery, sectionKey, socialProfiles }: GalleryWallProps) {
   const items: ResolvedGalleryItem[] = []
   const headingId = `media-gallery-${sectionKey}-heading`
+  const eyebrow = gallery.eyebrow?.trim()
+  const heading = gallery.heading?.trim()
+  const introduction = gallery.introduction?.trim()
+  const hasTitleContent = Boolean(eyebrow || heading)
+  const hasHeaderContent = Boolean(hasTitleContent || introduction)
 
   for (const item of gallery.items || []) {
     if (item.mediaType === 'video') {
@@ -52,14 +57,24 @@ export function GalleryWall({ gallery, sectionKey, socialProfiles }: GalleryWall
   }
 
   return (
-    <section aria-labelledby={headingId} className="mediaGallerySection">
-      <div className="gallerySectionHeader">
-        <div>
-          <p className="sectionLabel">{gallery.eyebrow}</p>
-          <h2 id={headingId}>{gallery.heading}</h2>
+    <section
+      aria-label={heading ? undefined : eyebrow || 'Selected photos and videos'}
+      aria-labelledby={heading ? headingId : undefined}
+      className="mediaGallerySection"
+    >
+      {hasHeaderContent ? (
+        <div
+          className={`gallerySectionHeader${hasTitleContent && introduction ? '' : ' gallerySectionHeaderSingle'}`}
+        >
+          {hasTitleContent ? (
+            <div>
+              {eyebrow ? <p className="sectionLabel">{eyebrow}</p> : null}
+              {heading ? <h2 id={headingId}>{heading}</h2> : null}
+            </div>
+          ) : null}
+          {introduction ? <p>{introduction}</p> : null}
         </div>
-        <p>{gallery.introduction}</p>
-      </div>
+      ) : null}
 
       {items.length > 0 ? (
         <div aria-label="Selected photos and videos" className="galleryWall" role="list">
@@ -79,7 +94,10 @@ export function GalleryWall({ gallery, sectionKey, socialProfiles }: GalleryWall
                 ) : (
                   <video
                     aria-label={item.media.description}
+                    autoPlay
                     controls
+                    loop
+                    muted
                     playsInline
                     poster={getImage(item.media.posterImage)?.url || undefined}
                     preload="metadata"

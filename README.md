@@ -343,6 +343,7 @@ A checked item means the implementation exists and has been verified at the leve
 
 - [x] Replace the single Homepage Gallery Global with a reusable Media Galleries Collection.
 - [x] Add an internal CMS name, editable heading, introduction, and visibility fields.
+- [x] Make the small heading, main heading, and introduction independently optional.
 - [x] Add a unique, stable Page reference used directly by Next.js page code.
 - [x] Add sortable rows that switch between Image and Video selection.
 - [x] Reuse media from the Images and Videos libraries.

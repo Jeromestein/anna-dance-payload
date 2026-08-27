@@ -442,6 +442,11 @@
   margin-bottom: 42px;
 }
 
+.gallerySectionHeaderSingle {
+  grid-template-columns: minmax(0, 720px);
+  gap: 0;
+}
+
 .gallerySectionHeader h2 {
   max-width: 720px;
   margin: 0;

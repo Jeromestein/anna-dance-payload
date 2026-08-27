@@ -267,9 +267,18 @@ export interface MediaGallery {
    * Used by the website code, for example “home-studio” or “about-academy”. Do not change it after the page is connected.
    */
   slug: string;
-  eyebrow: string;
-  heading: string;
-  introduction: string;
+  /**
+   * Leave blank to hide the small heading above this gallery.
+   */
+  eyebrow?: string | null;
+  /**
+   * Leave blank to show the gallery without a main heading.
+   */
+  heading?: string | null;
+  /**
+   * Leave blank to hide the introductory paragraph.
+   */
+  introduction?: string | null;
   /**
    * Add up to 12 items. Choose the media type first, select a file, then drag rows to reorder the wall.
    */
