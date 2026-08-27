@@ -356,6 +356,8 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Keep Payload CMS tables, S3 media, student Auth, and profiles in one Supabase project.
 - [x] Create `user_profiles`, RLS policies, and Auth synchronization triggers without changing the
       existing Payload administrator.
+- [x] Configure the Google OAuth provider for the shared Supabase project and register its callback
+      URL in Google Cloud.
 - [ ] Confirm Payload schema changes affect only the new project.
 - [x] Confirm administrator login works.
 - [ ] Confirm image selection works from a Faculty profile.
