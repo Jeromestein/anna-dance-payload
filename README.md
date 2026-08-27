@@ -40,6 +40,9 @@ The migrated project documentation is organized in the
 lightweight CMS design, legacy roadmap and design notes, authentication test procedures, media
 library notes, content references, and the original Apple Pages biography source.
 
+The applied student-authentication database history is documented in the
+[Supabase schema notes](supabase/README.md).
+
 ## Routes
 
 | Route                                | Purpose                                                          |
@@ -64,26 +67,28 @@ library notes, content references, and the original Apple Pages biography source
 
 ## Application and data boundaries
 
-The application intentionally uses two separate Supabase projects:
+The application uses one Supabase project, `anna-dance-payload-poc`
+(`hsitmgmcekzobksgtjoj`), for three services:
 
-- the dedicated Payload project stores CMS tables and S3-backed website media; and
-- the existing academy project remains the authority for student login and `user_profiles`.
+- Payload stores CMS records in the project's PostgreSQL `public` schema;
+- Supabase Storage provides the S3-compatible website media library; and
+- Supabase Auth owns student and parent login, with account details in `public.user_profiles`.
 
 Payload staff and student accounts are not merged. An `administrator` Payload account can open the
 student directory without a second administrator login. A `content-editor` can edit website content
 but cannot access student data. Students and parents continue to log in through `/login` and can
 only manage their own profile.
 
-The existing academy Supabase service-role key is server-only. It must never use a `NEXT_PUBLIC_*`
-name or be imported by client components. S3 credentials follow the same server-only rule.
+The Supabase secret key is server-only. It must never use a `NEXT_PUBLIC_*` name or be imported by
+client components. S3 credentials follow the same server-only rule. Row Level Security is enabled
+on `user_profiles`; Payload's `public.users` table remains separate from Supabase's `auth.users`.
 
 ## Local setup
 
-1. Keep the dedicated Payload Supabase project for CMS tables and Storage.
+1. Use the `anna-dance-payload-poc` Supabase project for CMS tables, Storage, and student Auth.
 2. Copy `.env.example` to `.env`.
-3. Add Payload database and S3 values from the dedicated project.
-4. Add the public URL/key and server-only service-role key from the existing academy project for
-   student authentication and administrator operations.
+3. Add the database, S3, public API, and server-only secret values from that project.
+4. Apply the SQL files under `supabase/migrations/` in timestamp order.
 5. Generate a long random `PAYLOAD_SECRET`.
 6. Run `pnpm install`.
 7. Run `pnpm dev` and open `http://localhost:3000/admin`.
@@ -247,12 +252,13 @@ A checked item means the implementation exists and has been verified at the leve
 
 - [x] Add `administrator` and `content-editor` roles to Payload staff accounts.
 - [x] Allow only Payload administrators to access `/users` and `/users/[id]`.
-- [x] Keep student and parent login under the academy Supabase project.
+- [x] Keep student and parent login under Supabase Auth in the shared project.
 - [x] Keep student self-service updates restricted to the signed-in student's own profile.
 - [x] Add a server-only Supabase administration client for student-directory operations.
 - [x] Remove the legacy Supabase `admin` role as an authorization source.
 - [x] Redirect unauthenticated `/users` requests to Payload login.
-- [ ] Add the academy Supabase public values and server-only service-role key to the local environment.
+- [x] Migrate and apply the six student-profile SQL migrations to the shared project.
+- [ ] Add the shared project's public values and server-only secret key to the local environment.
 - [ ] Verify the administrator directory against real academy student data after configuration.
 
 ### Images library
@@ -334,8 +340,9 @@ A checked item means the implementation exists and has been verified at the leve
 
 ### Acceptance
 
-- [x] Keep Payload CMS tables and S3 media in the dedicated Supabase project.
-- [ ] Connect student authentication and profiles to the existing academy Supabase project.
+- [x] Keep Payload CMS tables, S3 media, student Auth, and profiles in one Supabase project.
+- [x] Create `user_profiles`, RLS policies, and Auth synchronization triggers without changing the
+      existing Payload administrator.
 - [ ] Confirm Payload schema changes affect only the new project.
 - [x] Confirm administrator login works.
 - [ ] Confirm image selection works from a Faculty profile.
