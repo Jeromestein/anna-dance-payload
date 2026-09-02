@@ -1,32 +1,23 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { BrandLogo } from "@/components/brand-logo";
-import { navigation } from "@/lib/site-data";
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+import { BrandLogo } from '@/components/brand-logo'
+import { navigation } from '@/lib/site-data'
 
 type SiteHeaderProps = {
-  isAuthenticated: boolean;
-};
-
-export function SiteHeader({ isAuthenticated }: SiteHeaderProps) {
-  const pathname = usePathname();
-
-  return (
-    <SiteHeaderContent
-      key={pathname}
-      isAuthenticated={isAuthenticated}
-      pathname={pathname}
-    />
-  );
+  isAuthenticated: boolean
 }
 
-function SiteHeaderContent({
-  isAuthenticated,
-  pathname,
-}: SiteHeaderProps & { pathname: string }) {
-  const [open, setOpen] = useState(false);
+export function SiteHeader({ isAuthenticated }: SiteHeaderProps) {
+  const pathname = usePathname()
+
+  return <SiteHeaderContent key={pathname} isAuthenticated={isAuthenticated} pathname={pathname} />
+}
+
+function SiteHeaderContent({ isAuthenticated, pathname }: SiteHeaderProps & { pathname: string }) {
+  const [open, setOpen] = useState(false)
 
   return (
     <header className="site-header">
@@ -37,15 +28,19 @@ function SiteHeaderContent({
 
         <nav className="desktop-nav" aria-label="Main navigation">
           {navigation.map((item) => (
-            <Link key={item.href} href={item.href} className={pathname === item.href ? "active" : ""}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={pathname === item.href ? 'active' : ''}
+            >
               {item.label}
             </Link>
           ))}
         </nav>
 
         <div className="header-actions">
-          <Link href={isAuthenticated ? "/account" : "/login"} className="header-account-link">
-            {isAuthenticated ? "Profile" : "Log in"}
+          <Link href={isAuthenticated ? '/account' : '/login'} className="header-account-link">
+            {isAuthenticated ? 'My Account' : 'Log in'}
           </Link>
           <Link href="/schedule" className="button button-small desktop-cta">
             Schedule
@@ -55,7 +50,7 @@ function SiteHeaderContent({
         <button
           className="menu-button"
           type="button"
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label={open ? 'Close menu' : 'Open menu'}
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
         >
@@ -67,14 +62,18 @@ function SiteHeaderContent({
       {open && (
         <nav className="mobile-nav" aria-label="Mobile navigation">
           {navigation.map((item) => (
-            <Link key={item.href} href={item.href}>{item.label}</Link>
+            <Link key={item.href} href={item.href}>
+              {item.label}
+            </Link>
           ))}
-          <Link href={isAuthenticated ? "/account" : "/login"}>
-            {isAuthenticated ? "Profile" : "Log in"}
+          <Link href={isAuthenticated ? '/account' : '/login'}>
+            {isAuthenticated ? 'My Account' : 'Log in'}
           </Link>
-          <Link href="/schedule" className="button">Schedule</Link>
+          <Link href="/schedule" className="button">
+            Schedule
+          </Link>
         </nav>
       )}
     </header>
-  );
+  )
 }

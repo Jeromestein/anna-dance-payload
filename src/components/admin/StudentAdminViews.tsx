@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation'
 
 import { updateManagedStudentProfile } from '@/actions/student-profiles'
 import { isAdministratorUser } from '@/access/staff'
+import { getMockStudentAccount } from '@/lib/account/mock-student-account'
 import {
   buildStudentSearchFilter,
   getStudentIdFromRouteSegments,
@@ -16,6 +17,8 @@ import {
   STUDENTS_PAGE_SIZE,
 } from '@/lib/students/directory'
 import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase/admin'
+
+import previewStyles from './student-account-preview.module.css'
 
 type StudentProfile = {
   id: string
@@ -298,16 +301,12 @@ export async function StudentDetailView(props: AdminViewServerProps) {
 
   const routeError = getSearchParam(props.searchParams?.error)
   const message = getSearchParam(props.searchParams?.message)
+  const account = getMockStudentAccount()
 
   return (
     <StudentAdminTemplate props={props}>
       <div className="student-admin student-admin--detail">
-        <SetStepNav
-          nav={[
-            { label: 'Student', url: '/admin/students' },
-            { label: data.name },
-          ]}
-        />
+        <SetStepNav nav={[{ label: 'Student', url: '/admin/students' }, { label: data.name }]} />
         <header className="student-admin__header student-admin__header--detail">
           <Link className="student-admin__back-link" href="/admin/students">
             Student
@@ -329,6 +328,87 @@ export async function StudentDetailView(props: AdminViewServerProps) {
             {message}
           </p>
         )}
+
+        <p className={previewStyles.notice} role="status">
+          <strong>Sample data</strong>
+          Payment and schedule details below are a front-end preview. They are not connected to
+          Stripe, Cal.com, or enrollment records yet.
+        </p>
+
+        <div className={previewStyles.summary}>
+          <article>
+            <span className={previewStyles.label}>Current term</span>
+            <strong>{account.term.name}</strong>
+            <p>{account.term.program}</p>
+          </article>
+          <article>
+            <span className={previewStyles.label}>Payment</span>
+            <strong className={previewStyles.due}>{account.payment.status}</strong>
+            <p>{account.payment.amount} sample tuition</p>
+          </article>
+          <article>
+            <span className={previewStyles.label}>Next class</span>
+            <strong>{account.nextClass.title}</strong>
+            <p>{account.nextClass.time}</p>
+          </article>
+        </div>
+
+        <div className={previewStyles.grid}>
+          <section className={previewStyles.panel} aria-labelledby="admin-payment-heading">
+            <header className={previewStyles.panelHeader}>
+              <div>
+                <h2 id="admin-payment-heading">Semester payment</h2>
+                <p>{account.term.dateRange}</p>
+              </div>
+              <span className={previewStyles.tag}>Sample</span>
+            </header>
+            <div className={previewStyles.amount}>
+              <strong>{account.payment.amount}</strong>
+              <span>{account.term.lessonCount} lessons</span>
+            </div>
+            <dl className={previewStyles.details}>
+              <div>
+                <dt>Status</dt>
+                <dd className={previewStyles.due}>{account.payment.status}</dd>
+              </div>
+              <div>
+                <dt>Due date</dt>
+                <dd>{account.payment.dueDate}</dd>
+              </div>
+              <div>
+                <dt>Paid</dt>
+                <dd>{account.payment.paidAmount}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className={previewStyles.panel} aria-labelledby="admin-schedule-heading">
+            <header className={previewStyles.panelHeader}>
+              <div>
+                <h2 id="admin-schedule-heading">Schedule preview</h2>
+                <p>Semester classes and Cal.com appointments.</p>
+              </div>
+              <span className={previewStyles.tag}>Sample</span>
+            </header>
+            <div className={previewStyles.events}>
+              {account.events.slice(0, 3).map((event) => (
+                <article className={previewStyles.event} key={`${event.date}-${event.title}`}>
+                  <time className={previewStyles.date} dateTime={event.date}>
+                    <span>{event.month}</span>
+                    <strong>{event.day}</strong>
+                  </time>
+                  <div className={previewStyles.eventInfo}>
+                    <strong>{event.title}</strong>
+                    <span>
+                      {event.time} · {event.location}
+                    </span>
+                  </div>
+                  <span className={previewStyles.source}>{event.source}</span>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
 
         <form action={updateManagedStudentProfile} className="student-admin__form">
           <input type="hidden" name="target_student_id" value={data.id} />

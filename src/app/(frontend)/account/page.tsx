@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
-import { StudentProfileForm, type EditableStudentProfile } from '@/components/student-profile-form'
+import { StudentAccountDashboard } from '@/components/student-account-dashboard'
+import type { EditableStudentProfile } from '@/components/student-profile-form'
+import { getMockStudentAccount } from '@/lib/account/mock-student-account'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { createClient } from '@/lib/supabase/server'
 
-export const metadata: Metadata = { title: 'Profile' }
+export const metadata: Metadata = { title: 'My Account' }
 
 type AccountPageProps = {
   searchParams: Promise<{
@@ -68,7 +70,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   }
 
   return (
-    <StudentProfileForm
+    <StudentAccountDashboard
+      account={getMockStudentAccount()}
       profile={profile}
       error={params.error}
       message={params.message}
