@@ -30,3 +30,9 @@ restricted. `authenticated` receives only the row-level access required by `user
 server-only `service_role` can administer that table. Payload tables are not granted to `anon`,
 `authenticated`, or `service_role`; Payload reaches them through its direct PostgreSQL connection.
 Default Data API grants are also disabled for future tables and functions.
+
+The legacy `user_profiles.role = admin` authorization path is removed by
+`20260902183000_remove_customer_admin_privileges.sql`. Customer sessions can read only their own
+profile, regardless of the stored legacy role. Staff authorization is determined exclusively by the
+Payload `public.users.role` field, and administrator profile management uses the server-only
+Supabase service role after Payload authorization succeeds.

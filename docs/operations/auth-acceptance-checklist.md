@@ -15,6 +15,10 @@ they are executed successfully.
   from schema synchronization.
 - [x] The Supabase admin client imports `server-only`.
 - [x] The service-role key is read from `SUPABASE_SERVICE_ROLE_KEY`.
+- [x] A forward migration removes the legacy Supabase customer-admin policy,
+  helper, and update RPC.
+- [x] The current customer SELECT policy is strictly scoped to
+  `user_profiles.id = auth.uid()`.
 - [ ] Confirm `SUPABASE_SERVICE_ROLE_KEY` is configured only in server-side
   deployment settings.
 - [ ] Confirm the service-role key is absent from client bundles, browser
@@ -88,7 +92,7 @@ they are executed successfully.
   create staff fixtures.
 - [x] Ensure the default automated tests never send real authentication emails.
 - [x] Run `pnpm test:int` and confirm all integration tests pass.
-- [x] Run `pnpm test`: 10 integration tests and 2 read-only E2E tests passed;
+- [x] Run `pnpm test`: 13 integration tests and 2 read-only E2E tests passed;
   7 database-writing E2E tests were safely skipped.
 - [x] Run `pnpm test:e2e` against the local development server: 2 read-only
   tests passed and 7 database-writing tests were safely skipped.
