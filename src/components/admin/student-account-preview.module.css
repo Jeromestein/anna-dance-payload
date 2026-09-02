@@ -218,6 +218,14 @@
   font-weight: 600;
 }
 
+.tabContent {
+  scroll-margin-top: 84px;
+}
+
+.mobileTabs {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .summary,
   .grid {
@@ -236,5 +244,94 @@
 
   .source {
     grid-column: 2;
+  }
+}
+
+@media (max-width: 800px) {
+  .tabShell {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .grid {
+    display: contents;
+  }
+
+  .tabShell [data-admin-tab] {
+    display: none;
+  }
+
+  .tabShell[data-active-admin-tab='overview'] [data-admin-tab='overview'] {
+    display: grid;
+  }
+
+  .tabShell[data-active-admin-tab='payment'] [data-admin-tab='payment'],
+  .tabShell[data-active-admin-tab='schedule'] [data-admin-tab='schedule'],
+  .tabShell[data-active-admin-tab='profile'] [data-admin-tab='profile'] {
+    display: block;
+  }
+
+  .mobileTabs {
+    position: fixed;
+    left: 50%;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 100;
+    width: min(calc(100% - 24px), 430px);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding: 7px;
+    border: 1px solid var(--theme-elevation-300);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--theme-text) 94%, transparent);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26);
+    backdrop-filter: blur(16px);
+    transform: translateX(-50%);
+  }
+
+  .mobileTabs button {
+    min-width: 0;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    padding: 7px 4px 6px;
+    border: 0;
+    border-radius: 16px;
+    background: transparent;
+    color: color-mix(in srgb, var(--theme-bg) 70%, transparent);
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .mobileTabs button:focus-visible {
+    outline: 2px solid var(--theme-elevation-400);
+    outline-offset: 2px;
+  }
+
+  .mobileTabs button.mobileTabActive {
+    background: var(--theme-bg);
+    color: var(--theme-text);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  }
+
+  .mobileTabs svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .mobileTabs span {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 10px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

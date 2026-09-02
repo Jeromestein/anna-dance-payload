@@ -18,6 +18,7 @@ import {
 } from '@/lib/students/directory'
 import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase/admin'
 
+import { MobileStudentAdminTabs } from './MobileStudentAdminTabs'
 import previewStyles from './student-account-preview.module.css'
 
 type StudentProfile = {
@@ -335,155 +336,181 @@ export async function StudentDetailView(props: AdminViewServerProps) {
           Stripe, Cal.com, or enrollment records yet.
         </p>
 
-        <div className={previewStyles.summary}>
-          <article>
-            <span className={previewStyles.label}>Current term</span>
-            <strong>{account.term.name}</strong>
-            <p>{account.term.program}</p>
-          </article>
-          <article>
-            <span className={previewStyles.label}>Payment</span>
-            <strong className={previewStyles.due}>{account.payment.status}</strong>
-            <p>{account.payment.amount} sample tuition</p>
-          </article>
-          <article>
-            <span className={previewStyles.label}>Next class</span>
-            <strong>{account.nextClass.title}</strong>
-            <p>{account.nextClass.time}</p>
-          </article>
-        </div>
-
-        <div className={previewStyles.grid}>
-          <section className={previewStyles.panel} aria-labelledby="admin-payment-heading">
-            <header className={previewStyles.panelHeader}>
-              <div>
-                <h2 id="admin-payment-heading">Semester payment</h2>
-                <p>{account.term.dateRange}</p>
-              </div>
-              <span className={previewStyles.tag}>Sample</span>
-            </header>
-            <div className={previewStyles.amount}>
-              <strong>{account.payment.amount}</strong>
-              <span>{account.term.lessonCount} lessons</span>
-            </div>
-            <dl className={previewStyles.details}>
-              <div>
-                <dt>Status</dt>
-                <dd className={previewStyles.due}>{account.payment.status}</dd>
-              </div>
-              <div>
-                <dt>Due date</dt>
-                <dd>{account.payment.dueDate}</dd>
-              </div>
-              <div>
-                <dt>Paid</dt>
-                <dd>{account.payment.paidAmount}</dd>
-              </div>
-            </dl>
-          </section>
-
-          <section className={previewStyles.panel} aria-labelledby="admin-schedule-heading">
-            <header className={previewStyles.panelHeader}>
-              <div>
-                <h2 id="admin-schedule-heading">Schedule preview</h2>
-                <p>Semester classes and Cal.com appointments.</p>
-              </div>
-              <span className={previewStyles.tag}>Sample</span>
-            </header>
-            <div className={previewStyles.events}>
-              {account.events.slice(0, 3).map((event) => (
-                <article className={previewStyles.event} key={`${event.date}-${event.title}`}>
-                  <time className={previewStyles.date} dateTime={event.date}>
-                    <span>{event.month}</span>
-                    <strong>{event.day}</strong>
-                  </time>
-                  <div className={previewStyles.eventInfo}>
-                    <strong>{event.title}</strong>
-                    <span>
-                      {event.time} · {event.location}
-                    </span>
-                  </div>
-                  <span className={previewStyles.source}>{event.source}</span>
-                </article>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <form action={updateManagedStudentProfile} className="student-admin__form">
-          <input type="hidden" name="target_student_id" value={data.id} />
-
-          <div className="student-admin__form-heading">
-            <h2>Personal information</h2>
-            <p>These details belong to the Student using this login.</p>
+        <MobileStudentAdminTabs>
+          <div
+            className={previewStyles.summary}
+            id="admin-student-overview"
+            data-admin-tab="overview"
+          >
+            <article>
+              <span className={previewStyles.label}>Current term</span>
+              <strong>{account.term.name}</strong>
+              <p>{account.term.program}</p>
+            </article>
+            <article>
+              <span className={previewStyles.label}>Payment</span>
+              <strong className={previewStyles.due}>{account.payment.status}</strong>
+              <p>{account.payment.amount} sample tuition</p>
+            </article>
+            <article>
+              <span className={previewStyles.label}>Next class</span>
+              <strong>{account.nextClass.title}</strong>
+              <p>{account.nextClass.time}</p>
+            </article>
           </div>
 
-          <div className="student-admin__fields">
-            <label htmlFor="student-name">
-              Name
-              <input
-                id="student-name"
-                name="name"
-                type="text"
-                maxLength={100}
-                defaultValue={data.name}
-                required
-              />
-            </label>
-            <label htmlFor="student-phone">
-              Phone number <span>Optional</span>
-              <input
-                id="student-phone"
-                name="phone"
-                type="tel"
-                inputMode="tel"
-                maxLength={24}
-                defaultValue={data.phone ?? ''}
-              />
-            </label>
-            <label htmlFor="student-email">
-              Email
-              <input id="student-email" type="email" value={data.email} readOnly />
-            </label>
-            <label htmlFor="student-joined">
-              Joined
-              <input id="student-joined" type="text" value={formatDate(data.created_at)} readOnly />
-            </label>
+          <div className={previewStyles.grid}>
+            <section
+              className={previewStyles.panel}
+              id="admin-student-payment"
+              data-admin-tab="payment"
+              aria-labelledby="admin-payment-heading"
+            >
+              <header className={previewStyles.panelHeader}>
+                <div>
+                  <h2 id="admin-payment-heading">Semester payment</h2>
+                  <p>{account.term.dateRange}</p>
+                </div>
+                <span className={previewStyles.tag}>Sample</span>
+              </header>
+              <div className={previewStyles.amount}>
+                <strong>{account.payment.amount}</strong>
+                <span>{account.term.lessonCount} lessons</span>
+              </div>
+              <dl className={previewStyles.details}>
+                <div>
+                  <dt>Status</dt>
+                  <dd className={previewStyles.due}>{account.payment.status}</dd>
+                </div>
+                <div>
+                  <dt>Due date</dt>
+                  <dd>{account.payment.dueDate}</dd>
+                </div>
+                <div>
+                  <dt>Paid</dt>
+                  <dd>{account.payment.paidAmount}</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section
+              className={previewStyles.panel}
+              id="admin-student-schedule"
+              data-admin-tab="schedule"
+              aria-labelledby="admin-schedule-heading"
+            >
+              <header className={previewStyles.panelHeader}>
+                <div>
+                  <h2 id="admin-schedule-heading">Schedule preview</h2>
+                  <p>Semester classes and Cal.com appointments.</p>
+                </div>
+                <span className={previewStyles.tag}>Sample</span>
+              </header>
+              <div className={previewStyles.events}>
+                {account.events.slice(0, 3).map((event) => (
+                  <article className={previewStyles.event} key={`${event.date}-${event.title}`}>
+                    <time className={previewStyles.date} dateTime={event.date}>
+                      <span>{event.month}</span>
+                      <strong>{event.day}</strong>
+                    </time>
+                    <div className={previewStyles.eventInfo}>
+                      <strong>{event.title}</strong>
+                      <span>
+                        {event.time} · {event.location}
+                      </span>
+                    </div>
+                    <span className={previewStyles.source}>{event.source}</span>
+                  </article>
+                ))}
+              </div>
+            </section>
           </div>
 
-          <fieldset className="student-admin__guardian">
-            <legend>
-              Parent/guardian <span>Optional</span>
-            </legend>
+          <form
+            action={updateManagedStudentProfile}
+            className="student-admin__form"
+            id="admin-student-profile"
+            data-admin-tab="profile"
+          >
+            <input type="hidden" name="target_student_id" value={data.id} />
+
+            <div className="student-admin__form-heading">
+              <h2>Personal information</h2>
+              <p>These details belong to the Student using this login.</p>
+            </div>
+
             <div className="student-admin__fields">
-              <label htmlFor="student-guardian-name">
+              <label htmlFor="student-name">
                 Name
                 <input
-                  id="student-guardian-name"
-                  name="guardian_name"
+                  id="student-name"
+                  name="name"
                   type="text"
                   maxLength={100}
-                  defaultValue={data.guardian_name ?? ''}
+                  defaultValue={data.name}
+                  required
                 />
               </label>
-              <label htmlFor="student-guardian-phone">
-                Phone number
+              <label htmlFor="student-phone">
+                Phone number <span>Optional</span>
                 <input
-                  id="student-guardian-phone"
-                  name="guardian_phone"
+                  id="student-phone"
+                  name="phone"
                   type="tel"
                   inputMode="tel"
                   maxLength={24}
-                  defaultValue={data.guardian_phone ?? ''}
+                  defaultValue={data.phone ?? ''}
+                />
+              </label>
+              <label htmlFor="student-email">
+                Email
+                <input id="student-email" type="email" value={data.email} readOnly />
+              </label>
+              <label htmlFor="student-joined">
+                Joined
+                <input
+                  id="student-joined"
+                  type="text"
+                  value={formatDate(data.created_at)}
+                  readOnly
                 />
               </label>
             </div>
-          </fieldset>
 
-          <div className="student-admin__save-row">
-            <button type="submit">Save changes</button>
-          </div>
-        </form>
+            <fieldset className="student-admin__guardian">
+              <legend>
+                Parent/guardian <span>Optional</span>
+              </legend>
+              <div className="student-admin__fields">
+                <label htmlFor="student-guardian-name">
+                  Name
+                  <input
+                    id="student-guardian-name"
+                    name="guardian_name"
+                    type="text"
+                    maxLength={100}
+                    defaultValue={data.guardian_name ?? ''}
+                  />
+                </label>
+                <label htmlFor="student-guardian-phone">
+                  Phone number
+                  <input
+                    id="student-guardian-phone"
+                    name="guardian_phone"
+                    type="tel"
+                    inputMode="tel"
+                    maxLength={24}
+                    defaultValue={data.guardian_phone ?? ''}
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            <div className="student-admin__save-row">
+              <button type="submit">Save changes</button>
+            </div>
+          </form>
+        </MobileStudentAdminTabs>
       </div>
     </StudentAdminTemplate>
   )
