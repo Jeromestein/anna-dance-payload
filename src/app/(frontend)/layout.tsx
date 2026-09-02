@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import { FloatingBookingButton } from '@/components/floating-booking-button'
+import { StaffToolbar } from '@/components/admin/staff-toolbar'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
+import { getPayloadStaffUser } from '@/lib/staff/auth'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { createClient } from '@/lib/supabase/server'
 import { getSocialProfiles } from '@/lib/social'
@@ -42,14 +44,16 @@ async function getStudentAccountAccess() {
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [isAuthenticated, socialProfiles] = await Promise.all([
+  const [isAuthenticated, socialProfiles, staffUser] = await Promise.all([
     getStudentAccountAccess(),
     getSocialProfiles(),
+    getPayloadStaffUser(),
   ])
 
   return (
     <html lang="en">
-      <body className={poppins.variable}>
+      <body className={`${poppins.variable}${staffUser ? ' has-staff-toolbar' : ''}`}>
+        {staffUser && <StaffToolbar user={staffUser} />}
         <SiteHeader isAuthenticated={isAuthenticated} />
         <main>{children}</main>
         <SiteFooter socialProfiles={socialProfiles?.showInFooter ? socialProfiles : null} />

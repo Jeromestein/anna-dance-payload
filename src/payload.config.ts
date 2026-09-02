@@ -29,7 +29,10 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     components: {
-      afterNavLinks: ['/components/admin/StudentNavLink#StudentNavLink'],
+      afterNavLinks: [
+        '/components/admin/StudentNavLink#StudentNavLink',
+        '/components/admin/VisitWebsiteNavLink#VisitWebsiteNavLink',
+      ],
       views: {
         studentList: {
           Component: '/components/admin/StudentAdminViews#StudentListView',

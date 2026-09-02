@@ -1,3 +1,23 @@
+.visit-website-nav {
+  margin-top: calc(var(--base) * 0.75);
+  padding-top: calc(var(--base) * 0.6);
+  border-top: 1px solid var(--theme-elevation-100);
+}
+
+.visit-website-nav__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.visit-website-nav__arrow {
+  margin-left: 6px;
+  margin-right: calc(var(--base) * 0.5);
+  color: var(--theme-elevation-500);
+  font-size: 16px;
+  line-height: 1;
+}
+
 .student-admin {
   width: 100%;
   padding: calc(var(--base) * 1.8) 0 calc(var(--base) * 3);

@@ -10,6 +10,7 @@ test.describe('Frontend', () => {
     await expect(
       page.getByRole('region', { name: 'Why families choose Anna Dance Academy' }),
     ).toBeVisible()
+    await expect(page.getByRole('complementary', { name: 'Staff toolbar' })).toHaveCount(0)
   })
 
   test('redirects Student management to Payload login', async ({ page }) => {
