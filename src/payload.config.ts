@@ -29,6 +29,10 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     components: {
+      graphics: {
+        Icon: '/components/admin/AnnaDanceAdminBrand#AnnaDanceAdminIcon',
+        Logo: '/components/admin/AnnaDanceAdminBrand#AnnaDanceAdminLogo',
+      },
       afterNavLinks: [
         '/components/admin/StudentNavLink#StudentNavLink',
         '/components/admin/VisitWebsiteNavLink#VisitWebsiteNavLink',
@@ -48,6 +52,18 @@ export default buildConfig({
     },
     importMap: {
       baseDir: path.resolve(dirname),
+    },
+    meta: {
+      applicationName: 'Anna Dance Academy CMS',
+      description: 'Manage Anna Dance Academy website content and media.',
+      icons: [
+        {
+          rel: 'icon',
+          type: 'image/png',
+          url: '/images/branding/anna-dance-academy-mark.png',
+        },
+      ],
+      titleSuffix: ' — Anna Dance Academy',
     },
   },
   collections: [Faculty, Classes, MediaGalleries, Images, Videos, Users],

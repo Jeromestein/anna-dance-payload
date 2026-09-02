@@ -1,3 +1,55 @@
+.anna-admin-brand {
+  display: inline-flex;
+  align-items: center;
+  color: var(--theme-text);
+}
+
+.anna-admin-brand--logo {
+  gap: calc(var(--base) * 0.6);
+}
+
+.anna-admin-brand--icon {
+  justify-content: center;
+}
+
+.anna-admin-brand__mark {
+  display: block;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.anna-admin-brand--logo .anna-admin-brand__mark {
+  width: 64px;
+  height: 64px;
+}
+
+.anna-admin-brand--icon .anna-admin-brand__mark {
+  width: 34px;
+  height: 34px;
+}
+
+.anna-admin-brand__wordmark {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+.anna-admin-brand__name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.anna-admin-brand__label {
+  color: var(--theme-elevation-600);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
 .visit-website-nav {
   margin-top: calc(var(--base) * 0.75);
   padding-top: calc(var(--base) * 0.6);
