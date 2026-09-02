@@ -1,4 +1,5 @@
 import type { EditableStudentProfile } from '@/components/student-profile-form'
+import { MobileAccountTabs } from '@/components/mobile-account-tabs'
 import { StudentProfileForm } from '@/components/student-profile-form'
 import type { MockStudentAccount } from '@/lib/account/mock-student-account'
 
@@ -22,7 +23,7 @@ export function StudentAccountDashboard({
   profileLoadError = false,
 }: StudentAccountDashboardProps) {
   return (
-    <section className={styles.section}>
+    <section className={`${styles.section} account-page`}>
       <div className={styles.layout}>
         <header className={styles.header}>
           <div>
@@ -48,29 +49,33 @@ export function StudentAccountDashboard({
           <a href="#profile">Profile</a>
         </nav>
 
-        <div className={styles.summaryGrid} id="overview">
-          <article className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Next class</span>
-            <strong>{account.nextClass.title}</strong>
-            <p>
-              {account.nextClass.time} · {account.nextClass.location}
-            </p>
-          </article>
-          <article className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Payment</span>
-            <strong className={styles.paymentStatus}>{account.payment.status}</strong>
-            <p>{account.payment.amount} sample tuition</p>
-          </article>
-          <article className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Current term</span>
-            <strong>{account.term.program}</strong>
-            <p>{account.term.lessonCount} scheduled lessons</p>
-          </article>
-        </div>
+        <MobileAccountTabs>
+          <div className={styles.summaryGrid} id="overview" data-account-tab="overview">
+            <article className={styles.summaryCard}>
+              <span className={styles.summaryLabel}>Next class</span>
+              <strong>{account.nextClass.title}</strong>
+              <p>
+                {account.nextClass.time} · {account.nextClass.location}
+              </p>
+            </article>
+            <article className={styles.summaryCard}>
+              <span className={styles.summaryLabel}>Payment</span>
+              <strong className={styles.paymentStatus}>{account.payment.status}</strong>
+              <p>{account.payment.amount} sample tuition</p>
+            </article>
+            <article className={styles.summaryCard}>
+              <span className={styles.summaryLabel}>Current term</span>
+              <strong>{account.term.program}</strong>
+              <p>{account.term.lessonCount} scheduled lessons</p>
+            </article>
+          </div>
 
-        <div className={styles.contentGrid}>
-          <div className={styles.column}>
-            <article className={styles.panel} id="payments">
+          <div className={styles.contentGrid}>
+            <article
+              className={`${styles.panel} ${styles.paymentPanel}`}
+              id="payments"
+              data-account-tab="payments"
+            >
               <header className={styles.panelHeader}>
                 <div>
                   <h2>Payment</h2>
@@ -102,85 +107,89 @@ export function StudentAccountDashboard({
               <p className={styles.buttonNote}>This preview cannot collect a payment.</p>
             </article>
 
-            <StudentProfileForm
-              profile={profile}
-              error={error}
-              message={message}
-              profileLoadError={profileLoadError}
-              embedded
-            />
-          </div>
+            <article className={styles.panel} id="schedule" data-account-tab="schedule">
+              <header className={styles.panelHeader}>
+                <div>
+                  <h2>My schedule</h2>
+                  <p>{account.term.dateRange}</p>
+                </div>
+                <span className={styles.sampleTag}>Sample</span>
+              </header>
 
-          <article className={styles.panel} id="schedule">
-            <header className={styles.panelHeader}>
-              <div>
-                <h2>My schedule</h2>
-                <p>{account.term.dateRange}</p>
-              </div>
-              <span className={styles.sampleTag}>Sample</span>
-            </header>
-
-            <div className={styles.calendar} aria-label="September 2026 calendar preview">
-              <div className={styles.calendarTitle}>
-                <strong>September 2026</strong>
-                <span>5 scheduled dates</span>
-              </div>
-              <div className={styles.weekdays} aria-hidden="true">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <span key={day}>{day}</span>
-                ))}
-              </div>
-              <div className={styles.days}>
-                {[0, 1].map((day) => (
-                  <span className={styles.emptyDay} key={`empty-${day}`} aria-hidden="true" />
-                ))}
-                {september2026.map((day) => {
-                  const hasEvent = account.calendarDays.includes(day)
-                  const isCalEvent = day === 12
-                  return (
-                    <span
-                      className={`${styles.day} ${hasEvent ? styles.eventDay : ''} ${isCalEvent ? styles.calDay : ''}`}
-                      key={day}
-                      aria-label={hasEvent ? `September ${day}, scheduled` : `September ${day}`}
-                    >
-                      {day}
-                    </span>
-                  )
-                })}
-              </div>
-              <div className={styles.calendarLegend}>
-                <span>
-                  <i /> Semester class
-                </span>
-                <span>
-                  <i /> Cal.com appointment
-                </span>
-              </div>
-            </div>
-
-            <div className={styles.eventList} aria-label="Upcoming schedule">
-              {account.events.map((event) => (
-                <article className={styles.event} key={`${event.date}-${event.title}`}>
-                  <time className={styles.eventDate} dateTime={event.date}>
-                    <span>{event.month}</span>
-                    <strong>{event.day}</strong>
-                  </time>
-                  <div className={styles.eventInfo}>
-                    <strong>{event.title}</strong>
+              <div className={styles.scheduleBody}>
+                <div className={styles.calendar} aria-label="September 2026 calendar preview">
+                  <div className={styles.calendarTitle}>
+                    <strong>September 2026</strong>
+                    <span>5 scheduled dates</span>
+                  </div>
+                  <div className={styles.weekdays} aria-hidden="true">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                      <span key={day}>{day}</span>
+                    ))}
+                  </div>
+                  <div className={styles.days}>
+                    {[0, 1].map((day) => (
+                      <span className={styles.emptyDay} key={`empty-${day}`} aria-hidden="true" />
+                    ))}
+                    {september2026.map((day) => {
+                      const hasEvent = account.calendarDays.includes(day)
+                      const isCalEvent = day === 12
+                      return (
+                        <span
+                          className={`${styles.day} ${hasEvent ? styles.eventDay : ''} ${isCalEvent ? styles.calDay : ''}`}
+                          key={day}
+                          aria-label={hasEvent ? `September ${day}, scheduled` : `September ${day}`}
+                        >
+                          {day}
+                        </span>
+                      )
+                    })}
+                  </div>
+                  <div className={styles.calendarLegend}>
                     <span>
-                      {event.time} · {event.location}
+                      <i /> Semester class
+                    </span>
+                    <span>
+                      <i /> Cal.com appointment
                     </span>
                   </div>
-                  <span
-                    className={`${styles.sourceTag} ${event.source === 'Cal.com preview' ? styles.sourceCal : ''}`}
-                  >
-                    {event.source}
-                  </span>
-                </article>
-              ))}
+                </div>
+
+                <div className={styles.eventList} aria-label="Upcoming schedule">
+                  {account.events.map((event) => (
+                    <article className={styles.event} key={`${event.date}-${event.title}`}>
+                      <time className={styles.eventDate} dateTime={event.date}>
+                        <span>{event.month}</span>
+                        <strong>{event.day}</strong>
+                      </time>
+                      <div className={styles.eventInfo}>
+                        <strong>{event.title}</strong>
+                        <span>
+                          {event.time} · {event.location}
+                        </span>
+                      </div>
+                      <span
+                        className={`${styles.sourceTag} ${event.source === 'Cal.com preview' ? styles.sourceCal : ''}`}
+                      >
+                        {event.source}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </article>
+
+            <div className={styles.profilePanel} data-account-tab="profile">
+              <StudentProfileForm
+                profile={profile}
+                error={error}
+                message={message}
+                profileLoadError={profileLoadError}
+                embedded
+              />
             </div>
-          </article>
-        </div>
+          </div>
+        </MobileAccountTabs>
       </div>
     </section>
   )
