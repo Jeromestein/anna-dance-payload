@@ -162,3 +162,22 @@ Notes:
 - [ ] Define `app_payments` without storing sensitive payment credentials.
 - [ ] Add migrations, RLS policies, Staff authorization, and test coverage for
   each new table before enabling the family model in production.
+
+## Planned My Account expansion
+
+The approved design and complete implementation checklist live in
+[Student My Account, payments, and schedule design](../project/student-my-account-payments-schedule-design.md).
+These items remain unchecked until implementation and runtime verification are complete.
+
+- [ ] `/account` is visibly labeled `My Account` while its route remains unchanged.
+- [ ] The existing Profile form remains available and retains its current authorization checks.
+- [ ] A Student can view only their own enrollment, payment, and schedule records.
+- [ ] A Student cannot infer another Student's records by changing route or query parameters.
+- [ ] Staff manage a Student through `/admin/students/[id]` without impersonating the Student or
+  entering the Student's `/account` session.
+- [ ] Payment and schedule mutations re-check Staff authorization on the server.
+- [ ] A payment return page cannot mark a payment Paid without manual verification or a signed
+  Stripe webhook.
+- [ ] Cal.com and Stripe credentials remain server-only.
+- [ ] Cal.com results are matched to a verified account or stable booking UID before display.
+- [ ] Mobile and desktop My Account states pass authenticated browser verification.

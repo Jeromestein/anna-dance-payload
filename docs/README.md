@@ -16,6 +16,9 @@ README remain authoritative for the Payload implementation.
   field definitions, and implementation checklist.
 - [Legacy project status and roadmap](project/legacy-project-status-and-roadmap.md) — the
   pre-Payload implementation audit and longer-term product roadmap.
+- [Student My Account, payments, and schedule design](project/student-my-account-payments-schedule-design.md)
+  — the approved `/account` dashboard direction, interim Stripe Payment Link workflow, Cal.com
+  boundary, data ownership, and implementation checklist.
 - [Legacy design notes](project/legacy-design-notes.md) — the original visual and page-design
   direction.
 - [Original project README](project/original-project-readme.md) — setup and architecture notes from

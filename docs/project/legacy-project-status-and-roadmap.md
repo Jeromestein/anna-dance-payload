@@ -6,6 +6,13 @@
 
 **Current stage:** Public marketing and lead-generation website with a working Supabase authentication/profile foundation and protected user administration. Registration, enrollment, production payments, and class-management data are not yet implemented.
 
+**September 2 product direction:** Keep `/account`, expand its visible product from `Profile` to
+`My Account`, use a full-term Stripe Payment Link plus manual Staff scheduling as the interim model,
+and combine Academy class sessions with Cal.com appointment data in the Student schedule. See
+[Student My Account, payments, and schedule design](student-my-account-payments-schedule-design.md)
+for the approved boundaries and implementation checklist. This direction is documented but not yet
+implemented.
+
 ## Executive Summary
 
 The project has advanced materially since the August 10 review. Supabase authentication is now integrated, user profiles are stored in Postgres under Row Level Security, administrators can view and update users, and an automated authentication test framework is present.
@@ -151,7 +158,7 @@ Every exposed table should use RLS. Browser requests should use the publishable 
 - [ ] Confirm which Supabase project is development/staging and which project will be production.
 - [ ] Confirm the latest migrations are applied to the intended Supabase project.
 - [ ] Verify production Site URL and redirect allowlist.
-- [ ] Verify Google OAuth from login through `/auth/callback` to `/users/me`.
+- [ ] Verify Google OAuth from login through `/auth/callback` to `/account`.
 - [ ] Verify signup confirmation email delivery and callback.
 - [ ] Verify confirmation resend with an unconfirmed test account.
 - [ ] Verify forgot-password delivery, recovery callback, password update, and old-password rejection.
@@ -173,11 +180,16 @@ Every exposed table should use RLS. Browser requests should use the publishable 
 - [ ] Create versioned `consents` for waiver, Terms, and Privacy acceptance.
 - [ ] Add RLS tests for self, family, staff, and admin access.
 - [ ] Verify that one guardian can access multiple students without exposing another family's records.
-- [ ] Update `/users/me` into a small dashboard for students, registrations, and upcoming schedule.
+- [ ] Expand `/account` into My Account with Student, enrollment, payment, and upcoming schedule
+  information.
 
 ### Milestone 3 — Implement verified Stripe payments
 
+- [x] Select a full-term Stripe Payment Link plus manual Staff scheduling and verification as the
+  interim operating model.
 - [ ] Confirm the payment model: one-time registration, tuition installments/subscriptions, or both.
+- [ ] Attach a non-sensitive enrollment `client_reference_id` to each Student-specific Payment Link
+  URL for reconciliation.
 - [ ] Move Stripe configuration to server-only environment variables.
 - [ ] Create a pending registration before payment.
 - [ ] Create Stripe Checkout Sessions on the server.
@@ -192,6 +204,8 @@ Every exposed table should use RLS. Browser requests should use the publishable 
 
 ### Milestone 4 — Integrate consultation bookings
 
+- [x] Keep Cal.com focused on consultations and appointment-style bookings; use Academy
+  class-session records for the fixed group-class term schedule.
 - [ ] Define the account requirement: upcoming bookings only, or searchable history/reporting linked to students and staff workflows.
 - [ ] Choose one source strategy:
   - Direct Cal.com API queries for a simpler read-only view with Cal.com as the source of truth.
@@ -199,7 +213,7 @@ Every exposed table should use RLS. Browser requests should use the publishable 
 - [ ] For direct queries: use a server-only Cal.com client, match only verified account data, handle rate limits/outages, and avoid exposing API credentials.
 - [ ] For synchronization: create `consultation_bookings`, verify webhook signatures, and upsert created/rescheduled/cancelled/no-show events by Cal.com booking UID.
 - [ ] Define how an email-only booking is safely linked to a verified profile/student.
-- [ ] Display upcoming consultations in `/users/me` using the selected strategy.
+- [ ] Display upcoming consultations in `/account` using the selected strategy.
 - [ ] Document reconciliation and fallback behavior when Cal.com is unavailable.
 
 ### Milestone 5 — Staff operations and public launch
@@ -240,7 +254,8 @@ Complete these in order; do not begin production Stripe work before the first th
 - [ ] Draft and review RLS policies plus self/family/admin access tests.
 - [ ] Backfill existing profiles safely and keep a rollback path.
 - [ ] Migrate the approved class schedule from `lib/site-data.ts` into Supabase.
-- [ ] Upgrade `/users/me` to show the account's students, registrations, and schedule.
+- [ ] Upgrade `/account` to My Account and show the account's Students, enrollments, payments, and
+  combined schedule.
 
 **Exit condition:** account holders can see only their own family/student records, admins can support them, and automated checks pass.
 
