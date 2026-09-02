@@ -1,31 +1,6 @@
-.student-admin-nav {
-  margin: 8px 0 16px;
-  padding: 0 20px;
-}
-
-.student-admin-nav__link {
-  display: block;
-  padding: 7px 8px;
-  border-radius: 4px;
-  color: var(--theme-elevation-800);
-  font-size: 15px;
-  text-decoration: none;
-
-  &:hover,
-  &.active {
-    background: var(--theme-elevation-100);
-    color: var(--theme-text);
-  }
-
-  &.active {
-    font-weight: 600;
-  }
-}
-
 .student-admin {
   width: 100%;
-  max-width: 1180px;
-  padding: 42px 0 72px;
+  padding: calc(var(--base) * 1.8) 0 calc(var(--base) * 3);
 }
 
 .student-admin--detail {
@@ -33,224 +8,153 @@
 }
 
 .student-admin__header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 32px;
-  margin-bottom: 32px;
+  margin-bottom: calc(var(--base) * 1.25);
 
+  p {
+    margin: calc(var(--base) * 0.45) 0 0;
+    color: var(--theme-elevation-600);
+  }
+}
+
+.student-admin__header--detail {
   h1 {
-    margin: 0;
-    font-size: clamp(42px, 6vw, 64px);
+    margin: calc(var(--base) * 0.3) 0 0;
+  }
+}
+
+.student-admin__back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--theme-elevation-600);
+  text-decoration: none;
+
+  &::before {
+    content: '‹';
+    font-size: 20px;
     line-height: 1;
-    letter-spacing: -0.045em;
   }
 
-  p:last-child {
-    margin: 14px 0 0;
-    color: var(--theme-elevation-600);
+  &:hover {
+    color: var(--theme-text);
   }
 }
 
-.student-admin__eyebrow {
-  margin: 0 0 10px !important;
-  color: #b72e72 !important;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.student-admin__total {
-  min-width: 120px;
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 10px;
-  padding: 17px 20px;
-  border: 1px solid var(--theme-elevation-150);
-  border-radius: 12px;
-  background: var(--theme-elevation-0);
-
-  strong {
-    font-size: 28px;
-  }
-
-  span {
-    color: var(--theme-elevation-600);
-    font-size: 13px;
-    font-weight: 600;
-  }
+.student-admin__visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .student-admin__search {
-  margin-bottom: 22px;
-  padding: 22px;
-  border: 1px solid var(--theme-elevation-150);
-  border-radius: 12px;
-  background: var(--theme-elevation-0);
+  position: relative;
+  margin-bottom: calc(var(--base) * 1.25);
 
-  > label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 13px;
-    font-weight: 600;
+  svg {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--base) * 0.6);
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-width: 1.5;
+    color: var(--theme-elevation-500);
+    pointer-events: none;
   }
 
-  > div {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-  }
-}
-
-.student-admin input,
-.student-admin button,
-.student-admin__secondary-button {
-  min-height: 44px;
-  border-radius: 4px;
-  font: inherit;
-}
-
-.student-admin input {
-  width: 100%;
-  padding: 0 13px;
-  border: 1px solid var(--theme-elevation-250);
-  background: var(--theme-input-bg, var(--theme-elevation-0));
-  color: var(--theme-text);
-
-  &:focus {
-    border-color: var(--theme-elevation-500);
-    outline: 2px solid transparent;
-    box-shadow: 0 0 0 2px var(--theme-elevation-100);
-  }
-
-  &[readonly] {
+  input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 calc(var(--base) * 0.75) 0 calc(var(--base) * 1.8);
+    border: 0;
+    border-radius: var(--style-radius-s);
+    outline: 0;
     background: var(--theme-elevation-50);
-    color: var(--theme-elevation-600);
-  }
-}
+    color: var(--theme-text);
+    font: inherit;
 
-.student-admin button,
-.student-admin__secondary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 20px;
-  border: 1px solid var(--theme-elevation-800);
-  background: var(--theme-elevation-800);
-  color: var(--theme-elevation-0);
-  cursor: pointer;
-  font-weight: 600;
-  text-decoration: none;
+    &::placeholder {
+      color: var(--theme-elevation-400);
+    }
 
-  &:hover {
-    background: var(--theme-elevation-700);
-  }
-}
-
-.student-admin__secondary-button {
-  background: transparent;
-  color: var(--theme-text);
-
-  &:hover {
-    background: var(--theme-elevation-50);
+    &:focus-visible {
+      outline: var(--accessibility-outline);
+      outline-offset: var(--accessibility-outline-offset);
+    }
   }
 }
 
 .student-admin__table-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--theme-elevation-150);
-  border-radius: 12px;
-  background: var(--theme-elevation-0);
+  margin-bottom: 0;
 }
 
 .student-admin__table {
   width: 100%;
-  border-collapse: collapse;
-  text-align: left;
 
-  th {
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--theme-elevation-150);
-    color: var(--theme-elevation-600);
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
+  th,
   td {
-    padding: 18px;
-    border-bottom: 1px solid var(--theme-elevation-100);
-    color: var(--theme-elevation-700);
-    font-size: 14px;
-    vertical-align: top;
+    min-width: 140px;
   }
 
-  tbody tr:last-child td {
-    border-bottom: 0;
-  }
-
+  th:first-child,
   td:first-child {
-    min-width: 230px;
-  }
-
-  td:nth-child(3) {
     min-width: 180px;
   }
 
-  td strong,
+  th:nth-child(2),
+  td:nth-child(2) {
+    min-width: 230px;
+  }
+
+  th:last-child,
+  td:last-child {
+    min-width: 130px;
+  }
+
+  td {
+    color: var(--theme-elevation-700);
+  }
+
   td a {
+    color: inherit;
+  }
+
+  td:nth-child(4) strong,
+  td:nth-child(4) a {
     display: block;
   }
 
-  td strong {
-    color: var(--theme-text);
-  }
-
-  td a {
+  td:nth-child(4) a {
     margin-top: 4px;
-    color: inherit;
   }
 }
 
 .student-admin__name-link {
-  width: fit-content;
-  margin: 0 !important;
-  text-decoration: none;
-
-  span {
-    display: block;
-    margin-top: 2px;
-    color: #a92568;
-    font-size: 12px;
-    font-weight: 600;
-  }
-
-  &:hover strong {
-    color: #a92568;
-  }
+  color: var(--theme-text) !important;
+  font-weight: 600;
 }
 
 .student-admin__empty-value {
-  color: var(--theme-elevation-500);
+  color: var(--theme-elevation-400);
 }
 
 .student-admin__mobile-list {
   display: none;
 }
 
-.student-admin__empty,
-.student-admin__form {
-  border: 1px solid var(--theme-elevation-150);
-  border-radius: 12px;
-  background: var(--theme-elevation-0);
-}
-
 .student-admin__empty {
-  padding: 54px 28px;
-  text-align: center;
+  padding: calc(var(--base) * 2) 0;
+  border-top: 1px solid var(--theme-elevation-100);
+  border-bottom: 1px solid var(--theme-elevation-100);
 
   h2,
   p {
@@ -258,7 +162,7 @@
   }
 
   p {
-    margin-top: 8px;
+    margin-top: calc(var(--base) * 0.3);
     color: var(--theme-elevation-600);
   }
 }
@@ -266,52 +170,51 @@
 .student-admin__footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin: 16px 2px 0;
+  justify-content: flex-end;
+  gap: calc(var(--base) * 0.75);
+  margin-top: calc(var(--base) * 0.8);
 
   > p {
     margin: 0;
     color: var(--theme-elevation-600);
-    font-size: 13px;
   }
 }
 
 .student-admin__pagination {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: calc(var(--base) * 0.35);
 
   a,
   > span {
-    min-height: 36px;
+    min-height: 32px;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: 0 12px;
-    border: 1px solid var(--theme-elevation-200);
-    border-radius: 4px;
+    padding: 0 calc(var(--base) * 0.45);
+    border-radius: var(--style-radius-s);
     color: var(--theme-text);
-    font-size: 12px;
     text-decoration: none;
   }
 
+  a:hover {
+    background: var(--theme-elevation-50);
+  }
+
   > span[aria-disabled='true'] {
-    opacity: 0.45;
+    opacity: 0.4;
   }
 
   strong {
-    font-size: 12px;
+    font-weight: 500;
     white-space: nowrap;
   }
 }
 
 .student-admin__notice,
 .student-admin__alert {
-  margin: 0 0 18px;
-  padding: 14px 16px;
-  border-radius: 8px;
-  font-size: 14px;
+  margin: 0 0 var(--base);
+  padding: calc(var(--base) * 0.55) calc(var(--base) * 0.7);
+  border-radius: var(--style-radius-s);
 }
 
 .student-admin__notice {
@@ -332,11 +235,11 @@
 }
 
 .student-admin__form {
-  padding: 32px;
+  padding-top: calc(var(--base) * 0.5);
 }
 
 .student-admin__form-heading {
-  margin-bottom: 26px;
+  margin-bottom: var(--base);
 
   h2,
   p {
@@ -344,7 +247,7 @@
   }
 
   p {
-    margin-top: 7px;
+    margin-top: calc(var(--base) * 0.3);
     color: var(--theme-elevation-600);
   }
 }
@@ -352,77 +255,100 @@
 .student-admin__fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: var(--base);
 
   label {
     display: block;
-    font-size: 13px;
     font-weight: 600;
   }
 
   label > span {
     margin-left: 5px;
     color: var(--theme-elevation-500);
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 400;
     text-transform: uppercase;
   }
 
   input {
-    margin-top: 8px;
+    width: 100%;
+    min-height: 48px;
+    margin-top: calc(var(--base) * 0.3);
+    padding: 0 calc(var(--base) * 0.6);
+    border: 1px solid var(--theme-elevation-150);
+    border-radius: var(--style-radius-s);
+    outline: 0;
+    background: var(--theme-input-bg, var(--theme-elevation-0));
+    color: var(--theme-text);
+    font: inherit;
+
+    &:focus-visible {
+      border-color: var(--theme-elevation-400);
+      outline: var(--accessibility-outline);
+      outline-offset: var(--accessibility-outline-offset);
+    }
+
+    &[readonly] {
+      background: var(--theme-elevation-50);
+      color: var(--theme-elevation-600);
+    }
   }
 }
 
 .student-admin__guardian {
-  margin: 28px 0 0;
-  padding: 26px 0 0;
+  margin: calc(var(--base) * 1.5) 0 0;
+  padding: var(--base) 0 0;
   border: 0;
-  border-top: 1px solid var(--theme-elevation-150);
+  border-top: 1px solid var(--theme-elevation-100);
 
   legend {
-    margin-bottom: 18px;
+    margin-bottom: var(--base);
     padding: 0;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
   }
 
   legend span {
-    margin-left: 6px;
+    margin-left: 5px;
     color: var(--theme-elevation-500);
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 400;
     text-transform: uppercase;
   }
 }
 
 .student-admin__save-row {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 28px;
+  justify-content: flex-start;
+  margin-top: calc(var(--base) * 1.5);
+
+  button {
+    min-height: 42px;
+    padding: 0 calc(var(--base) * 0.8);
+    border: 1px solid var(--theme-elevation-800);
+    border-radius: var(--style-radius-s);
+    background: var(--theme-elevation-800);
+    color: var(--theme-elevation-0);
+    cursor: pointer;
+    font: inherit;
+
+    &:hover {
+      background: var(--theme-elevation-700);
+    }
+  }
 }
 
 @media (max-width: 700px) {
   .student-admin {
-    padding-top: 28px;
+    padding-top: var(--base);
   }
 
   .student-admin__header {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 18px;
-    margin-bottom: 24px;
-
-    h1 {
-      font-size: 42px;
-    }
-  }
-
-  .student-admin__total {
-    align-self: flex-start;
+    margin-bottom: var(--base);
   }
 
   .student-admin__search {
-    padding: 16px;
+    margin-bottom: var(--base);
   }
 
   .student-admin__table-wrap {
@@ -430,36 +356,37 @@
   }
 
   .student-admin__mobile-list {
-    display: grid;
-    gap: 8px;
+    display: block;
     margin: 0;
     padding: 0;
+    border-top: 1px solid var(--theme-elevation-100);
     list-style: none;
+
+    li:nth-child(odd) {
+      background: var(--theme-elevation-50);
+    }
   }
 
   .student-admin__mobile-link {
-    min-height: 72px;
+    min-height: 62px;
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) auto;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    border: 1px solid var(--theme-elevation-150);
-    border-radius: 10px;
-    background: var(--theme-elevation-0);
+    gap: calc(var(--base) * 0.45);
+    padding: calc(var(--base) * 0.45) calc(var(--base) * 0.6);
     color: var(--theme-text);
     text-decoration: none;
   }
 
   .student-admin__avatar {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     display: grid;
     place-items: center;
     border-radius: 50%;
     background: var(--theme-elevation-100);
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 600;
   }
 
   .student-admin__identity {
@@ -474,36 +401,27 @@
     }
 
     > span {
-      margin-top: 4px;
+      margin-top: 2px;
       color: var(--theme-elevation-600);
       font-size: 12px;
     }
   }
 
   .student-admin__chevron {
-    color: #a92568;
-    font-size: 22px;
+    color: var(--theme-elevation-500);
+    font-size: 20px;
   }
 
   .student-admin__footer {
-    align-items: stretch;
+    align-items: flex-end;
     flex-direction: column;
-    gap: 12px;
-  }
-
-  .student-admin__pagination {
-    justify-content: space-between;
+    gap: calc(var(--base) * 0.45);
   }
 
   .student-admin__fields {
     grid-template-columns: 1fr;
   }
 
-  .student-admin__form {
-    padding: 22px 18px;
-  }
-
-  .student-admin__secondary-button,
   .student-admin__save-row button {
     width: 100%;
   }

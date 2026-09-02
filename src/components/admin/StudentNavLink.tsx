@@ -11,14 +11,21 @@ export function StudentNavLink() {
 
   if (user?.role !== 'administrator') return null
 
+  const isActive = pathname.startsWith('/admin/students')
+
+  if (isActive) {
+    return (
+      <div className="nav__link" id="nav-students">
+        <div className="nav__link-indicator" />
+        <span className="nav__link-label">Student</span>
+      </div>
+    )
+  }
+
   return (
-    <div className="student-admin-nav">
-      <Link
-        className={`student-admin-nav__link${pathname.startsWith('/admin/students') ? ' active' : ''}`}
-        href="/admin/students"
-      >
-        Student
-      </Link>
-    </div>
+    <Link className="nav__link" href="/admin/students" id="nav-students" prefetch={false}>
+      <div className="nav__link-indicator" />
+      <span className="nav__link-label">Student</span>
+    </Link>
   )
 }

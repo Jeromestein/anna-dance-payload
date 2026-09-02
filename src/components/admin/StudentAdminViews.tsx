@@ -1,5 +1,5 @@
 import { DefaultTemplate } from '@payloadcms/next/templates'
-import { Gutter } from '@payloadcms/ui'
+import { Gutter, SetStepNav } from '@payloadcms/ui'
 import type { AdminViewServerProps } from 'payload'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
@@ -76,11 +76,12 @@ function formatDate(value: string) {
 function StudentDirectory({ students }: { students: StudentProfile[] }) {
   return (
     <>
-      <div className="student-admin__table-wrap">
+      <div className="table student-admin__table-wrap">
         <table className="student-admin__table">
           <thead>
             <tr>
               <th scope="col">Student</th>
+              <th scope="col">Email</th>
               <th scope="col">Phone</th>
               <th scope="col">Parent/guardian</th>
               <th scope="col">Joined</th>
@@ -91,9 +92,10 @@ function StudentDirectory({ students }: { students: StudentProfile[] }) {
               <tr key={student.id}>
                 <td>
                   <Link className="student-admin__name-link" href={`/admin/students/${student.id}`}>
-                    <strong>{student.name}</strong>
-                    <span>View profile →</span>
+                    {student.name}
                   </Link>
+                </td>
+                <td>
                   <a href={`mailto:${student.email}`}>{student.email}</a>
                 </td>
                 <td>
@@ -181,12 +183,11 @@ export async function StudentListView(props: AdminViewServerProps) {
   const searchFilter = buildStudentSearchFilter(query)
   if (searchFilter) studentsQuery = studentsQuery.or(searchFilter)
 
-  const [studentsResult, totalResult] = await Promise.all([
-    studentsQuery.order('created_at', { ascending: false }).range(from, to),
-    supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
-  ])
+  const studentsResult = await studentsQuery
+    .order('created_at', { ascending: false })
+    .range(from, to)
 
-  const error = studentsResult.error ?? totalResult.error
+  const error = studentsResult.error
   const students = (studentsResult.data ?? []) as StudentProfile[]
   const filteredCount = studentsResult.count ?? 0
   const totalPages = Math.max(1, Math.ceil(filteredCount / STUDENTS_PAGE_SIZE))
@@ -201,15 +202,15 @@ export async function StudentListView(props: AdminViewServerProps) {
   return (
     <StudentAdminTemplate props={props}>
       <div className="student-admin">
-        <header className="student-admin__header">
-          <div>
-            <p className="student-admin__eyebrow">Administration</p>
-            <h1>Student</h1>
-            <p>View and update Student contact information.</p>
+        <SetStepNav nav={[{ label: 'Student' }]} />
+        <header className="list-header student-admin__header">
+          <div className="list-header__content">
+            <div className="list-header__title-and-actions">
+              <h1 className="list-header__title">Student</h1>
+            </div>
           </div>
-          <div className="student-admin__total" aria-label="Student total">
-            <strong>{totalResult.count ?? 0}</strong>
-            <span>Total</span>
+          <div className="list-header__after-header-content">
+            <p>Students who can access the academy website.</p>
           </div>
         </header>
 
@@ -219,19 +220,22 @@ export async function StudentListView(props: AdminViewServerProps) {
           </p>
         )}
 
-        <form className="student-admin__search" action="/admin/students" method="get">
-          <label htmlFor="student-search">Search Student</label>
-          <div>
-            <input
-              id="student-search"
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Name, email, or phone"
-              maxLength={100}
-            />
-            <button type="submit">Search</button>
-          </div>
+        <form className="student-admin__search" action="/admin/students" method="get" role="search">
+          <label className="student-admin__visually-hidden" htmlFor="student-search">
+            Search Student
+          </label>
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m16.2 16.2 4.3 4.3" />
+          </svg>
+          <input
+            id="student-search"
+            name="q"
+            type="search"
+            defaultValue={query}
+            placeholder="Search by name, email, or phone"
+            maxLength={100}
+          />
         </form>
 
         {error && (
@@ -298,15 +302,18 @@ export async function StudentDetailView(props: AdminViewServerProps) {
   return (
     <StudentAdminTemplate props={props}>
       <div className="student-admin student-admin--detail">
-        <header className="student-admin__header">
-          <div>
-            <p className="student-admin__eyebrow">Student profile</p>
-            <h1>{data.name}</h1>
-            <p>Review and update this Student’s contact information.</p>
-          </div>
-          <Link className="student-admin__secondary-button" href="/admin/students">
-            Back to Student
+        <SetStepNav
+          nav={[
+            { label: 'Student', url: '/admin/students' },
+            { label: data.name },
+          ]}
+        />
+        <header className="student-admin__header student-admin__header--detail">
+          <Link className="student-admin__back-link" href="/admin/students">
+            Student
           </Link>
+          <h1>{data.name}</h1>
+          <p>Review and update this Student’s contact information.</p>
         </header>
 
         <p className="student-admin__notice" role="status">
