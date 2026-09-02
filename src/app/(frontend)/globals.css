@@ -388,7 +388,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .page-hero { position: relative; min-height: 580px; padding-top: 96px; display: flex; align-items: center; color: var(--white); background: var(--ink); }
 .page-hero-image, .page-hero-overlay { position: absolute; inset: 0; }
 .page-hero-image { background-image: var(--page-hero-image); background-size: cover; background-position: center; filter: saturate(.7); }
-.page-hero-about { min-height: 660px; background: #4b3b35; }
+.page-hero-about { min-height: 660px; background: #4b3b35; overflow: hidden; }
 .page-hero-image-about {
   background-color: #4b3b35;
   background-position: center top;
@@ -408,6 +408,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   background-size: auto 132%;
 }
 @media (min-width: 769px) {
+  .page-hero-image-about {
+    transform: translateX(20%);
+  }
   .page-hero-image-classes,
   .page-hero-image-faculty {
     -webkit-mask-image: linear-gradient(90deg, transparent 0%, transparent 42%, rgba(0, 0, 0, .2) 49%, #000 62%, #000 100%);
