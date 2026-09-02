@@ -45,11 +45,17 @@ export default async function HomePage() {
         <div className="hero-wash" />
         <div className="page-shell hero-content">
           <p className="eyebrow eyebrow-light">Bilingual dance education · Ages 2½+</p>
-          <h1>Rooted in Chinese dance.<br /><em>Choreographed for every child.</em></h1>
-          <p className="hero-copy">Personalized training in Lutz, Florida, combining Chinese classical and ethnic folk traditions with original choreography, strong foundations, and meaningful stage experience.</p>
-          <div className="hero-actions">
-            <Link href="/schedule#book" className="button button-light">Request placement <ArrowIcon /></Link>
-            <Link href="/classes" className="hero-text-link">Explore programs</Link>
+          <div className="hero-content-grid">
+            <h1>Expert Guidance.<br />Individual Attention.<br /><em>A Colorful World of Dance.</em></h1>
+            <div className="hero-copy-block">
+              <p className="hero-copy">Our dance program brings Chinese dance together with Acro Dance, Jazz, K-pop, Contemporary, and other movement styles to create fresh, original choreography for performances, showcases, and competitions.</p>
+              <p className="hero-copy">With colorful costumes, expressive props, and a wide range of movement experiences, each class opens a new world of dance for children. As they explore different styles, perform with beautiful costumes, and learn to use unique props, they discover more ways to express themselves—and more reasons to love dancing.</p>
+              <p className="hero-copy">Through patient, professional instruction, we help every dancer build strong foundations, develop technique, grow in confidence, and shine on stage.</p>
+              <div className="hero-actions">
+                <Link href="/schedule#book" className="button button-light">Request placement <ArrowIcon /></Link>
+                <Link href="/classes" className="hero-text-link">Explore programs</Link>
+              </div>
+            </div>
           </div>
         </div>
         <div className="hero-scroll"><span /> Scroll to discover</div>
