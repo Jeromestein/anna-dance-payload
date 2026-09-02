@@ -34,13 +34,22 @@ export function FacultyCards({
   }
 
   return (
-    <div aria-label="Faculty members" className="facultyGrid" role="list">
+    <div
+      aria-label="Faculty members"
+      className="facultyGrid mobileCardRail"
+      role="list"
+      tabIndex={0}
+    >
       {members.map((member) => {
         const photo = getProfilePhoto(member.profilePhoto)
         const photoURL = photo?.sizes?.facultyCard?.url || photo?.url
 
         return (
-          <article className="facultyCard" key={member.id} role="listitem">
+          <article
+            className="facultyCard mobileCardRailItem"
+            key={member.id}
+            role="listitem"
+          >
             <div className="facultyPhotoFrame">
               {photoURL ? (
                 // Payload serves local and S3-backed files through the same stored URL.

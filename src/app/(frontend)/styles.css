@@ -826,12 +826,6 @@
   margin-top: 70px;
 }
 
-@media (max-width: 1000px) {
-  .homepageFacultySection .facultyGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 900px) {
   .pocHeader,
   .previewHeader {
@@ -963,28 +957,39 @@
     font-size: clamp(2.5rem, 11vw, 3.6rem);
   }
 
-  .homepageFacultySection .facultyGrid {
+  /* Shared mobile pattern for repeatable groups of peer cards. */
+  .mobileCardRail {
+    --mobile-card-rail-width: min(84vw, 370px);
+
     grid-template-columns: none;
-    grid-auto-columns: min(84vw, 370px);
+    grid-auto-columns: var(--mobile-card-rail-width);
     grid-auto-flow: column;
     gap: 14px;
     padding: 6px 4px 18px;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
+    scroll-behavior: smooth;
     scroll-padding-inline: 4px;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
   }
 
-  .homepageFacultySection .facultyGrid::-webkit-scrollbar {
+  .mobileCardRail::-webkit-scrollbar {
     display: none;
   }
 
-  .homepageFacultySection .facultyCard {
+  .mobileCardRailItem {
+    min-width: 0;
     scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 
-  .homepageFacultySection .facultyPhotoFrame {
+  .mobileCardRail:focus-visible {
+    outline: 2px solid #c74783;
+    outline-offset: 4px;
+  }
+
+  .facultyGrid.mobileCardRail .facultyPhotoFrame {
     aspect-ratio: 4 / 4.8;
   }
 
