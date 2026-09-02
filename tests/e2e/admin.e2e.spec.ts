@@ -1,8 +1,18 @@
 import { test, expect, Page } from '@playwright/test'
 import { login } from '../helpers/login'
-import { seedTestUser, cleanupTestUser, testUser } from '../helpers/seedUser'
+import {
+  cleanupTestUser,
+  e2eDatabaseWritesEnabled,
+  seedTestUser,
+  testUser,
+} from '../helpers/seedUser'
 
 test.describe('Admin Panel', () => {
+  test.skip(
+    !e2eDatabaseWritesEnabled,
+    'Payload admin tests require an explicitly approved disposable database.',
+  )
+
   let page: Page
 
   test.beforeAll(async ({ browser }) => {

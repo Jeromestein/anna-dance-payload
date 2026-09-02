@@ -1,7 +1,8 @@
 # Authentication Test Framework
 
-The default authentication test suite is designed not to create users, send
-emails, or modify Supabase records.
+The test suite contains both non-mutating frontend checks and Payload admin
+tests that create and delete temporary staff records. Do not run the complete
+suite against the production database.
 
 ## Commands
 
@@ -22,24 +23,32 @@ is available, it starts the application with `pnpm dev`. Set
 
 ## Data safety
 
-The always-on browser tests read public pages and verify unauthenticated
-redirects. The confirmation-resend test intercepts the Supabase request inside
-the browser and returns a local mock response, so no email is sent and no
-Supabase record is changed. Registration and password-reset forms are not
-submitted.
+The frontend browser tests read public pages and verify unauthenticated
+redirects without creating Supabase customers or sending authentication email.
+Registration, confirmation, resend-confirmation, and password-reset forms are
+not submitted by the default tests.
 
-Optional login tests use existing fixed accounts and do not edit their
-profiles. Store credentials in local environment variables; never commit them:
+The Payload admin browser tests are different. `tests/helpers/seedUser.ts`
+creates a temporary Payload staff account before the suite and deletes it
+afterward. Those operations use the database configured by `DATABASE_URL`.
+
+Before running `pnpm test:e2e` or `pnpm test`, confirm that `DATABASE_URL`
+points to a disposable local or staging database. Never point destructive
+fixture helpers at production. A failed or interrupted test can skip cleanup
+and leave the temporary account behind.
+
+Database-writing suites are skipped unless this explicit safety flag is set:
 
 ```bash
-E2E_STUDENT_EMAIL=
-E2E_STUDENT_PASSWORD=
-E2E_ADMIN_EMAIL=
-E2E_ADMIN_PASSWORD=
+E2E_ALLOW_DATABASE_WRITES=true pnpm test:e2e
 ```
 
-When these variables are absent, the fixed-account tests are skipped. Use
-dedicated test accounts instead of personal or customer accounts.
+Setting the flag is an assertion that the configured database is disposable.
+The temporary users have unique `anna-dance-e2e-*` addresses under
+`example.com` and are removed after successful completion.
+
+Do not place personal, customer, or production credentials in test environment
+variables or committed files.
 
 ## Full email flows
 

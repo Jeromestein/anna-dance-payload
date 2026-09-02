@@ -5,10 +5,10 @@ test.describe('Frontend', () => {
     await page.goto('http://localhost:3000')
 
     await expect(page).toHaveTitle(/Anna Dance Academy/)
-    await expect(page.locator('h1')).toContainText('Rooted in Chinese dance')
-    await expect(page.getByRole('heading', { name: 'Anna Liu' })).toBeVisible()
+    await expect(page.locator('h1')).toContainText('Expert Guidance.')
+    await expect(page.locator('h1')).toContainText('A Colorful World of Dance.')
     await expect(
-      page.getByRole('region', { name: 'Movement, moments, and community.' }),
+      page.getByRole('region', { name: 'Why families choose Anna Dance Academy' }),
     ).toBeVisible()
   })
 

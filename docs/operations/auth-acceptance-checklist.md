@@ -26,6 +26,9 @@ they are executed successfully.
 - [x] `/users` calls `requirePayloadAdministrator()` before querying profiles.
 - [x] Unauthenticated staff are redirected to `/admin/login`.
 - [x] Non-administrator staff are redirected away from `/users`.
+- [x] Only administrators can create or delete Payload staff accounts.
+- [x] Content editors can read and update only their own Payload staff record.
+- [x] Only administrators can assign or change a Payload staff role.
 - [ ] Log in as a Payload `administrator` and open `/users` successfully.
 - [ ] Log in as a Payload `content-editor` and confirm `/users` is denied.
 - [ ] Confirm a content editor cannot open `/users/[id]` directly.
@@ -45,7 +48,7 @@ they are executed successfully.
 - [ ] Open a customer from `/users` and verify `/users/[id]` loads the expected
   profile.
 - [ ] Update a dedicated test profile and verify the change persists.
-- [ ] Confirm administrator mutations re-check Payload authorization on every
+- [x] Confirm administrator mutations re-check Payload authorization on every
   request.
 - [ ] Confirm invalid profile IDs return a safe not-found or error state.
 - [ ] Confirm privileged errors do not expose credentials or database details.
@@ -79,11 +82,16 @@ they are executed successfully.
 
 ## 6. Automated tests
 
-- [x] The repository documents non-mutating authentication tests.
-- [x] Default tests are designed not to create users or send real emails.
-- [ ] Run `pnpm test` and record the result.
-- [ ] Run `pnpm test:e2e` against the local development server and record the
-  result.
+- [x] The repository documents which authentication tests create temporary
+  Payload records.
+- [ ] Confirm E2E tests use a disposable non-production database before they
+  create staff fixtures.
+- [x] Ensure the default automated tests never send real authentication emails.
+- [x] Run `pnpm test:int` and confirm all integration tests pass.
+- [x] Run `pnpm test`: 10 integration tests and 2 read-only E2E tests passed;
+  7 database-writing E2E tests were safely skipped.
+- [x] Run `pnpm test:e2e` against the local development server: 2 read-only
+  tests passed and 7 database-writing tests were safely skipped.
 - [ ] Add or verify an administrator fixture for Payload-authenticated tests.
 - [ ] Add or verify a content-editor fixture for denial tests.
 - [ ] Add or verify a dedicated Supabase customer fixture.
