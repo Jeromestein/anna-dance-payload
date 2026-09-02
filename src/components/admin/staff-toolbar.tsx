@@ -8,14 +8,13 @@ type StaffToolbarProps = {
 
 export function StaffToolbar({ user }: StaffToolbarProps) {
   return (
-    <aside className="staff-toolbar" aria-label="Staff toolbar">
+    <aside className="staff-toolbar" aria-label="Admin toolbar">
       <div className="staff-toolbar__inner">
         <div className="staff-toolbar__links">
-          <span className="staff-toolbar__status">
+          <Link className="staff-toolbar__admin-link" href="/admin">
             <span aria-hidden="true" />
-            Staff
-          </span>
-          <Link href="/admin">CMS</Link>
+            Admin
+          </Link>
           {user.role === 'administrator' && <Link href="/admin/students">Student</Link>}
         </div>
 

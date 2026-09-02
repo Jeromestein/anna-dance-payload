@@ -226,13 +226,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   gap: 18px;
   min-width: 0;
 }
-.staff-toolbar__status {
+.staff-toolbar__admin-link {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   color: var(--white);
+  font-weight: 700;
 }
-.staff-toolbar__status > span {
+.staff-toolbar__admin-link > span {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -244,6 +245,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   transition: color 160ms ease;
 }
 .staff-toolbar a:hover { color: var(--white); }
+.staff-toolbar__admin-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .staff-toolbar__email {
   max-width: 260px;
   overflow: hidden;

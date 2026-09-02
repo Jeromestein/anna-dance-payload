@@ -12,7 +12,15 @@ export function AnnaDanceAdminLogo() {
       />
       <span className="anna-admin-brand__wordmark">
         <span className="anna-admin-brand__name">Anna Dance</span>
-        <span className="anna-admin-brand__label">Academy CMS</span>
+        <span className="anna-admin-brand__label" aria-hidden="true">
+          <span>A</span>
+          <span>C</span>
+          <span>A</span>
+          <span>D</span>
+          <span>E</span>
+          <span>M</span>
+          <span>Y</span>
+        </span>
       </span>
     </div>
   )

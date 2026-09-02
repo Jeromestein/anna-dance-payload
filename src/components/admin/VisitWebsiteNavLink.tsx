@@ -7,7 +7,7 @@ export function VisitWebsiteNavLink() {
         rel="noopener noreferrer"
         target="_blank"
       >
-        <span className="nav__link-label">Visit website</span>
+        <span className="nav__link-label">VISIT WEBSITE</span>
         <span className="visit-website-nav__arrow" aria-hidden="true">
           ↗
         </span>
