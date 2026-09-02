@@ -52,6 +52,7 @@ describe('Payload staff access', () => {
   })
 
   it('wires the staff collection to the role-aware access rules', () => {
+    expect(Users.labels).toEqual({ singular: 'Staff', plural: 'Staff' })
     expect(Users.access?.create).toBe(administratorOnly)
     expect(Users.access?.delete).toBe(administratorOnly)
     expect(Users.access?.read).toBe(administratorOrSelf)

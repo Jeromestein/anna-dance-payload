@@ -346,7 +346,7 @@ export interface Video {
   height?: number | null;
 }
 /**
- * Staff accounts that can access the website content system.
+ * Staff who can access the website content system.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
@@ -354,7 +354,7 @@ export interface Video {
 export interface User {
   id: number;
   /**
-   * Administrators can manage student operations. Content editors only manage website content.
+   * Administrators can manage Student information. Content editors only manage website content.
    */
   role: 'administrator' | 'content-editor';
   updatedAt: string;

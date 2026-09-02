@@ -26,21 +26,21 @@ export default function AuthCallbackPage() {
         });
 
         if (!sessionError) {
-          window.location.replace("/users/me");
+          window.location.replace('/account')
           return;
         }
       } else if (code) {
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
         if (!exchangeError) {
-          window.location.replace("/users/me");
+          window.location.replace('/account')
           return;
         }
       } else {
         const { data } = await supabase.auth.getSession();
 
         if (data.session) {
-          window.location.replace("/users/me");
+          window.location.replace('/account')
           return;
         }
       }
@@ -65,7 +65,7 @@ export default function AuthCallbackPage() {
     <section className="auth-section auth-callback-section section-space">
       <div className="page-shell auth-callback-layout">
         <article className="auth-card auth-callback-card" aria-live="polite">
-          <p className="eyebrow">User account</p>
+          <p className="eyebrow">Student</p>
           <h1>{error ? "We couldn’t finish signing you in." : "Signing you in…"}</h1>
           {error ? (
             <>

@@ -21,11 +21,11 @@ export async function isPayloadAdministrator() {
   return user?.role === 'administrator'
 }
 
-export async function requirePayloadAdministrator() {
+export async function requirePayloadAdministrator(redirectPath = '/admin/students') {
   const user = await getPayloadStaffUser()
 
   if (!user) {
-    redirect('/admin/login?redirect=%2Fusers')
+    redirect(`/admin/login?redirect=${encodeURIComponent(redirectPath)}`)
   }
 
   if (user.role !== 'administrator') {

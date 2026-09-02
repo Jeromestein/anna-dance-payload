@@ -8,16 +8,14 @@ import { navigation } from "@/lib/site-data";
 
 type SiteHeaderProps = {
   isAuthenticated: boolean;
-  isAdmin: boolean;
 };
 
-export function SiteHeader({ isAuthenticated, isAdmin }: SiteHeaderProps) {
+export function SiteHeader({ isAuthenticated }: SiteHeaderProps) {
   const pathname = usePathname();
 
   return (
     <SiteHeaderContent
       key={pathname}
-      isAdmin={isAdmin}
       isAuthenticated={isAuthenticated}
       pathname={pathname}
     />
@@ -26,7 +24,6 @@ export function SiteHeader({ isAuthenticated, isAdmin }: SiteHeaderProps) {
 
 function SiteHeaderContent({
   isAuthenticated,
-  isAdmin,
   pathname,
 }: SiteHeaderProps & { pathname: string }) {
   const [open, setOpen] = useState(false);
@@ -47,8 +44,7 @@ function SiteHeaderContent({
         </nav>
 
         <div className="header-actions">
-          {isAdmin && <Link href="/users" className="header-account-link">Users</Link>}
-          <Link href={isAuthenticated ? "/users/me" : "/login"} className="header-account-link">
+          <Link href={isAuthenticated ? "/account" : "/login"} className="header-account-link">
             {isAuthenticated ? "Profile" : "Log in"}
           </Link>
           <Link href="/schedule" className="button button-small desktop-cta">
@@ -73,8 +69,7 @@ function SiteHeaderContent({
           {navigation.map((item) => (
             <Link key={item.href} href={item.href}>{item.label}</Link>
           ))}
-          {isAdmin && <Link href="/users">Users</Link>}
-          <Link href={isAuthenticated ? "/users/me" : "/login"}>
+          <Link href={isAuthenticated ? "/account" : "/login"}>
             {isAuthenticated ? "Profile" : "Log in"}
           </Link>
           <Link href="/schedule" className="button">Schedule</Link>

@@ -106,7 +106,7 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/users/me");
+  redirect('/account')
 }
 
 export async function signup(formData: FormData) {
@@ -130,7 +130,7 @@ export async function signup(formData: FormData) {
 
   if (data.session) {
     revalidatePath("/", "layout");
-    redirect("/users/me");
+    redirect('/account')
   }
 
   redirectToLogin(

@@ -13,7 +13,7 @@ export default function ResetPasswordPage() {
           <BrandLogo />
         </Link>
         <div className="auth-brand-copy">
-          <p className="eyebrow eyebrow-light">Student account</p>
+          <p className="eyebrow eyebrow-light">Student</p>
           <h2>Choose a fresh start.</h2>
         </div>
       </div>

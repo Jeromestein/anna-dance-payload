@@ -13,7 +13,7 @@ export default function ForgotPasswordPage() {
           <BrandLogo />
         </Link>
         <div className="auth-brand-copy">
-          <p className="eyebrow eyebrow-light">Student account</p>
+          <p className="eyebrow eyebrow-light">Student</p>
           <h2>Return to the dance floor.</h2>
         </div>
       </div>

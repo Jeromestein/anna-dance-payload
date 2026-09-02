@@ -1,62 +1,107 @@
-# Dual Authentication Architecture
+# Staff and Student Authentication Architecture
 
 ## Purpose
 
 Anna Dance Academy uses Payload and Supabase in the same application and
-database, but the two systems own separate identities.
+production database, but each system owns a different type of identity:
 
-The boundary is intentional:
+- Payload authenticates academy **Staff** and controls CMS permissions.
+- Supabase Auth authenticates **Students** and protects their personal data.
+- A Payload administrator may manage Student profiles from inside the Payload admin
+  experience without signing in to Supabase separately.
 
-- Payload authenticates academy staff and controls CMS permissions.
-- Supabase Auth authenticates students and parents.
-- Supabase business tables store customer-facing profile data.
-- A Payload administrator may manage customer profiles through a server-only
-  Supabase client without signing in to Supabase separately.
+The technical identity boundary remains separate, while the administration
+experience is consolidated into one `/admin` interface.
 
-The systems must not synchronize passwords, sessions, or user records.
+The user interface must use only the labels **Staff** and **Student**. It must
+not use `Users`, `Staff Accounts`, or `Student Accounts` as navigation labels.
 
 ## Identity ownership
 
-| User type | Login | Identity store | Primary access |
+| Identity | Login | Identity store | Primary access |
 | --- | --- | --- | --- |
-| Administrator | `/admin` | Payload `public.users` | CMS and customer profile management |
-| Content editor | `/admin` | Payload `public.users` | Website content only |
-| Student or parent | `/login` | Supabase `auth.users` | Own account profile only |
+| Administrator Staff | `/admin` | Payload `public.users` | CMS, Staff, and Student management |
+| Content editor Staff | `/admin` | Payload `public.users` | Approved website content only |
+| Student | `/login` | Supabase `auth.users` | Own profile only |
 
-Customer profile data is stored in `public.user_profiles`. Its `id` matches the
+Student profile data is stored in `public.user_profiles`. Its `id` matches the
 corresponding Supabase Auth user ID:
 
 ```text
 auth.users.id = public.user_profiles.id
 ```
 
+Passwords, sessions, and identity records are never synchronized between
+Payload and Supabase.
+
+## Target navigation
+
+### Staff experience
+
+All Staff work begins at `/admin` and remains inside the Payload admin shell:
+
+```text
+/admin
+├── Website Content
+├── Media Library
+└── Administration
+    ├── Student
+    └── Staff
+```
+
+- **Student** opens `/admin/students`.
+- Selecting a Student opens `/admin/students/[id]`.
+- **Staff** continues to use Payload's existing authenticated `users`
+  collection internally, but the collection label shown in the interface is
+  `Staff`.
+- The Staff collection slug and `public.users` table name remain unchanged to
+  avoid an unnecessary database migration.
+
+The Student section must support listing, searching, filtering, pagination,
+profile detail, and profile editing without leaving the Payload admin shell.
+
+### Student experience
+
+Students use the public website rather than the Payload admin interface:
+
+```text
+/login
+  -> Supabase authentication
+  -> /account
+```
+
+`/account` allows a Student to view and update only their own name, optional
+phone number, and optional parent or guardian contact.
+
+Because the website has not launched, the previous routes are removed instead
+of redirected:
+
+- `/users`
+- `/users/[id]`
+- `/users/me`
+
+These old routes must return a safe not-found response and must not expose
+Student data.
+
 ## Staff authorization flow
 
 ```text
 Payload login cookie
-  -> authenticate the Payload user
+  -> authenticate the Payload Staff member
   -> require role = administrator
   -> create a server-only Supabase admin client
   -> read or update public.user_profiles
 ```
 
-Every page and mutation that exposes customer data must independently verify
+Every page and mutation that exposes Student data must independently verify
 the Payload user and require the `administrator` role. Protecting only the
 page is not sufficient; server actions and route handlers must repeat the
 authorization check.
 
-The relevant implementation is located in:
+Content editors must not see the Student navigation item and must not be able
+to list, search, open, or modify Student profiles through direct requests.
 
-- `src/lib/staff/auth.ts`
-- `src/lib/supabase/admin.ts`
-- `src/app/(frontend)/users/page.tsx`
-- `src/app/(frontend)/users/[id]/page.tsx`
-- `src/app/(frontend)/users/actions.ts`
-
-Content editors must not be able to list, search, open, or modify customer
-profiles.
-
-## Customer authorization flow
+## Student authorization flow
 
 ```text
 Supabase session cookie
@@ -66,10 +111,8 @@ Supabase session cookie
   -> enforce ownership with Supabase RLS
 ```
 
-Students and parents use `/login` and manage their own profile at `/users/me`.
-They never receive Payload access and cannot use the staff management routes.
-
-Supabase RLS must restrict customer access to rows where:
+Students never receive Payload access. Supabase RLS must restrict Student
+access to rows where:
 
 ```sql
 id = auth.uid()
@@ -77,19 +120,15 @@ id = auth.uid()
 
 ## Authorization sources
 
-Payload staff permissions are determined only by the role on Payload's
+Payload Staff permissions are determined only by the role on Payload's
 `public.users` record:
 
-- `administrator`: may manage customer profiles.
+- `administrator`: may manage Staff and Students.
 - `content-editor`: may edit approved CMS content only.
 
-The legacy `public.user_profiles.role` field is not a staff authorization
-source. A value of `admin` in that table must never grant access to `/users` or
-to a staff-only mutation.
-
-Until a dedicated migration removes or replaces the legacy field, the UI may
-display it only as legacy customer-profile data. New customer records should
-remain ordinary account-holder records.
+The legacy `public.user_profiles.role` field is not a Staff authorization
+source. A value of `admin` in that table must never grant access to
+`/admin/students` or to a privileged mutation.
 
 ## Database ownership boundary
 
@@ -130,34 +169,42 @@ The Supabase service-role key bypasses RLS and must remain server-only.
 Because the service role bypasses RLS, application-level Payload authorization
 must run before every privileged query or mutation.
 
-## Current account model
+## Implementation sequence
 
-`public.user_profiles` currently represents one account holder and one set of
-student or guardian contact details. It does not yet support:
+1. Rename the visible Payload collection label from `Users` to `Staff` without
+   changing its slug or database table.
+2. Add administrator-only Student list and detail views inside `/admin`.
+3. Move the Student self-service profile from `/users/me` to `/account`.
+4. Remove the previous `/users` route family and its frontend administrator
+   navigation.
+5. Update authorization tests and complete desktop and mobile acceptance.
 
-- One parent managing multiple students
+The changes should be committed in these independent modules:
+
+```text
+refactor(auth): distinguish staff and student identities
+feat(admin): manage students inside Payload
+refactor(profile): move student profile to account route
+test(auth): verify consolidated administration access
+```
+
+## Current profile model
+
+`public.user_profiles` currently represents one Student login and its profile
+details. It does not yet support:
+
+- One parent managing multiple Students
 - Family relationships
 - Enrollment and class history
 - Terms, attendance, or payments
 
-The next data-model phase should retain `user_profiles` as the account-holder
-record and introduce:
-
-```text
-app_families
-app_family_members
-app_students
-app_enrollments
-app_payments
-```
-
-That phase must preserve the same authentication boundary: Payload manages
-staff, Supabase Auth manages customers, and business tables reference customer
-identities without merging the two login systems.
+A future family model may introduce `app_families`, `app_family_members`,
+`app_students`, `app_enrollments`, and `app_payments`. That work is outside the
+current Staff and Student interface consolidation.
 
 ## Acceptance rule
 
-The architecture is accepted only when all items in
+The architecture is accepted only when all applicable items in
 `docs/operations/auth-acceptance-checklist.md` pass. Source-code presence alone
 does not prove production configuration, RLS behavior, or runtime access
 control.

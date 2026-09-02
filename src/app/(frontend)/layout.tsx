@@ -6,7 +6,6 @@ import { SiteHeader } from '@/components/site-header'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { createClient } from '@/lib/supabase/server'
 import { getSocialProfiles } from '@/lib/social'
-import { isPayloadAdministrator } from '@/lib/staff/auth'
 
 import './globals.css'
 import './footer.css'
@@ -43,16 +42,15 @@ async function getStudentAccountAccess() {
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [isAuthenticated, isAdmin, socialProfiles] = await Promise.all([
+  const [isAuthenticated, socialProfiles] = await Promise.all([
     getStudentAccountAccess(),
-    isPayloadAdministrator(),
     getSocialProfiles(),
   ])
 
   return (
     <html lang="en">
       <body className={poppins.variable}>
-        <SiteHeader isAdmin={isAdmin} isAuthenticated={isAuthenticated} />
+        <SiteHeader isAuthenticated={isAuthenticated} />
         <main>{children}</main>
         <SiteFooter socialProfiles={socialProfiles?.showInFooter ? socialProfiles : null} />
         <FloatingBookingButton />

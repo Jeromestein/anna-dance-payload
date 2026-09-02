@@ -9,8 +9,12 @@ import {
 
 export const Users: CollectionConfig = {
   slug: 'users',
+  labels: {
+    singular: 'Staff',
+    plural: 'Staff',
+  },
   admin: {
-    description: 'Staff accounts that can access the website content system.',
+    description: 'Staff who can access the website content system.',
     group: 'Administration',
     hidden: ({ user }) => !isAdministratorUser(user),
     useAsTitle: 'email',
@@ -45,7 +49,7 @@ export const Users: CollectionConfig = {
       saveToJWT: true,
       admin: {
         description:
-          'Administrators can manage student operations. Content editors only manage website content.',
+          'Administrators can manage Student information. Content editors only manage website content.',
         position: 'sidebar',
       },
     },

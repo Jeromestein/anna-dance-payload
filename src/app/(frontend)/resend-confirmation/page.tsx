@@ -13,7 +13,7 @@ export default function ResendConfirmationPage() {
           <BrandLogo />
         </Link>
         <div className="auth-brand-copy">
-          <p className="eyebrow eyebrow-light">Student account</p>
+          <p className="eyebrow eyebrow-light">Student</p>
           <h2>Let’s get you confirmed.</h2>
         </div>
       </div>

@@ -28,6 +28,21 @@ const isSupabaseStorageConfigured = [
 export default buildConfig({
   admin: {
     user: Users.slug,
+    components: {
+      afterNavLinks: ['/components/admin/StudentNavLink#StudentNavLink'],
+      views: {
+        studentList: {
+          Component: '/components/admin/StudentAdminViews#StudentListView',
+          exact: true,
+          path: '/students',
+        },
+        studentDetail: {
+          Component: '/components/admin/StudentAdminViews#StudentDetailView',
+          exact: true,
+          path: '/students/:id',
+        },
+      },
+    },
     importMap: {
       baseDir: path.resolve(dirname),
     },

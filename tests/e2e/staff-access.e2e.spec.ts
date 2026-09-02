@@ -31,8 +31,8 @@ test.describe('Payload staff authorization', () => {
     await cleanupTestContentEditor()
   })
 
-  test('denies the customer directory to content editors', async () => {
-    await page.goto('http://localhost:3000/users')
+  test('denies Student management to content editors', async () => {
+    await page.goto('http://localhost:3000/admin/students')
 
     await expect(page).toHaveURL(/\/admin\?error=Administrator\+access\+is\+required\.$/)
   })

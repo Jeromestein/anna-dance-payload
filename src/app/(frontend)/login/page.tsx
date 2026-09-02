@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { login, signup } from "./actions";
 import { GoogleSignInButton } from "./google-sign-in-button";
 
-export const metadata: Metadata = { title: "Student Account" };
+export const metadata: Metadata = { title: "Student Login" };
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -26,7 +26,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     const { data } = await supabase.auth.getClaims();
 
     if (data?.claims?.sub) {
-      redirect("/users/me");
+      redirect('/account')
     }
   }
 
@@ -37,7 +37,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <BrandLogo />
         </Link>
         <div className="auth-brand-copy">
-          <p className="eyebrow eyebrow-light">Student account</p>
+          <p className="eyebrow eyebrow-light">Student</p>
           <h2>Everything starts with a first step.</h2>
         </div>
       </div>
@@ -50,7 +50,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <article className="auth-card auth-card-simple">
           <header className="auth-card-header">
             {isSignup && <Link className="auth-back-link" href="/login" aria-label="Back to login">←</Link>}
-            <p className="eyebrow">{isSignup ? "New student account" : "Student account"}</p>
+            <p className="eyebrow">{isSignup ? "New Student" : "Student"}</p>
             <h1>{isSignup ? "Create your account" : "Log in"}</h1>
             <p className="auth-card-copy">
               {isSignup

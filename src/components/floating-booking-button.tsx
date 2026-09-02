@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 export function FloatingBookingButton() {
   const pathname = usePathname();
 
-  if (pathname === "/login" || pathname === "/account" || pathname.startsWith("/users") || pathname.startsWith("/auth/") || pathname.startsWith("/admin/")) {
+  if (pathname === "/login" || pathname === "/account" || pathname.startsWith("/auth/") || pathname.startsWith("/admin/")) {
     return null;
   }
 
