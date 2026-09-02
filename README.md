@@ -28,6 +28,7 @@ or responsive behavior.
 | Payload Next adapter       | `3.88.0` |
 | Payload Postgres adapter   | `3.88.0` |
 | Payload S3 storage adapter | `3.88.0` |
+| Payload Resend adapter     | `3.88.0` |
 | Next.js                    | `16.3.3` |
 | React / React DOM          | `19.2.6` |
 
@@ -97,7 +98,7 @@ Future Data API access must be granted explicitly in a reviewed migration.
 
 1. Use the `anna-dance-payload-poc` Supabase project for CMS tables, Storage, and student Auth.
 2. Copy `.env.example` to `.env`.
-3. Add the database, S3, public API, and server-only secret values from that project.
+3. Add the database, S3, Resend, public API, and server-only secret values.
 4. Apply the SQL files under `supabase/migrations/` in timestamp order.
 5. Generate a long random `PAYLOAD_SECRET`.
 6. Run `pnpm install`.
@@ -155,6 +156,22 @@ same; only the port changes from `5432` to `6543`.
 
 The local `.env` initially contains a deliberately non-production localhost placeholder. The CMS
 admin and Faculty preview require a working PostgreSQL connection.
+
+## Email delivery
+
+The public contact form and Payload Staff password recovery share the same Resend account and
+server-only `RESEND_API_KEY`. Payload's `/admin/forgot` flow uses the official
+`@payloadcms/email-resend` adapter and sends from the address extracted from `RESEND_FROM_EMAIL`.
+That variable may be either a plain address or the display-name format shown in `.env.example`.
+
+The sender domain must be verified in Resend. Add both `RESEND_API_KEY` and `RESEND_FROM_EMAIL` to
+Vercel Production and Preview environments, then redeploy. Restart the local development server
+after changing either value. If the API key is absent, Payload intentionally falls back to its
+console-only development email adapter, so no real password-reset message is delivered.
+
+Payload Staff recovery is separate from Student recovery: `/admin/forgot` resets a Staff account
+in Payload's `public.users` table, while the public `/forgot-password` route continues to use
+Supabase Auth and its configured SMTP provider.
 
 ### Verified test environment
 

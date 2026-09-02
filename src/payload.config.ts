@@ -1,4 +1,5 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
+import { resendAdapter } from '@payloadcms/email-resend'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { s3Storage } from '@payloadcms/storage-s3'
 import path from 'path'
@@ -24,6 +25,16 @@ const isSupabaseStorageConfigured = [
   process.env.S3_ACCESS_KEY_ID,
   process.env.S3_SECRET_ACCESS_KEY,
 ].every(Boolean)
+
+const resendFrom = process.env.RESEND_FROM_EMAIL?.trim() || ''
+const resendFromAddress = resendFrom.match(/<([^<>]+)>/)?.[1]?.trim() || resendFrom
+const payloadEmailAdapter = process.env.RESEND_API_KEY
+  ? resendAdapter({
+      apiKey: process.env.RESEND_API_KEY,
+      defaultFromAddress: resendFromAddress || 'onboarding@resend.dev',
+      defaultFromName: 'Anna Dance Academy',
+    })
+  : undefined
 
 export default buildConfig({
   admin: {
@@ -68,6 +79,7 @@ export default buildConfig({
   },
   collections: [Faculty, Classes, MediaGalleries, Images, Videos, Users],
   editor: lexicalEditor(),
+  email: payloadEmailAdapter,
   globals: [SocialProfiles],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
