@@ -374,10 +374,10 @@ A checked item means the implementation exists and has been verified at the leve
 - [x] Migrate the existing three-image and Dunhuang-performance video selection to
       `Home — Studio Moments`.
 - [x] Seed and publish `About — Academy in Motion` with a different media order and copy.
-- [ ] Show a contextual **Edit gallery** shortcut only to authenticated Payload staff.
-- [ ] Open the exact rendered Media Gallery record in a new browser tab instead of routing staff
+- [x] Show a contextual **Edit gallery** shortcut only to authenticated Payload staff.
+- [x] Open the exact rendered Media Gallery record in a new browser tab instead of routing staff
       through the administrator dashboard and collection list.
-- [ ] Verify the shortcut is hidden from public visitors and works for both Homepage and About
+- [x] Verify the shortcut is hidden from public visitors and works for both Homepage and About
       galleries.
 
 ### Reusable Social Profiles

@@ -434,6 +434,63 @@
   padding: 20px 0 64px;
 }
 
+.galleryWallFrame {
+  position: relative;
+}
+
+.galleryEditBar {
+  position: absolute;
+  z-index: 5;
+  top: 96px;
+  right: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.galleryEditLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 15px;
+  border: 1px solid rgba(184, 50, 114, 0.32);
+  border-radius: 999px;
+  color: #a52964;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 24px rgba(40, 28, 34, 0.1);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.galleryEditLink svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.galleryEditLink:hover {
+  border-color: #b83272;
+  color: #fff;
+  background: #b83272;
+  transform: translateY(-1px);
+}
+
+.galleryEditLink:focus-visible {
+  outline: 2px solid #b83272;
+  outline-offset: 3px;
+}
+
 .gallerySectionHeader {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
@@ -856,6 +913,16 @@
 }
 
 @media (max-width: 680px) {
+  .galleryEditBar {
+    top: 96px;
+    right: 12px;
+  }
+
+  .galleryEditLink {
+    padding: 8px 13px;
+    font-size: 0.7rem;
+  }
+
   .pocShell,
   .previewShell {
     width: min(100% - 36px, 1180px);

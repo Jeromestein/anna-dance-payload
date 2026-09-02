@@ -4,6 +4,7 @@ import { SocialFollow } from '@/components/SocialFollow'
 import type { Image, MediaGallery, SocialProfile, Video } from '@/payload-types'
 
 type GalleryWallProps = {
+  canEdit?: boolean
   gallery: MediaGallery
   sectionKey: string
   socialProfiles?: SocialProfile | null
@@ -29,7 +30,7 @@ function getVideo(video: number | Video | null | undefined): Video | null {
   return typeof video === 'object' && video !== null ? video : null
 }
 
-export function GalleryWall({ gallery, sectionKey, socialProfiles }: GalleryWallProps) {
+export function GalleryWall({ canEdit = false, gallery, sectionKey, socialProfiles }: GalleryWallProps) {
   const items: ResolvedGalleryItem[] = []
   const headingId = `media-gallery-${sectionKey}-heading`
   const eyebrow = gallery.eyebrow?.trim()
@@ -77,41 +78,64 @@ export function GalleryWall({ gallery, sectionKey, socialProfiles }: GalleryWall
       ) : null}
 
       {items.length > 0 ? (
-        <div aria-label="Selected photos and videos" className="galleryWall" role="list">
-          {items.map((item, index) => {
-            const caption = item.caption?.trim()
-
-            return (
-              <figure
-                className={`galleryItem galleryItem${(index % 6) + 1}`}
-                key={item.id || `${item.type}-${item.media.id}-${index}`}
-                role="listitem"
+        <div className="galleryWallFrame">
+          {canEdit ? (
+            <div className="galleryEditBar">
+              <Link
+                aria-label={`Edit ${gallery.internalName} in the administrator`}
+                className="galleryEditLink"
+                href={`/admin/collections/media-galleries/${gallery.id}`}
+                rel="noopener noreferrer"
+                target="_blank"
               >
-                {item.type === 'image' ? (
-                  // Payload serves local and S3-backed files through the same stored URL.
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img alt={item.media.altText} loading="lazy" src={item.media.url || ''} />
-                ) : (
-                  <video
-                    aria-label={item.media.description}
-                    autoPlay
-                    controls
-                    loop
-                    muted
-                    playsInline
-                    poster={getImage(item.media.posterImage)?.url || undefined}
-                    preload="metadata"
-                  >
-                    <source src={item.media.url || ''} type={item.media.mimeType || 'video/mp4'} />
-                  </video>
-                )}
-                {caption ? <figcaption>{caption}</figcaption> : null}
-              </figure>
-            )
-          })}
-          {gallery.showSocialLinks && socialProfiles ? (
-            <SocialFollow profiles={socialProfiles} variant="gallery" />
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M12 8.75a3.25 3.25 0 1 0 0 6.5 3.25 3.25 0 0 0 0-6.5Z" />
+                  <path d="M19.1 13.5c.06-.49.06-1.01 0-1.5l1.62-1.27-1.75-3.03-1.91.77a7.6 7.6 0 0 0-2.6-1.5L14.18 5h-3.5l-.28 1.97a7.6 7.6 0 0 0-2.6 1.5L5.89 7.7l-1.75 3.03L5.76 12a6.4 6.4 0 0 0 0 1.5l-1.62 1.27 1.75 3.03 1.91-.77a7.6 7.6 0 0 0 2.6 1.5l.28 1.97h3.5l.28-1.97a7.6 7.6 0 0 0 2.6-1.5l1.91.77 1.75-3.03-1.62-1.27Z" />
+                </svg>
+                EDIT
+              </Link>
+            </div>
           ) : null}
+
+          <div aria-label="Selected photos and videos" className="galleryWall" role="list">
+            {items.map((item, index) => {
+              const caption = item.caption?.trim()
+
+              return (
+                <figure
+                  className={`galleryItem galleryItem${(index % 6) + 1}`}
+                  key={item.id || `${item.type}-${item.media.id}-${index}`}
+                  role="listitem"
+                >
+                  {item.type === 'image' ? (
+                    // Payload serves local and S3-backed files through the same stored URL.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt={item.media.altText} loading="lazy" src={item.media.url || ''} />
+                  ) : (
+                    <video
+                      aria-label={item.media.description}
+                      autoPlay
+                      controls
+                      loop
+                      muted
+                      playsInline
+                      poster={getImage(item.media.posterImage)?.url || undefined}
+                      preload="metadata"
+                    >
+                      <source
+                        src={item.media.url || ''}
+                        type={item.media.mimeType || 'video/mp4'}
+                      />
+                    </video>
+                  )}
+                  {caption ? <figcaption>{caption}</figcaption> : null}
+                </figure>
+              )
+            })}
+            {gallery.showSocialLinks && socialProfiles ? (
+              <SocialFollow profiles={socialProfiles} variant="gallery" />
+            ) : null}
+          </div>
         </div>
       ) : (
         <div className="emptyState galleryEmptyState">

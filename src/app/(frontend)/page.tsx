@@ -8,16 +8,18 @@ import { getPublicClasses } from "@/lib/classes";
 import { getPublicFaculty } from "@/lib/faculty";
 import { getMediaGalleryBySlug } from "@/lib/gallery";
 import { getSocialProfiles } from "@/lib/social";
+import { getPayloadStaffUser } from "@/lib/staff/auth";
 import "./home.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [classes, faculty, gallery, socialProfiles] = await Promise.all([
+  const [classes, faculty, gallery, socialProfiles, staffUser] = await Promise.all([
     getPublicClasses(),
     getPublicFaculty(),
     getMediaGalleryBySlug("home-studio"),
     getSocialProfiles(),
+    getPayloadStaffUser(),
   ]);
 
   return (
@@ -63,6 +65,7 @@ export default async function HomePage() {
 
       {gallery ? (
         <GalleryWall
+          canEdit={Boolean(staffUser)}
           gallery={gallery}
           sectionKey="home-studio"
           socialProfiles={socialProfiles}

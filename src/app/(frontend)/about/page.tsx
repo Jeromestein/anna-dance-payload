@@ -4,14 +4,16 @@ import { GalleryWall } from "@/components/GalleryWall";
 import { PageHero } from "@/components/page-hero";
 import { getMediaGalleryBySlug } from "@/lib/gallery";
 import { getSocialProfiles } from "@/lib/social";
+import { getPayloadStaffUser } from "@/lib/staff/auth";
 
 export const metadata: Metadata = { title: "About" };
 export const dynamic = "force-dynamic";
 
 export default async function AboutPage() {
-  const [gallery, socialProfiles] = await Promise.all([
+  const [gallery, socialProfiles, staffUser] = await Promise.all([
     getMediaGalleryBySlug("about-academy"),
     getSocialProfiles(),
+    getPayloadStaffUser(),
   ]);
 
   return (
@@ -117,6 +119,7 @@ export default async function AboutPage() {
 
       {gallery ? (
         <GalleryWall
+          canEdit={Boolean(staffUser)}
           gallery={gallery}
           sectionKey="about-academy"
           socialProfiles={socialProfiles}
