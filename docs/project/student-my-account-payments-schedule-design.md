@@ -27,15 +27,15 @@ My Account is an Academy dashboard. It is not a Stripe dashboard or a Cal.com da
 
 The application should display normalized, Student-safe information from each service:
 
-| Domain | Source of truth | Displayed in My Account |
-| --- | --- | --- |
-| Login identity and editable contact details | Supabase Auth and `user_profiles` | Profile |
-| Term and class enrollment | Academy tables in Supabase | Overview and Payments |
-| Amount due and internal payment status | Academy enrollment/payment records | Overview and Payments |
-| Completed financial transaction | Stripe | Payments and receipt link |
-| Fixed group-class sessions | Academy class-session records | Schedule |
-| Consultations, private lessons, and makeup appointments | Cal.com | Schedule |
-| Combined Student calendar | Anna Dance Academy website | Schedule |
+| Domain                                                  | Source of truth                       | Displayed in My Account   |
+| ------------------------------------------------------- | ------------------------------------- | ------------------------- |
+| Login identity and editable contact details             | Supabase Auth and `app_user_profiles` | Profile                   |
+| Term and class enrollment                               | Academy tables in Supabase            | Overview and Payments     |
+| Amount due and internal payment status                  | Academy enrollment/payment records    | Overview and Payments     |
+| Completed financial transaction                         | Stripe                                | Payments and receipt link |
+| Fixed group-class sessions                              | Academy class-session records         | Schedule                  |
+| Consultations, private lessons, and makeup appointments | Cal.com                               | Schedule                  |
+| Combined Student calendar                               | Anna Dance Academy website            | Schedule                  |
 
 The browser must never receive a Stripe secret key, Cal.com API key, Supabase service-role key, or
 raw payment-card data.
@@ -161,30 +161,20 @@ through the admin detail page without taking over the Student session.
 
 ## Proposed Data Model
 
-The final schema should separate login identities from students. Suggested tables are:
+The approved first-release schema keeps one account profile per Student login:
 
 ```text
-user_profiles
-    -> app_family_members
-        -> app_families
-            -> app_students
-                -> app_enrollments
-                    -> app_payments
-                    -> app_class_offerings
-                        -> app_class_sessions
-                -> app_cal_bookings
+auth.users
+    -> app_user_profiles
+        -> app_payments
+        -> app_schedule_entries
 ```
 
-Minimum responsibilities:
-
-- `app_students`: the dancer, independent of login identity.
-- `app_enrollments`: one Student's place in one class offering for one term.
-- `app_class_offerings`: the term-specific class, capacity, location, and instructor assignment.
-- `app_class_sessions`: the actual 10–16 class dates, including cancellations and replacements.
-- `app_payments`: amounts, currency, status, provider references, receipt URL, verification source,
-  and timestamps. Never store payment credentials.
-- `app_cal_bookings`: stable Student/enrollment association to a Cal.com booking UID and its current
-  scheduling status.
+`app_payments` temporarily carries the term, class, lesson count, amount, and payment state for one
+Student. `app_schedule_entries` stores each class or appointment date and may carry a Cal.com
+booking UID. If the Academy later needs shared class rosters, multiple Students per guardian, or
+installment billing, those concerns can be split into dedicated family, Student, enrollment, class,
+and session tables without changing the current interface.
 
 Every exposed table requires Row Level Security. A Student or guardian may read only records owned
 by their family. Staff access must be authorized on the server and audited.
@@ -287,33 +277,36 @@ work is not yet implemented or externally verified.
 - [x] Keep Staff Student management at `/admin/students` and `/admin/students/:id`.
 - [x] Use one full-term Stripe Payment Link plus manual scheduling as the interim operating model.
 - [x] Use Cal.com for appointment-style scheduling, not as the sole source of the group-class term
-  calendar.
+      calendar.
 - [x] Keep Staff and Student authentication contexts separate.
 
 ### B. Business decisions required before implementation
 
 - [ ] Decide whether the login owner is presented as a Student, parent/guardian, or neutral account
-  holder.
+      holder.
 - [ ] Approve the first real term, class offering, lesson dates, lesson count, tuition, currency, and
-  payment deadline.
+      payment deadline.
 - [ ] Approve cancellation, withdrawal, refund, makeup, and schedule-change rules.
 - [ ] Decide whether the first release supports one Student per login or must immediately support
-  multiple Students per family.
+      multiple Students per family.
 - [ ] Decide which appointment types remain in Cal.com: consultation, private lesson, makeup lesson,
-  or all three.
+      or all three.
 
 ### C. Data and authorization foundation
 
-- [ ] Draft migrations for families, family members, Students, terms, class offerings, sessions,
-  enrollments, payments, and Cal.com booking links.
-- [ ] Define stable UUIDs and uniqueness rules before attaching Stripe or Cal.com references.
-- [ ] Store money in integer minor units with an explicit currency.
+- [x] Create and apply the first-release `app_user_profiles`, `app_payments`, and
+      `app_schedule_entries` migration while retaining `user_profiles` as a rollback copy.
+- [x] Define stable UUIDs and uniqueness rules before attaching Stripe or Cal.com references.
+- [x] Store money in integer minor units with an explicit currency.
 - [ ] Add payment verification source, verifier, and timestamp fields.
 - [ ] Add audit history for payment, enrollment, and schedule-status changes.
-- [ ] Add RLS policies for account/family ownership.
+- [x] Add RLS policies for account ownership.
 - [ ] Add server-side Staff authorization for every administrative query and mutation.
-- [ ] Add tests proving one Student or family cannot read another family's records.
-- [ ] Confirm service-role, Stripe, and Cal.com secrets remain server-only.
+- [x] Verify with a disposable authenticated account that one Student cannot read or update another
+      Student's profile.
+- [x] Confirm the Supabase service-role secret remains server-only in the implemented profile flow.
+- [ ] Confirm future Stripe and Cal.com secrets remain server-only when those integrations are
+      implemented.
 
 ### D. Staff Student directory and detail page
 
@@ -384,7 +377,7 @@ work is not yet implemented or externally verified.
 - [ ] Visually verify desktop and mobile states in the Codex in-app browser.
 - [ ] Verify keyboard navigation, focus visibility, labels, status announcements, and contrast.
 - [ ] Confirm no keys, payment credentials, or other sensitive values appear in HTML, browser logs,
-  screenshots, or committed files.
+      screenshots, or committed files.
 - [ ] Do not run `pnpm build`; the repository instructions prohibit it.
 
 ## Definition of Done

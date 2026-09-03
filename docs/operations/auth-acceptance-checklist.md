@@ -11,11 +11,11 @@ items remain unchecked until implemented and verified.
 - [x] The Payload collection slug and `public.users` table remain unchanged.
 - [x] The Payload sidebar contains an administrator-only `Student` item.
 - [x] The interface does not use `Users`, `Staff Accounts`, or
-  `Student Accounts` as navigation labels.
+      `Student Accounts` as navigation labels.
 - [x] `/admin/students` renders inside the Payload admin shell.
 - [x] `/admin/students/[id]` renders inside the Payload admin shell.
 - [x] The public website no longer shows an administrator `Users` navigation
-  item.
+      item.
 - [x] `/account` is the Student self-service profile route.
 - [x] `/users`, `/users/[id]`, and `/users/me` return safe not-found responses.
 
@@ -24,22 +24,23 @@ items remain unchecked until implemented and verified.
 - [x] Payload Staff authentication uses Payload's `public.users` collection.
 - [x] Staff roles include `administrator` and `content-editor`.
 - [x] Supabase Students authenticate through `/login`.
-- [x] Student profiles use `public.user_profiles`.
+- [x] Student profiles use `public.app_user_profiles`; `public.user_profiles` remains only as a
+      rollback copy.
 - [x] Payload excludes `user_profiles`, `student_profiles`, and `app_*` tables
-  from schema synchronization.
+      from schema synchronization.
 - [x] The Supabase admin client imports `server-only`.
 - [x] The service-role key is read from `SUPABASE_SERVICE_ROLE_KEY`.
 - [x] A forward migration removes the legacy Supabase customer-admin policy,
-  helper, and update RPC.
+      helper, and update RPC.
 - [x] The target Student SELECT policy is strictly scoped to
-  `user_profiles.id = auth.uid()`.
+      `app_user_profiles.id = auth.uid()`.
 - [x] The local environment targets production Supabase project
-  `hsitmgmcekzobksgtjoj`.
+      `hsitmgmcekzobksgtjoj`.
 - [ ] Confirm `SUPABASE_SERVICE_ROLE_KEY` is configured only in server-side
-  deployment settings.
+      deployment settings.
 - [ ] Confirm the service-role key is absent from client bundles, browser
-  responses, logs, and committed files.
-- [ ] Confirm the forward RLS migration is applied to the production database.
+      responses, logs, and committed files.
+- [x] Confirm the forward RLS migration is applied to the production database.
 
 ## 3. Staff access
 
@@ -47,7 +48,7 @@ items remain unchecked until implemented and verified.
 - [x] Content editors can read and update only their own Payload Staff record.
 - [x] Only administrators can assign or change a Payload Staff role.
 - [x] Unauthenticated visitors to `/admin/students` are redirected to the
-  Payload login page.
+      Payload login page.
 - [x] An administrator can open `/admin/students` using the Payload session.
 - [ ] A content editor cannot see the Student navigation item.
 - [ ] A content editor cannot open `/admin/students` directly.
@@ -59,16 +60,17 @@ items remain unchecked until implemented and verified.
 ## 4. Administrator Student management
 
 - [x] The existing Student directory queries profiles through a server-only
-  Supabase admin client.
+      Supabase admin client.
 - [x] The existing directory supports server-side pagination.
 - [x] The existing directory supports name, email, or phone search.
 - [x] The existing directory has desktop-table and compact mobile-list
-  presentations.
+      presentations.
 - [x] Move the directory UI into `/admin/students`.
 - [x] Move Student detail and edit UI into `/admin/students/[id]`.
 - [x] Verify the directory total against current production data.
 - [x] Open a Student and verify the expected profile loads.
-- [ ] Update a dedicated test Student and verify the change persists.
+- [x] Update a dedicated test Student through `/account` and verify the change persists in
+      `app_user_profiles`.
 - [x] Administrator mutations re-check Payload authorization on every request.
 - [x] Confirm invalid Student IDs return a safe not-found or error state.
 - [ ] Confirm privileged errors do not expose credentials or database details.
@@ -76,17 +78,20 @@ items remain unchecked until implemented and verified.
 ## 5. Student access
 
 - [x] The current self-service implementation verifies Supabase claims before
-  loading a profile.
+      loading a profile.
 - [x] The profile ID is resolved from the Supabase `sub` claim.
-- [x] The Student profile query matches `user_profiles.id` to the authenticated
-  user ID.
+- [x] The Student profile query matches `app_user_profiles.id` to the authenticated
+      user ID.
 - [x] Move the self-service profile UI and actions to `/account`.
-- [ ] Register a dedicated test Student with email and password.
+- [x] Create a dedicated, confirmed test Student with email and password through the Supabase Admin
+      API so the Auth trigger is exercised without sending a real email.
 - [ ] Confirm the registration email and callback complete successfully.
-- [ ] Log in with the confirmed Student and open `/account`.
-- [ ] Update name, optional phone, and optional guardian contact information.
-- [ ] Verify the Student cannot read another profile through Supabase RLS.
-- [ ] Verify the Student cannot update another profile through Supabase RLS.
+- [x] Log in with the confirmed Student and open `/account`.
+- [x] Update name, optional phone, and optional guardian contact information.
+- [x] Verify the Student cannot read another profile through Supabase RLS.
+- [x] Verify the Student cannot update another profile through Supabase RLS.
+- [x] Delete the disposable Auth user and verify `app_user_profiles`, `app_payments`, and
+      `app_schedule_entries` contain no rows for it.
 - [ ] Verify the Student cannot change a Staff role or obtain a Payload cookie.
 - [ ] Test Google sign-in with a dedicated test identity.
 - [ ] Test resend-confirmation rate-limit messaging.
@@ -97,7 +102,7 @@ items remain unchecked until implemented and verified.
 - [ ] Log in to Payload as an administrator without logging in to Supabase.
 - [ ] Confirm `/admin/students` loads through the server-side admin client.
 - [ ] Log out of Payload and confirm Student management access is immediately
-  removed.
+      removed.
 - [ ] Log in to Supabase as a Student without logging in to Payload.
 - [ ] Confirm `/account` works while `/admin/students` remains inaccessible.
 - [ ] Confirm Payload logout does not destroy the Supabase Student session.
@@ -106,35 +111,35 @@ items remain unchecked until implemented and verified.
 ## 7. Automated tests
 
 - [x] The repository documents which authentication tests create temporary
-  Payload records.
+      Payload records.
 - [ ] Confirm E2E tests use a disposable non-production database before they
-  create Staff fixtures.
+      create Staff fixtures.
 - [x] The default automated tests never send real authentication emails.
 - [x] `pnpm test:int` passes.
 - [x] `pnpm test` passes with database-writing E2E tests safely skipped.
 - [x] `pnpm test:e2e` passes against the local development server with
-  database-writing tests safely skipped.
+      database-writing tests safely skipped.
 - [x] Update route tests for `/admin/students` and `/account`.
 - [ ] Add authenticated route coverage for `/admin/students/[id]` against a
-  disposable test project.
+      disposable test project.
 - [x] Test all removed `/users` routes return not found.
 - [ ] Add or verify an administrator Staff fixture.
 - [ ] Add or verify a content-editor Staff fixture for denial tests.
 - [ ] Add or verify a dedicated Supabase Student fixture.
 - [ ] Test direct access to protected pages and mutation endpoints.
 - [ ] Test RLS cross-Student read and update failures against a disposable test
-  project.
+      project.
 - [ ] Confirm automated tests never use personal or customer credentials.
 - [ ] Confirm screenshots, traces, and reports contain no passwords or secrets.
 
 ## 8. Production acceptance
 
 - [ ] Confirm the intended academy administrator exists in Payload
-  `public.users` with role `administrator`.
+      `public.users` with role `administrator`.
 - [ ] Confirm at least one `content-editor` Staff member has restricted access.
 - [ ] Confirm the dedicated mock Student appears in `/admin/students`.
 - [ ] Verify administrator list, search, pagination, detail, and edit flows on
-  desktop.
+      desktop.
 - [ ] Verify the same administrator flows on a mobile viewport.
 - [ ] Verify Student login, profile view, profile edit, and logout on desktop.
 - [ ] Verify Student login and profile flows on a mobile viewport.
@@ -161,7 +166,7 @@ Notes:
 - [ ] Define `app_enrollments` and class-term relationships.
 - [ ] Define `app_payments` without storing sensitive payment credentials.
 - [ ] Add migrations, RLS policies, Staff authorization, and test coverage for
-  each new table before enabling the family model in production.
+      each new table before enabling the family model in production.
 
 ## Planned My Account expansion
 
@@ -174,10 +179,10 @@ These items remain unchecked until implementation and runtime verification are c
 - [ ] A Student can view only their own enrollment, payment, and schedule records.
 - [ ] A Student cannot infer another Student's records by changing route or query parameters.
 - [ ] Staff manage a Student through `/admin/students/[id]` without impersonating the Student or
-  entering the Student's `/account` session.
+      entering the Student's `/account` session.
 - [ ] Payment and schedule mutations re-check Staff authorization on the server.
 - [ ] A payment return page cannot mark a payment Paid without manual verification or a signed
-  Stripe webhook.
+      Stripe webhook.
 - [ ] Cal.com and Stripe credentials remain server-only.
 - [ ] Cal.com results are matched to a verified account or stable booking UID before display.
 - [ ] Mobile and desktop My Account states pass authenticated browser verification.

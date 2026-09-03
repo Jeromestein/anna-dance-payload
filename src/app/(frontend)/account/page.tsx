@@ -48,7 +48,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const authEmail = typeof data.claims.email === 'string' ? data.claims.email : 'Verified email'
   const metadata = data.claims.user_metadata
   const { data: storedProfile, error: profileError } = await supabase
-    .from('user_profiles')
+    .from('app_user_profiles')
     .select('email, name, phone, guardian_name, guardian_phone')
     .eq('id', studentId)
     .maybeSingle<StoredStudentProfile>()

@@ -22,9 +22,7 @@ function redirectWithStatus(path: string, type: 'error' | 'message', text: strin
 }
 
 function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value,
-  )
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
 function readStudentProfile(formData: FormData, path: string): StudentProfileValues {
@@ -75,7 +73,7 @@ export async function updateStudentProfile(formData: FormData) {
 
   const profileValues = readStudentProfile(formData, path)
   const { data: updatedProfile, error: updateError } = await supabase
-    .from('user_profiles')
+    .from('app_user_profiles')
     .update(profileValues)
     .eq('id', currentStudentId)
     .select('id')
@@ -90,7 +88,7 @@ export async function updateStudentProfile(formData: FormData) {
       redirectWithStatus(path, 'error', 'We could not save your profile. Please try again.')
     }
 
-    const { error: insertError } = await supabase.from('user_profiles').insert({
+    const { error: insertError } = await supabase.from('app_user_profiles').insert({
       id: currentStudentId,
       email: authEmail.toLowerCase(),
       role: 'student',
@@ -124,7 +122,7 @@ export async function updateManagedStudentProfile(formData: FormData) {
   const profileValues = readStudentProfile(formData, path)
   const supabase = createSupabaseAdminClient()
   const { data, error } = await supabase
-    .from('user_profiles')
+    .from('app_user_profiles')
     .update(profileValues)
     .eq('id', targetStudentId)
     .select('id')

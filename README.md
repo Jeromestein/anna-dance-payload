@@ -73,7 +73,8 @@ The application uses one Supabase project, `anna-dance-payload-poc`
 
 - Payload stores CMS records in the project's PostgreSQL `public` schema;
 - Supabase Storage provides the S3-compatible website media library; and
-- Supabase Auth owns student and parent login, with account details in `public.user_profiles`.
+- Supabase Auth owns student and parent login, with account details in
+  `public.app_user_profiles`.
 
 Payload staff and student accounts are not merged. An `administrator` Payload account can open the
 student directory without a second administrator login. A `content-editor` can edit website content
@@ -82,13 +83,14 @@ only manage their own profile.
 
 The Supabase secret key is server-only. It must never use a `NEXT_PUBLIC_*` name or be imported by
 client components. S3 credentials follow the same server-only rule. Row Level Security is enabled
-on `user_profiles`; Payload's `public.users` table remains separate from Supabase's `auth.users`.
+on `app_user_profiles`, `app_payments`, and `app_schedule_entries`; Payload's `public.users` table
+remains separate from Supabase's `auth.users`.
 
 Payload's development schema synchronization is configured to ignore `user_profiles`, the legacy
-`student_profiles` name, and tables prefixed with `app_`. Use the `app_` prefix for future
-non-Payload operational tables. This ownership boundary prevents Payload from treating student or
-business tables as obsolete CMS tables while preserving automatic schema updates for Payload
-collections.
+`student_profiles` name, and tables prefixed with `app_`. The retained `user_profiles` table is a
+temporary rollback copy; application reads, writes, and new Auth profile creation use
+`app_user_profiles`. This ownership boundary prevents Payload from treating student or business
+tables as obsolete CMS tables while preserving automatic schema updates for Payload collections.
 
 The Supabase Data API is enabled only for student profile workflows. Payload tables do not grant
 access to the Data API roles; they remain accessible through Payload's direct PostgreSQL connection.
@@ -393,8 +395,8 @@ A checked item means the implementation exists and has been verified at the leve
 ### Acceptance
 
 - [x] Keep Payload CMS tables, S3 media, student Auth, and profiles in one Supabase project.
-- [x] Create `user_profiles`, RLS policies, and Auth synchronization triggers without changing the
-      existing Payload administrator.
+- [x] Create `app_user_profiles`, RLS policies, and Auth synchronization triggers without changing
+      the existing Payload administrator or deleting the legacy `user_profiles` rollback copy.
 - [x] Configure the Google OAuth provider for the shared Supabase project and register its callback
       URL in Google Cloud.
 - [ ] Configure Vercel Production and Preview `DATABASE_URL` values with the Supabase Transaction

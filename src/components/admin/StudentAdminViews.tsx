@@ -180,7 +180,7 @@ export async function StudentListView(props: AdminViewServerProps) {
 
   const supabase = createSupabaseAdminClient()
   let studentsQuery = supabase
-    .from('user_profiles')
+    .from('app_user_profiles')
     .select('id, email, name, phone, guardian_name, guardian_phone, created_at', {
       count: 'exact',
     })
@@ -293,7 +293,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
 
   const supabase = createSupabaseAdminClient()
   const { data, error } = await supabase
-    .from('user_profiles')
+    .from('app_user_profiles')
     .select('id, email, name, phone, guardian_name, guardian_phone, created_at')
     .eq('id', id)
     .maybeSingle<StudentProfile>()

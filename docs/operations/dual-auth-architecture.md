@@ -18,17 +18,17 @@ not use `Users`, `Staff Accounts`, or `Student Accounts` as navigation labels.
 
 ## Identity ownership
 
-| Identity | Login | Identity store | Primary access |
-| --- | --- | --- | --- |
-| Administrator Staff | `/admin` | Payload `public.users` | CMS, Staff, and Student management |
-| Content editor Staff | `/admin` | Payload `public.users` | Approved website content only |
-| Student | `/login` | Supabase `auth.users` | Own profile only |
+| Identity             | Login    | Identity store         | Primary access                     |
+| -------------------- | -------- | ---------------------- | ---------------------------------- |
+| Administrator Staff  | `/admin` | Payload `public.users` | CMS, Staff, and Student management |
+| Content editor Staff | `/admin` | Payload `public.users` | Approved website content only      |
+| Student              | `/login` | Supabase `auth.users`  | Own profile only                   |
 
-Student profile data is stored in `public.user_profiles`. Its `id` matches the
+Student profile data is stored in `public.app_user_profiles`. Its `id` matches the
 corresponding Supabase Auth user ID:
 
 ```text
-auth.users.id = public.user_profiles.id
+auth.users.id = public.app_user_profiles.id
 ```
 
 Passwords, sessions, and identity records are never synchronized between
@@ -90,7 +90,7 @@ Payload login cookie
   -> authenticate the Payload Staff member
   -> require role = administrator
   -> create a server-only Supabase admin client
-  -> read or update public.user_profiles
+  -> read or update public.app_user_profiles
 ```
 
 Every page and mutation that exposes Student data must independently verify
@@ -107,7 +107,7 @@ to list, search, open, or modify Student profiles through direct requests.
 Supabase session cookie
   -> verify Supabase claims
   -> resolve auth.users.id
-  -> read or update the matching public.user_profiles row
+  -> read or update the matching public.app_user_profiles row
   -> enforce ownership with Supabase RLS
 ```
 
@@ -126,7 +126,7 @@ Payload Staff permissions are determined only by the role on Payload's
 - `administrator`: may manage Staff and Students.
 - `content-editor`: may edit approved CMS content only.
 
-The legacy `public.user_profiles.role` field is not a Staff authorization
+The legacy profile `role` field is not a Staff authorization
 source. A value of `admin` in that table must never grant access to
 `/admin/students` or to a privileged mutation.
 
@@ -140,8 +140,9 @@ Payload owns:
 Supabase owns:
 
 - `auth.users`
-- `public.user_profiles`
-- Legacy `public.student_profiles`, while it remains present
+- `public.app_user_profiles`
+- `public.user_profiles`, retained temporarily as a rollback copy
+- Legacy `public.student_profiles`, if it remains present
 - Business tables prefixed with `app_`
 
 The Payload Postgres adapter must continue to exclude the Supabase business
@@ -190,7 +191,7 @@ test(auth): verify consolidated administration access
 
 ## Current profile model
 
-`public.user_profiles` currently represents one Student login and its profile
+`public.app_user_profiles` currently represents one Student login and its profile
 details. It does not yet support:
 
 - One parent managing multiple Students
