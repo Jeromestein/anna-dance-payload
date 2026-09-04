@@ -8,6 +8,12 @@ They create and evolve the legacy `public.user_profiles` table, then copy its re
 access. Auth triggers create new app profiles and synchronize email changes. The final schema
 supports email/password and Google-created Auth users.
 
+`20260904153000_add_cal_booking_sync.sql` adds short-lived booking intents and extends schedule
+entries with Cal.com synchronization and review fields. The active website flow stores only
+account-linked appointments; the additional match states remain available for historical safety.
+The migration was applied to the shared project on September 4, 2026, before enabling the Cal.com
+webhook.
+
 Payload staff and Supabase Auth users remain separate:
 
 - `public.users` contains Payload administrator and content-editor accounts.
@@ -53,10 +59,34 @@ their exact name is also added to the adapter filter) so CMS schema changes cann
 
 The Data API is enabled for student self-service access, but its database roles are intentionally
 restricted. `authenticated` receives only the row-level access required by `app_user_profiles` and
-read-only access to its own `app_payments` and `app_schedule_entries`. The server-only
-`service_role` administers those tables. Payload tables are not granted to `anon`, `authenticated`,
-or `service_role`; Payload reaches them through its direct PostgreSQL connection. Default Data API
-grants are also disabled for future tables and functions.
+read-only access to its own `app_payments` and `app_schedule_entries`. An authenticated account may
+insert only its own short-lived `app_booking_intents` record and cannot read booking intents. The
+server-only `service_role` administers those tables and processes signed Cal.com webhooks. Payload
+tables are not granted to `anon`, `authenticated`, or `service_role`; Payload reaches them through
+its direct PostgreSQL connection. Default Data API grants are also disabled for future tables and
+functions.
+
+## Cal.com webhook setup
+
+The application endpoint is `/api/integrations/cal/webhook`. Configure the deployment with:
+
+- `CAL_WEBHOOK_SECRET`: a new random secret used only by this webhook.
+- `CAL_ALLOWED_EVENT_TYPE_SLUGS`: a comma-separated allowlist. The default is
+  `trial-class-consultation`.
+
+Use the same secret in the Cal.com webhook settings. Subscribe to booking created, rescheduled,
+cancelled, confirmed, rejected, and completed events. Keep Cal.com's default payload shape so the
+handler receives booking UID, attendee, metadata, event type, timing, and status fields. The
+subscriber URL must be the deployed HTTPS URL; Cal.com Cloud does not send webhooks to localhost.
+
+The browser never receives the webhook secret or Supabase service-role key. A client-side booking
+success event is informational only; the signed webhook is the only automatic synchronization
+authority. The website does not render the Cal.com booking form for signed-out visitors, and
+webhooks without a valid account booking intent are acknowledged but not stored.
+
+The Cal.com Event Type remains public until the Academy chooses to hide it. A person with its direct
+Cal.com URL can therefore still book outside the website, but that booking will remain in Cal.com
+only and will not be imported into an Academy account without valid website account context.
 
 The legacy `user_profiles.role = admin` authorization path and table were removed by forward
 migrations. Staff authorization is determined exclusively by the Payload `public.users.role` field,

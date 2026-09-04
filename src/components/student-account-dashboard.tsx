@@ -1,27 +1,40 @@
+import Link from 'next/link'
+
 import type { EditableStudentProfile } from '@/components/student-profile-form'
 import { MobileAccountTabs } from '@/components/mobile-account-tabs'
 import { StudentProfileForm } from '@/components/student-profile-form'
 import type { MockStudentAccount } from '@/lib/account/mock-student-account'
+import {
+  type AccountScheduleEntry,
+  formatScheduleEntry,
+  getScheduleSourceLabel,
+  getScheduleStatusLabel,
+} from '@/lib/account/schedule'
 
 import styles from './student-account-dashboard.module.css'
 
 type StudentAccountDashboardProps = {
   account: MockStudentAccount
   profile: EditableStudentProfile
+  scheduleEntries: AccountScheduleEntry[]
+  scheduleLoadError?: boolean
   error?: string
   message?: string
   profileLoadError?: boolean
 }
 
-const september2026 = Array.from({ length: 30 }, (_, index) => index + 1)
-
 export function StudentAccountDashboard({
   account,
   profile,
+  scheduleEntries,
+  scheduleLoadError = false,
   error,
   message,
   profileLoadError = false,
 }: StudentAccountDashboardProps) {
+  const nextEntry = scheduleEntries.find((entry) => entry.status !== 'cancelled')
+  const nextEntryDisplay = nextEntry ? formatScheduleEntry(nextEntry) : null
+
   return (
     <section className={`${styles.section} account-page`}>
       <div className={styles.layout}>
@@ -38,8 +51,8 @@ export function StudentAccountDashboard({
 
         <p className={styles.previewNotice} role="status">
           <strong>Sample data</strong>
-          Payments and schedule are a front-end preview while the live records and integrations are
-          being prepared.
+          Semester and payment details are still a preview. Appointments below use synchronized
+          schedule records.
         </p>
 
         <nav className={styles.sectionNav} aria-label="My Account sections">
@@ -52,10 +65,12 @@ export function StudentAccountDashboard({
         <MobileAccountTabs>
           <div className={styles.summaryGrid} id="overview" data-account-tab="overview">
             <article className={styles.summaryCard}>
-              <span className={styles.summaryLabel}>Next class</span>
-              <strong>{account.nextClass.title}</strong>
+              <span className={styles.summaryLabel}>Next appointment</span>
+              <strong>{nextEntry?.title ?? 'No upcoming appointment'}</strong>
               <p>
-                {account.nextClass.time} · {account.nextClass.location}
+                {nextEntryDisplay
+                  ? `${nextEntryDisplay.date} · ${nextEntryDisplay.time}`
+                  : 'Book a consultation when you are ready.'}
               </p>
             </article>
             <article className={styles.summaryCard}>
@@ -111,70 +126,50 @@ export function StudentAccountDashboard({
               <header className={styles.panelHeader}>
                 <div>
                   <h2>My schedule</h2>
-                  <p>{account.term.dateRange}</p>
+                  <p>Academy classes and linked Cal.com appointments.</p>
                 </div>
-                <span className={styles.sampleTag}>Sample</span>
               </header>
 
               <div className={styles.scheduleBody}>
-                <div className={styles.calendar} aria-label="September 2026 calendar preview">
-                  <div className={styles.calendarTitle}>
-                    <strong>September 2026</strong>
-                    <span>5 scheduled dates</span>
-                  </div>
-                  <div className={styles.weekdays} aria-hidden="true">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                      <span key={day}>{day}</span>
-                    ))}
-                  </div>
-                  <div className={styles.days}>
-                    {[0, 1].map((day) => (
-                      <span className={styles.emptyDay} key={`empty-${day}`} aria-hidden="true" />
-                    ))}
-                    {september2026.map((day) => {
-                      const hasEvent = account.calendarDays.includes(day)
-                      const isCalEvent = day === 12
-                      return (
-                        <span
-                          className={`${styles.day} ${hasEvent ? styles.eventDay : ''} ${isCalEvent ? styles.calDay : ''}`}
-                          key={day}
-                          aria-label={hasEvent ? `September ${day}, scheduled` : `September ${day}`}
-                        >
-                          {day}
-                        </span>
-                      )
-                    })}
-                  </div>
-                  <div className={styles.calendarLegend}>
-                    <span>
-                      <i /> Semester class
-                    </span>
-                    <span>
-                      <i /> Cal.com appointment
-                    </span>
-                  </div>
-                </div>
-
                 <div className={styles.eventList} aria-label="Upcoming schedule">
-                  {account.events.map((event) => (
-                    <article className={styles.event} key={`${event.date}-${event.title}`}>
-                      <time className={styles.eventDate} dateTime={event.date}>
-                        <span>{event.month}</span>
-                        <strong>{event.day}</strong>
-                      </time>
-                      <div className={styles.eventInfo}>
-                        <strong>{event.title}</strong>
-                        <span>
-                          {event.time} · {event.location}
+                  {scheduleLoadError && (
+                    <p className={styles.scheduleMessage} role="alert">
+                      We could not refresh your appointments. Please try again shortly.
+                    </p>
+                  )}
+                  {!scheduleLoadError && scheduleEntries.length === 0 && (
+                    <div className={styles.emptySchedule}>
+                      <strong>No upcoming appointments</strong>
+                      <p>Your linked consultations and lessons will appear here.</p>
+                      <Link className="button button-secondary" href="/schedule#book">
+                        Book a consultation
+                      </Link>
+                    </div>
+                  )}
+                  {scheduleEntries.map((entry) => {
+                    const display = formatScheduleEntry(entry)
+
+                    return (
+                      <article className={styles.event} key={entry.id}>
+                        <time className={styles.eventDate} dateTime={entry.startsAt}>
+                          <span>{display.month}</span>
+                          <strong>{display.day}</strong>
+                        </time>
+                        <div className={styles.eventInfo}>
+                          <strong>{entry.title}</strong>
+                          <span>
+                            {display.time} · {entry.location || 'Location to be confirmed'}
+                          </span>
+                          <small>{getScheduleStatusLabel(entry)}</small>
+                        </div>
+                        <span
+                          className={`${styles.sourceTag} ${entry.source === 'cal_com' ? styles.sourceCal : ''}`}
+                        >
+                          {getScheduleSourceLabel(entry)}
                         </span>
-                      </div>
-                      <span
-                        className={`${styles.sourceTag} ${event.source === 'Cal.com preview' ? styles.sourceCal : ''}`}
-                      >
-                        {event.source}
-                      </span>
-                    </article>
-                  ))}
+                      </article>
+                    )
+                  })}
                 </div>
               </div>
             </article>

@@ -8,6 +8,13 @@ import { updateManagedStudentProfile } from '@/actions/student-profiles'
 import { isAdministratorUser } from '@/access/staff'
 import { getMockStudentAccount } from '@/lib/account/mock-student-account'
 import {
+  type AccountScheduleEntry,
+  formatScheduleEntry,
+  getScheduleSourceLabel,
+  getScheduleStatusLabel,
+  mapStoredScheduleEntry,
+} from '@/lib/account/schedule'
+import {
   buildStudentSearchFilter,
   getStudentIdFromRouteSegments,
   getStudentInitials,
@@ -29,6 +36,18 @@ type StudentProfile = {
   guardian_name: string | null
   guardian_phone: string | null
   created_at: string
+}
+
+type StoredScheduleEntry = {
+  id: string
+  entry_type: AccountScheduleEntry['entryType']
+  title: string
+  starts_at: string
+  ends_at: string
+  timezone: string
+  location: string | null
+  status: AccountScheduleEntry['status']
+  source: AccountScheduleEntry['source']
 }
 
 function getSearchParam(value: string | string[] | undefined) {
@@ -292,17 +311,32 @@ export async function StudentDetailView(props: AdminViewServerProps) {
   if (!id || !isSupabaseAdminConfigured()) notFound()
 
   const supabase = createSupabaseAdminClient()
-  const { data, error } = await supabase
-    .from('app_user_profiles')
-    .select('id, email, name, phone, guardian_name, guardian_phone, created_at')
-    .eq('id', id)
-    .maybeSingle<StudentProfile>()
+  const [profileResult, scheduleResult] = await Promise.all([
+    supabase
+      .from('app_user_profiles')
+      .select('id, email, name, phone, guardian_name, guardian_phone, created_at')
+      .eq('id', id)
+      .maybeSingle<StudentProfile>(),
+    supabase
+      .from('app_schedule_entries')
+      .select('id, entry_type, title, starts_at, ends_at, timezone, location, status, source')
+      .eq('user_profile_id', id)
+      .gte('ends_at', new Date().toISOString())
+      .order('starts_at', { ascending: true })
+      .limit(50),
+  ])
+  const { data, error } = profileResult
 
   if (error || !data) notFound()
 
   const routeError = getSearchParam(props.searchParams?.error)
   const message = getSearchParam(props.searchParams?.message)
   const account = getMockStudentAccount()
+  const scheduleEntries = ((scheduleResult.data ?? []) as StoredScheduleEntry[]).map(
+    mapStoredScheduleEntry,
+  )
+  const nextEntry = scheduleEntries.find((entry) => entry.status !== 'cancelled')
+  const nextEntryDisplay = nextEntry ? formatScheduleEntry(nextEntry) : null
 
   return (
     <StudentAdminTemplate props={props}>
@@ -332,8 +366,8 @@ export async function StudentDetailView(props: AdminViewServerProps) {
 
         <p className={previewStyles.notice} role="status">
           <strong>Sample data</strong>
-          Payment and schedule details below are a front-end preview. They are not connected to
-          Stripe, Cal.com, or enrollment records yet.
+          Semester and payment details remain a preview. Appointments below use synchronized
+          schedule records.
         </p>
 
         <MobileStudentAdminTabs>
@@ -353,9 +387,13 @@ export async function StudentDetailView(props: AdminViewServerProps) {
               <p>{account.payment.amount} sample tuition</p>
             </article>
             <article>
-              <span className={previewStyles.label}>Next class</span>
-              <strong>{account.nextClass.title}</strong>
-              <p>{account.nextClass.time}</p>
+              <span className={previewStyles.label}>Next appointment</span>
+              <strong>{nextEntry?.title ?? 'None scheduled'}</strong>
+              <p>
+                {nextEntryDisplay
+                  ? `${nextEntryDisplay.date} · ${nextEntryDisplay.time}`
+                  : 'No linked appointment'}
+              </p>
             </article>
           </div>
 
@@ -401,27 +439,39 @@ export async function StudentDetailView(props: AdminViewServerProps) {
             >
               <header className={previewStyles.panelHeader}>
                 <div>
-                  <h2 id="admin-schedule-heading">Schedule preview</h2>
-                  <p>Semester classes and Cal.com appointments.</p>
+                  <h2 id="admin-schedule-heading">Schedule</h2>
+                  <p>Academy classes and linked Cal.com appointments.</p>
                 </div>
-                <span className={previewStyles.tag}>Sample</span>
               </header>
               <div className={previewStyles.events}>
-                {account.events.slice(0, 3).map((event) => (
-                  <article className={previewStyles.event} key={`${event.date}-${event.title}`}>
-                    <time className={previewStyles.date} dateTime={event.date}>
-                      <span>{event.month}</span>
-                      <strong>{event.day}</strong>
-                    </time>
-                    <div className={previewStyles.eventInfo}>
-                      <strong>{event.title}</strong>
-                      <span>
-                        {event.time} · {event.location}
-                      </span>
-                    </div>
-                    <span className={previewStyles.source}>{event.source}</span>
-                  </article>
-                ))}
+                {scheduleResult.error && (
+                  <p className="student-admin__alert student-admin__alert--error" role="alert">
+                    Schedule records could not be loaded.
+                  </p>
+                )}
+                {!scheduleResult.error && scheduleEntries.length === 0 && (
+                  <p className={previewStyles.empty}>No linked appointments or classes.</p>
+                )}
+                {scheduleEntries.map((entry) => {
+                  const display = formatScheduleEntry(entry)
+
+                  return (
+                    <article className={previewStyles.event} key={entry.id}>
+                      <time className={previewStyles.date} dateTime={entry.startsAt}>
+                        <span>{display.month}</span>
+                        <strong>{display.day}</strong>
+                      </time>
+                      <div className={previewStyles.eventInfo}>
+                        <strong>{entry.title}</strong>
+                        <span>
+                          {display.time} · {entry.location || 'Location to be confirmed'}
+                        </span>
+                        <small>{getScheduleStatusLabel(entry)}</small>
+                      </div>
+                      <span className={previewStyles.source}>{getScheduleSourceLabel(entry)}</span>
+                    </article>
+                  )
+                })}
               </div>
             </section>
           </div>

@@ -127,6 +127,69 @@
   padding: calc(var(--base) * 1.8) 0 calc(var(--base) * 3);
 }
 
+.appointment-admin {
+  width: 100%;
+  padding: calc(var(--base) * 1.8) 0 calc(var(--base) * 3);
+}
+
+.appointment-admin__table-wrap {
+  overflow-x: auto;
+}
+
+.appointment-admin__table {
+  width: 100%;
+
+  th,
+  td {
+    min-width: 150px;
+    vertical-align: top;
+  }
+
+  th:first-child,
+  td:first-child {
+    min-width: 235px;
+  }
+
+  th:nth-child(2),
+  td:nth-child(2) {
+    min-width: 210px;
+  }
+
+  th:last-child,
+  td:last-child {
+    min-width: 270px;
+  }
+
+  td strong,
+  td span,
+  td small {
+    display: block;
+  }
+
+  td span,
+  td small {
+    margin-top: 4px;
+    color: var(--theme-elevation-600);
+  }
+}
+
+.appointment-admin__empty {
+  padding: calc(var(--base) * 2);
+  border: 1px dashed var(--theme-elevation-250);
+  border-radius: 8px;
+  background: var(--theme-elevation-50);
+  text-align: center;
+
+  h2 {
+    margin: 0 0 calc(var(--base) * 0.4);
+  }
+
+  p {
+    margin: 0;
+    color: var(--theme-elevation-600);
+  }
+}
+
 .student-admin--detail {
   max-width: 900px;
 }

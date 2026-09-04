@@ -46,6 +46,7 @@ export default buildConfig({
       },
       afterNavLinks: [
         '/components/admin/StudentNavLink#StudentNavLink',
+        '/components/admin/AppointmentNavLink#AppointmentNavLink',
         '/components/admin/VisitWebsiteNavLink#VisitWebsiteNavLink',
       ],
       views: {
@@ -58,6 +59,11 @@ export default buildConfig({
           Component: '/components/admin/StudentAdminViews#StudentDetailView',
           exact: true,
           path: '/students/:id',
+        },
+        appointments: {
+          Component: '/components/admin/AppointmentAdminView#AppointmentAdminView',
+          exact: true,
+          path: '/appointments',
         },
       },
     },

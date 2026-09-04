@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { StudentAccountDashboard } from '@/components/student-account-dashboard'
 import type { EditableStudentProfile } from '@/components/student-profile-form'
 import { getMockStudentAccount } from '@/lib/account/mock-student-account'
+import { mapStoredScheduleEntry } from '@/lib/account/schedule'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { createClient } from '@/lib/supabase/server'
 
@@ -52,6 +53,13 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     .select('email, name, phone, guardian_name, guardian_phone')
     .eq('id', studentId)
     .maybeSingle<StoredStudentProfile>()
+  const { data: storedSchedule, error: scheduleError } = await supabase
+    .from('app_schedule_entries')
+    .select('id, entry_type, title, starts_at, ends_at, timezone, location, status, source')
+    .eq('user_profile_id', studentId)
+    .gte('ends_at', new Date().toISOString())
+    .order('starts_at', { ascending: true })
+    .limit(50)
 
   const profile: EditableStudentProfile = {
     id: studentId,
@@ -73,6 +81,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     <StudentAccountDashboard
       account={getMockStudentAccount()}
       profile={profile}
+      scheduleEntries={(storedSchedule ?? []).map(mapStoredScheduleEntry)}
+      scheduleLoadError={Boolean(scheduleError)}
       error={params.error}
       message={params.message}
       profileLoadError={Boolean(profileError)}

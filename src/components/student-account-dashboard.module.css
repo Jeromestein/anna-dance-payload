@@ -416,6 +416,38 @@
   justify-self: start;
 }
 
+.eventInfo small {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.scheduleMessage,
+.emptySchedule {
+  margin: 0;
+  padding: 28px;
+  border: 1px dashed var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.emptySchedule strong {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 1.05rem;
+}
+
+.emptySchedule p {
+  margin: 8px 0 18px;
+}
+
 .event {
   display: grid;
   grid-template-columns: 48px 1fr auto;

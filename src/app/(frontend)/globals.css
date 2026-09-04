@@ -1547,6 +1547,39 @@ textarea:focus-visible {
 .schedule-booking-frame {
   padding: 10px;
 }
+.booking-account-context {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  margin: 2px 4px 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--cream);
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-align: center;
+}
+.booking-account-context a {
+  color: var(--rose-dark);
+  font-weight: 700;
+}
+.booking-login-required {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.booking-login-required .button {
+  min-height: 44px;
+  color: var(--white);
+}
+.booking-sync-status {
+  color: var(--teal-dark);
+}
 .cal-booking-shell {
   width: 100%;
   min-height: 760px;
@@ -3525,6 +3558,14 @@ body:has(.legal-page) .floating-booking-button {
   .schedule-booking-frame {
     padding: 0;
     border-radius: 20px;
+  }
+  .booking-account-context {
+    display: grid;
+    margin: 8px;
+    font-size: 0.76rem;
+  }
+  .booking-login-required {
+    display: grid;
   }
   .cal-booking-shell {
     min-height: 820px;

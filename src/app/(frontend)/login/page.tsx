@@ -1,32 +1,35 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { BrandLogo } from "@/components/brand-logo";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createClient } from "@/lib/supabase/server";
-import { login, signup } from "./actions";
-import { GoogleSignInButton } from "./google-sign-in-button";
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { BrandLogo } from '@/components/brand-logo'
+import { getSafeNextPath } from '@/lib/auth/redirects'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { createClient } from '@/lib/supabase/server'
+import { login, signup } from './actions'
+import { GoogleSignInButton } from './google-sign-in-button'
 
-export const metadata: Metadata = { title: "Student Login" };
+export const metadata: Metadata = { title: 'Student Login' }
 
 type LoginPageProps = {
   searchParams: Promise<{
-    error?: string;
-    message?: string;
-    mode?: string;
-  }>;
-};
+    error?: string
+    message?: string
+    mode?: string
+    next?: string
+  }>
+}
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const params = await searchParams;
-  const isSignup = params.mode === "signup";
+  const params = await searchParams
+  const isSignup = params.mode === 'signup'
+  const nextPath = getSafeNextPath(params.next)
 
   if (isSupabaseConfigured()) {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getClaims();
+    const supabase = await createClient()
+    const { data } = await supabase.auth.getClaims()
 
     if (data?.claims?.sub) {
-      redirect('/account')
+      redirect(nextPath)
     }
   }
 
@@ -43,29 +46,52 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       </div>
 
       <div className="auth-form-panel">
-        <Link href="/" className="wordmark auth-mobile-wordmark" aria-label="Anna Dance Academy home">
+        <Link
+          href="/"
+          className="wordmark auth-mobile-wordmark"
+          aria-label="Anna Dance Academy home"
+        >
           <BrandLogo />
         </Link>
 
         <article className="auth-card auth-card-simple">
           <header className="auth-card-header">
-            {isSignup && <Link className="auth-back-link" href="/login" aria-label="Back to login">←</Link>}
-            <p className="eyebrow">{isSignup ? "New Student" : "Student"}</p>
-            <h1>{isSignup ? "Create your account" : "Log in"}</h1>
+            {isSignup && (
+              <Link
+                className="auth-back-link"
+                href={`/login?next=${encodeURIComponent(nextPath)}`}
+                aria-label="Back to login"
+              >
+                ←
+              </Link>
+            )}
+            <p className="eyebrow">{isSignup ? 'New Student' : 'Student'}</p>
+            <h1>{isSignup ? 'Create your account' : 'Log in'}</h1>
             <p className="auth-card-copy">
               {isSignup
-                ? "Create the student’s account with Google or email. Contact information is optional."
-                : "Continue with Google or use the email and password connected to your account."}
+                ? 'Create the student’s account with Google or email. Contact information is optional.'
+                : 'Continue with Google or use the email and password connected to your account.'}
             </p>
           </header>
 
-          {params.error && <p className="auth-alert auth-alert-error" role="alert">{params.error}</p>}
-          {params.message && <p className="auth-alert auth-alert-success" role="status">{params.message}</p>}
+          {params.error && (
+            <p className="auth-alert auth-alert-error" role="alert">
+              {params.error}
+            </p>
+          )}
+          {params.message && (
+            <p className="auth-alert auth-alert-success" role="status">
+              {params.message}
+            </p>
+          )}
 
-          <GoogleSignInButton />
-          <div className="auth-divider"><span>or continue with email</span></div>
+          <GoogleSignInButton nextPath={nextPath} />
+          <div className="auth-divider">
+            <span>or continue with email</span>
+          </div>
 
           <form action={isSignup ? signup : login} className="auth-form">
+            <input type="hidden" name="next" value={nextPath} />
             {isSignup && (
               <label htmlFor="student_name">
                 Student name
@@ -116,7 +142,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete={isSignup ? "new-password" : "current-password"}
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
                 minLength={8}
                 maxLength={72}
                 placeholder="At least 8 characters"
@@ -133,7 +159,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
             {isSignup && (
               <fieldset className="auth-optional-contact">
-                <legend>Parent/guardian contact <span>Optional</span></legend>
+                <legend>
+                  Parent/guardian contact <span>Optional</span>
+                </legend>
                 <div className="auth-optional-fields">
                   <label htmlFor="guardian_name">
                     Name
@@ -164,18 +192,25 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             )}
 
             <button className="button auth-submit" type="submit">
-              {isSignup ? "Create account" : "Log in"}
+              {isSignup ? 'Create account' : 'Log in'}
             </button>
           </form>
 
           <div className="auth-secondary-action">
-            <span>{isSignup ? "Already have an account?" : "New to Anna Dance Academy?"}</span>
-            <Link className="button button-secondary" href={isSignup ? "/login" : "/login?mode=signup"}>
-              {isSignup ? "Log in" : "Create an account"}
+            <span>{isSignup ? 'Already have an account?' : 'New to Anna Dance Academy?'}</span>
+            <Link
+              className="button button-secondary"
+              href={
+                isSignup
+                  ? `/login?next=${encodeURIComponent(nextPath)}`
+                  : `/login?mode=signup&next=${encodeURIComponent(nextPath)}`
+              }
+            >
+              {isSignup ? 'Log in' : 'Create an account'}
             </Link>
           </div>
         </article>
       </div>
     </section>
-  );
+  )
 }

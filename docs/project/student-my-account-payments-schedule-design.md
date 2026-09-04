@@ -2,7 +2,8 @@
 
 **Decision date:** September 2, 2026
 
-**Status:** Approved design direction; implementation and external-service configuration are pending.
+**Status:** Approved design direction; Cal.com synchronization is implemented locally and in the
+database, while deployment and external-service configuration remain pending.
 
 **Primary routes:** `/account`, `/admin/students`, and `/admin/students/:id`
 
@@ -356,27 +357,37 @@ work is not yet implemented or externally verified.
 ### G. Cal.com integration
 
 - [ ] Confirm the Cal.com account and plan support the required API and webhook access.
-- [ ] Add a server-only Cal.com client and timeout/error handling.
+- [x] Add an authenticated, short-lived booking-intent endpoint for account-aware embeds.
+- [x] Prefill the signed-in account name and verified email and pass only an opaque intent ID as
+      Cal.com metadata.
+- [x] Require a Student login before rendering the website's Cal.com booking form.
+- [x] Add a server-only signed webhook handler and event-type allowlist.
 - [ ] Query upcoming bookings using the authenticated verified email only as the first bridge.
 - [ ] Filter returned bookings again before rendering Student data.
-- [ ] Store and use Cal.com booking UIDs for stable Student ownership.
-- [ ] Add signed webhooks for created, rescheduled, and cancelled bookings.
-- [ ] Make webhook handling idempotent.
+- [x] Store and use Cal.com booking UIDs for idempotent synchronization.
+- [x] Store only appointments with valid account context in the active synchronization flow.
+- [x] Add a read-only administrator Appointments view for linked bookings.
+- [x] Read linked schedule records from Student My Account and the Staff Student detail page.
+- [x] Apply `20260904153000_add_cal_booking_sync.sql` to the intended Supabase project.
+- [ ] Configure the deployed HTTPS webhook URL and shared secret in Cal.com.
 - [ ] Add Google Calendar, Outlook, and ICS actions where Cal.com provides them.
 - [ ] Confirm no Student can discover another attendee or Academy booking.
-- [ ] Document the fallback when Cal.com is unavailable.
+- [x] Hide the booking form and direct Cal.com fallback when login or account context is unavailable.
+- [ ] Hide or privatize the Cal.com Event Type; this external setting is intentionally deferred.
+- [ ] Add a server-side Cal.com API reconciliation job for missed webhooks.
 
 ### H. Verification and release
 
-- [ ] Run `pnpm typecheck`.
-- [ ] Run the relevant unit and integration tests.
-- [ ] Run `git diff --check`.
+- [x] Run `pnpm typecheck`.
+- [x] Run the relevant unit and integration tests.
+- [x] Run `git diff --check`.
 - [ ] Verify Staff directory and detail pages with administrator and content-editor sessions.
 - [ ] Verify My Account with dedicated Student test accounts.
 - [ ] Verify cross-account and direct-route denial cases.
 - [ ] Verify Stripe payment flows in test mode before any live transaction.
 - [ ] Verify Cal.com query and webhook behavior with dedicated test bookings.
-- [ ] Visually verify desktop and mobile states in the Codex in-app browser.
+- [x] Visually verify the signed-out login gate on desktop and mobile.
+- [ ] Visually verify the signed-in Cal.com booking page on desktop and mobile.
 - [ ] Verify keyboard navigation, focus visibility, labels, status announcements, and contrast.
 - [ ] Confirm no keys, payment credentials, or other sensitive values appear in HTML, browser logs,
       screenshots, or committed files.

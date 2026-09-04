@@ -11,6 +11,10 @@ const removalMigration = readFileSync(
   resolve(process.cwd(), 'supabase/migrations/20260904111500_drop_legacy_user_profiles.sql'),
   'utf8',
 )
+const calBookingMigration = readFileSync(
+  resolve(process.cwd(), 'supabase/migrations/20260904153000_add_cal_booking_sync.sql'),
+  'utf8',
+)
 
 describe('application account schema', () => {
   it('creates and backfills the app tables before removing the legacy profile table', () => {
@@ -53,5 +57,14 @@ describe('application account schema', () => {
     expect(migration).toContain('starts_at timestamptz not null')
     expect(migration).toContain('cal_booking_uid text unique')
     expect(migration).not.toMatch(/card_number|card_cvc|bank_account_number/)
+  })
+
+  it('supports account-linked Cal.com appointments with guarded intent storage', () => {
+    expect(calBookingMigration).toContain('create table if not exists public.app_booking_intents')
+    expect(calBookingMigration).toContain('alter column user_profile_id drop not null')
+    expect(calBookingMigration).toContain("match_status in ('linked', 'unmatched', 'needs_review')")
+    expect(calBookingMigration).toContain('app_schedule_entries_booking_intent_unique')
+    expect(calBookingMigration).toContain('grant insert on table public.app_booking_intents')
+    expect(calBookingMigration).not.toContain('grant select on table public.app_booking_intents')
   })
 })
