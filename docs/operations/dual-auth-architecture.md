@@ -141,19 +141,25 @@ Supabase owns:
 
 - `auth.users`
 - `public.app_user_profiles`
-- `public.user_profiles`, retained temporarily as a rollback copy
-- Legacy `public.student_profiles`, if it remains present
 - Business tables prefixed with `app_`
+
+Deprecated or historical tables:
+
+- `public.user_profiles`: deprecated legacy table, removed by
+  `20260904111500_drop_legacy_user_profiles.sql` after dependency and replacement-coverage checks.
+- `public.student_profiles`: historical name only. It was renamed to `public.user_profiles` and does
+  not exist in production; there is no separate table to delete.
 
 The Payload Postgres adapter must continue to exclude the Supabase business
 tables:
 
 ```ts
-tablesFilter: ['!user_profiles', '!student_profiles', '!app_*']
+tablesFilter: ['!student_profiles', '!app_*']
 ```
 
-This prevents Payload schema synchronization from treating business tables as
-obsolete CMS tables.
+This prevents Payload schema synchronization from treating business tables as obsolete CMS tables.
+The exact `!user_profiles` entry was removed with the legacy table. Keep `!student_profiles` while
+historical migrations remain supported.
 
 ## Secret handling
 

@@ -1,5 +1,9 @@
 # Anna Dance Academy
 
+> Historical snapshot: this document describes the original schema. References to
+> `public.user_profiles` and `public.student_profiles` are not current; both tables have been removed
+> and the active profile table is `public.app_user_profiles`.
+
 A responsive Next.js website for Anna Dance Academy with public marketing pages, consultation booking, contact inquiry delivery, Supabase authentication, editable user profiles, and protected administrator tools.
 
 For the current product status and prioritized backlog, see [PROJECT_STATUS_AND_ROADMAP.md](./PROJECT_STATUS_AND_ROADMAP.md).

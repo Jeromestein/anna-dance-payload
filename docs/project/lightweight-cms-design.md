@@ -1,5 +1,9 @@
 # Anna Dance Academy Custom Lightweight CMS Design
 
+> Historical scope note: references to `public.user_profiles` describe the schema at the time this
+> design was written. That deprecated table has since been removed and replaced by
+> `public.app_user_profiles`.
+
 **Document status:** Isolated Payload proof-of-concept scaffold created; new Supabase setup and runtime acceptance pending
 
 **Date:** August 26, 2026

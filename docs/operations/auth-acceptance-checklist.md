@@ -24,9 +24,10 @@ items remain unchecked until implemented and verified.
 - [x] Payload Staff authentication uses Payload's `public.users` collection.
 - [x] Staff roles include `administrator` and `content-editor`.
 - [x] Supabase Students authenticate through `/login`.
-- [x] Student profiles use `public.app_user_profiles`; `public.user_profiles` remains only as a
-      rollback copy.
-- [x] Payload excludes `user_profiles`, `student_profiles`, and `app_*` tables
+- [x] Student profiles use `public.app_user_profiles`; the deprecated `public.user_profiles` table
+      has been removed.
+- [x] Confirm `public.student_profiles` is a historical name and is not present in production.
+- [x] Payload excludes `student_profiles` and `app_*` tables
       from schema synchronization.
 - [x] The Supabase admin client imports `server-only`.
 - [x] The service-role key is read from `SUPABASE_SERVICE_ROLE_KEY`.
@@ -41,6 +42,11 @@ items remain unchecked until implemented and verified.
 - [ ] Confirm the service-role key is absent from client bundles, browser
       responses, logs, and committed files.
 - [x] Confirm the forward RLS migration is applied to the production database.
+- [x] Confirm no code, function, policy, scheduled job, or external integration depends on the
+      deprecated `public.user_profiles` table.
+- [x] Confirm every legacy profile ID exists in `public.app_user_profiles` before removal.
+- [x] Drop `public.user_profiles` through a new forward migration, verify the
+      production schema, then remove its exact Payload filter and rollback-copy documentation.
 
 ## 3. Staff access
 
@@ -55,7 +61,7 @@ items remain unchecked until implemented and verified.
 - [ ] A content editor cannot open `/admin/students/[id]` directly.
 - [ ] A content editor cannot call a Student profile mutation directly.
 - [ ] A Supabase Student session does not grant access to `/admin/students`.
-- [ ] A legacy `user_profiles.role = admin` value does not grant Staff access.
+- [x] Remove the legacy `user_profiles.role = admin` authorization path and table.
 
 ## 4. Administrator Student management
 

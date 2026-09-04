@@ -1,5 +1,9 @@
 # Anna Dance Academy Website: Status and Roadmap
 
+> Historical snapshot: schema descriptions below reflect the earlier implementation. The deprecated
+> `public.user_profiles` table has been removed; current account profiles use
+> `public.app_user_profiles`.
+
 **Review date:** August 16, 2026
 
 **Reviewed revision:** `656fad8`

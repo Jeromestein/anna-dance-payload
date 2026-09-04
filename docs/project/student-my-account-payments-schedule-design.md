@@ -295,7 +295,9 @@ work is not yet implemented or externally verified.
 ### C. Data and authorization foundation
 
 - [x] Create and apply the first-release `app_user_profiles`, `app_payments`, and
-      `app_schedule_entries` migration while retaining `user_profiles` as a rollback copy.
+      `app_schedule_entries` migration and backfill legacy profiles.
+- [x] Remove the deprecated `user_profiles` table with a guarded forward migration after dependency,
+      replacement-coverage, and production CRUD verification.
 - [x] Define stable UUIDs and uniqueness rules before attaching Stripe or Cal.com references.
 - [x] Store money in integer minor units with an explicit currency.
 - [ ] Add payment verification source, verifier, and timestamp fields.

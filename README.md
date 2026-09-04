@@ -86,11 +86,12 @@ client components. S3 credentials follow the same server-only rule. Row Level Se
 on `app_user_profiles`, `app_payments`, and `app_schedule_entries`; Payload's `public.users` table
 remains separate from Supabase's `auth.users`.
 
-Payload's development schema synchronization is configured to ignore `user_profiles`, the legacy
-`student_profiles` name, and tables prefixed with `app_`. The retained `user_profiles` table is a
-temporary rollback copy; application reads, writes, and new Auth profile creation use
-`app_user_profiles`. This ownership boundary prevents Payload from treating student or business
-tables as obsolete CMS tables while preserving automatic schema updates for Payload collections.
+Payload's development schema synchronization is configured to ignore the historical
+`student_profiles` name and tables prefixed with `app_`. The deprecated `public.user_profiles` table
+was removed after its records were moved to `app_user_profiles` and production profile CRUD was
+verified. `student_profiles` is only a historical migration name and is not present in production.
+This ownership boundary prevents Payload from treating student or business tables as obsolete CMS
+tables while preserving automatic schema updates for Payload collections.
 
 The Supabase Data API is enabled only for student profile workflows. Payload tables do not grant
 access to the Data API roles; they remain accessible through Payload's direct PostgreSQL connection.
@@ -396,7 +397,9 @@ A checked item means the implementation exists and has been verified at the leve
 
 - [x] Keep Payload CMS tables, S3 media, student Auth, and profiles in one Supabase project.
 - [x] Create `app_user_profiles`, RLS policies, and Auth synchronization triggers without changing
-      the existing Payload administrator or deleting the legacy `user_profiles` rollback copy.
+      the existing Payload administrator.
+- [x] Remove the deprecated `user_profiles` rollback table after dependency and production CRUD
+      verification.
 - [x] Configure the Google OAuth provider for the shared Supabase project and register its callback
       URL in Google Cloud.
 - [ ] Configure Vercel Production and Preview `DATABASE_URL` values with the Supabase Transaction

@@ -7,14 +7,26 @@ const migration = readFileSync(
   resolve(process.cwd(), 'supabase/migrations/20260903170000_create_app_account_tables.sql'),
   'utf8',
 )
+const removalMigration = readFileSync(
+  resolve(process.cwd(), 'supabase/migrations/20260904111500_drop_legacy_user_profiles.sql'),
+  'utf8',
+)
 
 describe('application account schema', () => {
-  it('creates the app tables and preserves the legacy profile table', () => {
+  it('creates and backfills the app tables before removing the legacy profile table', () => {
     expect(migration).toContain('create table if not exists public.app_user_profiles')
     expect(migration).toContain('create table if not exists public.app_payments')
     expect(migration).toContain('create table if not exists public.app_schedule_entries')
     expect(migration).toContain('from public.user_profiles')
     expect(migration).not.toContain('drop table public.user_profiles')
+  })
+
+  it('removes the legacy profile table only after checking replacement coverage', () => {
+    expect(removalMigration).toContain("to_regclass('public.app_user_profiles')")
+    expect(removalMigration).toContain('left join public.app_user_profiles')
+    expect(removalMigration).toContain('where replacement.id is null')
+    expect(removalMigration).toContain('drop table if exists public.user_profiles')
+    expect(removalMigration).not.toMatch(/drop table[^;]+cascade/i)
   })
 
   it('moves new profile creation and email synchronization to the app table', () => {
