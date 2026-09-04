@@ -18,6 +18,7 @@ export function SiteHeader({ isAuthenticated }: SiteHeaderProps) {
 
 function SiteHeaderContent({ isAuthenticated, pathname }: SiteHeaderProps & { pathname: string }) {
   const [open, setOpen] = useState(false)
+  const loginHref = pathname === '/schedule' ? '/login?next=%2Fschedule%23book' : '/login'
 
   return (
     <header className="site-header">
@@ -39,7 +40,7 @@ function SiteHeaderContent({ isAuthenticated, pathname }: SiteHeaderProps & { pa
         </nav>
 
         <div className="header-actions">
-          <Link href={isAuthenticated ? '/account' : '/login'} className="header-account-link">
+          <Link href={isAuthenticated ? '/account' : loginHref} className="header-account-link">
             {isAuthenticated ? 'My Account' : 'Log in'}
           </Link>
           <Link href="/schedule" className="button button-small desktop-cta">
@@ -66,7 +67,7 @@ function SiteHeaderContent({ isAuthenticated, pathname }: SiteHeaderProps & { pa
               {item.label}
             </Link>
           ))}
-          <Link href={isAuthenticated ? '/account' : '/login'}>
+          <Link href={isAuthenticated ? '/account' : loginHref}>
             {isAuthenticated ? 'My Account' : 'Log in'}
           </Link>
           <Link href="/schedule" className="button">
