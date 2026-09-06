@@ -11,6 +11,7 @@ import {
   getScheduleStatusLabel,
   mapStoredScheduleEntry,
 } from '@/lib/account/schedule'
+import { groupCalAppointments } from '@/lib/cal/appointment-sessions'
 import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase/admin'
 
 type Appointment = {
@@ -19,6 +20,8 @@ type Appointment = {
   attendee_name: string | null
   attendee_email: string | null
   cal_booking_uid: string | null
+  cal_session_key: string | null
+  seat_capacity: number | null
   entry_type: AccountScheduleEntry['entryType']
   title: string
   starts_at: string
@@ -91,7 +94,7 @@ export async function AppointmentAdminView(props: AdminViewServerProps) {
     supabase
       .from('app_schedule_entries')
       .select(
-        'id, user_profile_id, attendee_name, attendee_email, cal_booking_uid, entry_type, title, starts_at, ends_at, timezone, location, status, source',
+        'id, user_profile_id, attendee_name, attendee_email, cal_booking_uid, cal_session_key, seat_capacity, entry_type, title, starts_at, ends_at, timezone, location, status, source',
       )
       .eq('source', 'cal_com')
       .eq('match_status', 'linked')
@@ -104,6 +107,7 @@ export async function AppointmentAdminView(props: AdminViewServerProps) {
   const appointments = (appointmentsResult.data ?? []) as Appointment[]
   const students = (studentsResult.data ?? []) as StudentOption[]
   const studentsById = new Map(students.map((student) => [student.id, student]))
+  const appointmentSessions = groupCalAppointments(appointments)
   const loadError = appointmentsResult.error || studentsResult.error
 
   return (
@@ -138,52 +142,72 @@ export async function AppointmentAdminView(props: AdminViewServerProps) {
             <p>Bookings made by signed-in Students will appear here after secure confirmation.</p>
           </div>
         ) : (
-          <div className="table appointment-admin__table-wrap">
-            <table className="appointment-admin__table">
-              <thead>
-                <tr>
-                  <th scope="col">Appointment</th>
-                  <th scope="col">Attendee</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Student account</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.map((appointment) => {
-                  const scheduleEntry = mapStoredScheduleEntry(appointment)
-                  const display = formatScheduleEntry(scheduleEntry)
-                  const linkedStudent = appointment.user_profile_id
-                    ? studentsById.get(appointment.user_profile_id)
-                    : null
+          <div className="appointment-admin__sessions">
+            {appointmentSessions.map((session) => {
+              const sessionEntry = mapStoredScheduleEntry(session.representative)
+              const display = formatScheduleEntry(sessionEntry)
+              const seatSummary = session.capacity
+                ? `${session.bookedSeats} / ${session.capacity} seats`
+                : `${session.bookedSeats} booked`
 
-                  return (
-                    <tr key={appointment.id}>
-                      <td>
-                        <strong>{appointment.title}</strong>
-                        <span>
-                          {display.date} · {display.time}
-                        </span>
-                        <small>{appointment.cal_booking_uid}</small>
-                      </td>
-                      <td>
-                        <strong>{appointment.attendee_name || 'Attendee'}</strong>
-                        <span>{appointment.attendee_email || 'Email not provided'}</span>
-                      </td>
-                      <td>{getScheduleStatusLabel(scheduleEntry)}</td>
-                      <td>
-                        {linkedStudent ? (
-                          <Link href={`/admin/students/${linkedStudent.id}`}>
-                            {linkedStudent.name}
-                          </Link>
-                        ) : (
-                          <span>Account unavailable</span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+              return (
+                <section className="appointment-admin__session" key={session.key}>
+                  <header className="appointment-admin__session-header">
+                    <div>
+                      <h2>{session.representative.title}</h2>
+                      <p>
+                        {display.date} · {display.time}
+                      </p>
+                      {session.representative.location && (
+                        <small>{session.representative.location}</small>
+                      )}
+                    </div>
+                    <strong className="appointment-admin__seat-count">{seatSummary}</strong>
+                  </header>
+
+                  <div className="table appointment-admin__table-wrap">
+                    <table className="appointment-admin__table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Attendee</th>
+                          <th scope="col">Status</th>
+                          <th scope="col">Student account</th>
+                          <th scope="col">Cal.com reference</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {session.appointments.map((appointment) => {
+                          const scheduleEntry = mapStoredScheduleEntry(appointment)
+                          const linkedStudent = studentsById.get(appointment.user_profile_id)
+
+                          return (
+                            <tr key={appointment.id}>
+                              <td>
+                                <strong>{appointment.attendee_name || 'Attendee'}</strong>
+                                <span>{appointment.attendee_email || 'Email not provided'}</span>
+                              </td>
+                              <td>{getScheduleStatusLabel(scheduleEntry)}</td>
+                              <td>
+                                {linkedStudent ? (
+                                  <Link href={`/admin/students/${linkedStudent.id}`}>
+                                    {linkedStudent.name}
+                                  </Link>
+                                ) : (
+                                  <span>Account unavailable</span>
+                                )}
+                              </td>
+                              <td>
+                                <small>{appointment.cal_booking_uid || 'Not provided'}</small>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )
+            })}
           </div>
         )}
       </div>

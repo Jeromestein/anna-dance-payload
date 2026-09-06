@@ -71,8 +71,8 @@ functions.
 The application endpoint is `/api/integrations/cal/webhook`. Configure the deployment with:
 
 - `CAL_WEBHOOK_SECRET`: a new random secret used only by this webhook.
-- `CAL_ALLOWED_EVENT_TYPE_SLUGS`: a comma-separated allowlist. The default is
-  `trial-class-consultation`.
+- `CAL_ALLOWED_EVENT_TYPE_SLUGS`: a comma-separated allowlist. The example enables
+  `trial-class-consultation`, `level-class`, and `duet-class`.
 
 Use the same secret in the Cal.com webhook settings. Subscribe to booking created, rescheduled,
 cancelled, confirmed, rejected, and completed events. Keep Cal.com's default payload shape so the
@@ -87,6 +87,12 @@ webhooks without a valid account booking intent are acknowledged but not stored.
 The Cal.com Event Type remains public until the Academy chooses to hide it. A person with its direct
 Cal.com URL can therefore still book outside the website, but that booking will remain in Cal.com
 only and will not be imported into an Academy account without valid website account context.
+
+`20260906160000_support_cal_seated_bookings.sql` allows seated Event Types to store one schedule
+entry per attendee, even when Cal.com reuses a booking UID for the shared session. The Admin view
+groups those attendee rows by event type and start time and shows occupied seats against the
+capacity supplied by Cal.com. Keep Cal.com's guest option disabled for Academy group events so one
+signed-in account represents one attendee seat.
 
 The legacy `user_profiles.role = admin` authorization path and table were removed by forward
 migrations. Staff authorization is determined exclusively by the Payload `public.users.role` field,

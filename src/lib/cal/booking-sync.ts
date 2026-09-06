@@ -11,7 +11,7 @@ export const CAL_BOOKING_EVENTS = [
 
 export type CalBookingEvent = (typeof CAL_BOOKING_EVENTS)[number]
 export type ScheduleEntryStatus = 'scheduled' | 'changed' | 'cancelled' | 'completed'
-export type ScheduleEntryType = 'consultation' | 'private_lesson' | 'makeup'
+export type ScheduleEntryType = 'class' | 'consultation' | 'private_lesson' | 'makeup'
 
 export type NormalizedCalBooking = {
   triggerEvent: CalBookingEvent
@@ -27,6 +27,8 @@ export type NormalizedCalBooking = {
   attendeeEmail: string | null
   eventTypeId: number | null
   eventTypeSlug: string | null
+  sessionKey: string | null
+  seatCapacity: number | null
   bookingIntentId: string | null
   rescheduledFromUid: string | null
 }
@@ -80,8 +82,35 @@ function getStatus(triggerEvent: CalBookingEvent): ScheduleEntryStatus {
 function getEntryType(slug: string | null): ScheduleEntryType {
   const value = slug?.toLowerCase() ?? ''
   if (value.includes('makeup') || value.includes('make-up')) return 'makeup'
-  if (value.includes('private')) return 'private_lesson'
+  if (value.includes('private') || value.includes('solo')) return 'private_lesson'
+  if (value.includes('consultation') || value.includes('trial')) return 'consultation'
+  if (
+    value.includes('class') ||
+    value.includes('level') ||
+    value.includes('duet') ||
+    value.includes('group')
+  ) {
+    return 'class'
+  }
   return 'consultation'
+}
+
+export function buildCalSessionKey(
+  eventTypeId: number | null,
+  eventTypeSlug: string | null,
+  startsAt: string | null,
+) {
+  if (!startsAt) return null
+  const timestamp = Date.parse(startsAt)
+  if (!Number.isFinite(timestamp)) return null
+
+  const eventTypeKey = eventTypeId
+    ? `event:${eventTypeId}`
+    : eventTypeSlug
+      ? `slug:${eventTypeSlug.toLowerCase()}`
+      : null
+
+  return eventTypeKey ? `${eventTypeKey}:${new Date(timestamp).toISOString()}` : null
 }
 
 export function normalizeEmail(value: string | null | undefined) {
@@ -112,6 +141,7 @@ export function parseCalWebhook(rawBody: string): NormalizedCalBooking | null {
   if (!CAL_BOOKING_EVENTS.includes(triggerEvent as CalBookingEvent)) return null
 
   const payload = isRecord(event.payload) ? event.payload : event
+  const eventType = isRecord(payload.eventType) ? payload.eventType : null
   const attendees = Array.isArray(payload.attendees) ? payload.attendees : []
   const primaryAttendee = attendees.find(isRecord) ?? null
   const metadata = isRecord(payload.metadata) ? payload.metadata : null
@@ -128,13 +158,20 @@ export function parseCalWebhook(rawBody: string): NormalizedCalBooking | null {
     (primaryAttendee && readString(primaryAttendee, 'name')) ??
     readResponseValue(payload, 'name') ??
     readString(payload, 'attendeeName')
-  const eventTypeSlug = readString(payload, 'type', 'eventTypeSlug')
+  const eventTypeSlug =
+    readString(payload, 'type', 'eventTypeSlug') ?? (eventType && readString(eventType, 'slug'))
+  const eventTypeId =
+    readNumber(payload, 'eventTypeId') ?? (eventType && readNumber(eventType, 'id'))
+  const startsAt = readString(payload, 'startTime', 'start')
+  const seatCapacity =
+    readNumber(payload, 'seatsPerTimeSlot', 'seatCapacity') ??
+    (eventType && readNumber(eventType, 'seatsPerTimeSlot', 'seatCapacity'))
 
   return {
     triggerEvent: triggerEvent as CalBookingEvent,
     uid,
     title: readString(payload, 'title'),
-    startsAt: readString(payload, 'startTime', 'start'),
+    startsAt,
     endsAt: readString(payload, 'endTime', 'end'),
     timezone:
       (primaryAttendee && readString(primaryAttendee, 'timeZone', 'timezone')) ??
@@ -145,8 +182,10 @@ export function parseCalWebhook(rawBody: string): NormalizedCalBooking | null {
     entryType: getEntryType(eventTypeSlug),
     attendeeName,
     attendeeEmail,
-    eventTypeId: readNumber(payload, 'eventTypeId'),
+    eventTypeId,
     eventTypeSlug,
+    sessionKey: buildCalSessionKey(eventTypeId, eventTypeSlug, startsAt),
+    seatCapacity,
     bookingIntentId:
       (metadata && readString(metadata, 'bookingIntentId', 'booking_intent_id')) ?? null,
     rescheduledFromUid:

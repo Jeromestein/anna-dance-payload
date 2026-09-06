@@ -3,6 +3,7 @@ import { createHmac } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildCalSessionKey,
   isAllowedCalEventType,
   normalizeEmail,
   parseCalWebhook,
@@ -58,6 +59,8 @@ describe('Cal.com booking synchronization', () => {
       attendeeEmail: 'test@example.com',
       eventTypeId: 42,
       eventTypeSlug: 'trial-class-consultation',
+      sessionKey: 'event:42:2026-09-10T17:00:00.000Z',
+      seatCapacity: null,
       bookingIntentId: 'a02e6eba-34cc-458f-872c-1d3c336c31dd',
       rescheduledFromUid: null,
     })
@@ -100,6 +103,56 @@ describe('Cal.com booking synchronization', () => {
       rescheduledFromUid: 'previous-booking-uid',
       status: 'changed',
     })
+  })
+
+  it('normalizes a seated class and gives every attendee webhook the same session key', () => {
+    const firstSeat = JSON.stringify({
+      triggerEvent: 'BOOKING_CREATED',
+      payload: {
+        uid: 'shared-session-booking-uid',
+        type: 'level-class',
+        eventTypeId: 81,
+        seatsPerTimeSlot: 20,
+        startTime: '2026-09-12T16:00:00.000Z',
+        attendees: [{ name: 'First Student', email: 'first@example.com' }],
+        metadata: { bookingIntentId: '11111111-1111-4111-8111-111111111111' },
+      },
+    })
+    const secondSeat = JSON.stringify({
+      triggerEvent: 'BOOKING_CREATED',
+      payload: {
+        uid: 'shared-session-booking-uid',
+        type: 'level-class',
+        eventTypeId: 81,
+        seatsPerTimeSlot: 20,
+        startTime: '2026-09-12T16:00:00.000Z',
+        attendees: [{ name: 'Second Student', email: 'second@example.com' }],
+        metadata: { bookingIntentId: '22222222-2222-4222-8222-222222222222' },
+      },
+    })
+
+    expect(parseCalWebhook(firstSeat)).toMatchObject({
+      entryType: 'class',
+      attendeeEmail: 'first@example.com',
+      bookingIntentId: '11111111-1111-4111-8111-111111111111',
+      seatCapacity: 20,
+      sessionKey: 'event:81:2026-09-12T16:00:00.000Z',
+    })
+    expect(parseCalWebhook(secondSeat)).toMatchObject({
+      entryType: 'class',
+      attendeeEmail: 'second@example.com',
+      bookingIntentId: '22222222-2222-4222-8222-222222222222',
+      seatCapacity: 20,
+      sessionKey: 'event:81:2026-09-12T16:00:00.000Z',
+    })
+  })
+
+  it('builds stable session keys only when event and timing data are usable', () => {
+    expect(buildCalSessionKey(null, 'Duet-Class', '2026-09-12T16:00:00Z')).toBe(
+      'slug:duet-class:2026-09-12T16:00:00.000Z',
+    )
+    expect(buildCalSessionKey(null, null, '2026-09-12T16:00:00Z')).toBeNull()
+    expect(buildCalSessionKey(81, 'level-class', 'not-a-date')).toBeNull()
   })
 
   it('allows only configured event type slugs', () => {

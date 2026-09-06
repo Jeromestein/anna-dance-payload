@@ -15,6 +15,10 @@ const calBookingMigration = readFileSync(
   resolve(process.cwd(), 'supabase/migrations/20260904153000_add_cal_booking_sync.sql'),
   'utf8',
 )
+const seatedBookingMigration = readFileSync(
+  resolve(process.cwd(), 'supabase/migrations/20260906160000_support_cal_seated_bookings.sql'),
+  'utf8',
+)
 
 describe('application account schema', () => {
   it('creates and backfills the app tables before removing the legacy profile table', () => {
@@ -66,5 +70,19 @@ describe('application account schema', () => {
     expect(calBookingMigration).toContain('app_schedule_entries_booking_intent_unique')
     expect(calBookingMigration).toContain('grant insert on table public.app_booking_intents')
     expect(calBookingMigration).not.toContain('grant select on table public.app_booking_intents')
+  })
+
+  it('stores one row per attendee while retaining a shared seated-session key', () => {
+    expect(seatedBookingMigration).toContain(
+      'drop constraint if exists app_schedule_entries_cal_booking_uid_key',
+    )
+    expect(seatedBookingMigration).toContain(
+      'drop constraint if exists app_booking_intents_cal_booking_uid_key',
+    )
+    expect(seatedBookingMigration).toContain('add column if not exists cal_session_key text')
+    expect(seatedBookingMigration).toContain('add column if not exists seat_capacity integer')
+    expect(seatedBookingMigration).toContain('app_schedule_entries_cal_booking_attendee_idx')
+    expect(seatedBookingMigration).toContain('app_schedule_entries_cal_session_key_idx')
+    expect(calBookingMigration).toContain('app_schedule_entries_booking_intent_unique')
   })
 })

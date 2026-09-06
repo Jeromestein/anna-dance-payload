@@ -17,6 +17,8 @@ type ExistingScheduleEntry = {
   attendee_email: string | null
   cal_event_type_id: number | null
   cal_event_type_slug: string | null
+  cal_session_key: string | null
+  seat_capacity: number | null
   rescheduled_from_uid: string | null
   matched_at: string | null
   title: string
@@ -41,7 +43,7 @@ type ProfileIdentity = {
 }
 
 const scheduleEntrySelect =
-  'id, user_profile_id, match_status, booking_intent_id, attendee_name, attendee_email, cal_event_type_id, cal_event_type_slug, rescheduled_from_uid, matched_at, title, starts_at, ends_at, timezone, location'
+  'id, user_profile_id, match_status, booking_intent_id, attendee_name, attendee_email, cal_event_type_id, cal_event_type_slug, cal_session_key, seat_capacity, rescheduled_from_uid, matched_at, title, starts_at, ends_at, timezone, location'
 
 export async function POST(request: Request) {
   const secret = process.env.CAL_WEBHOOK_SECRET?.trim()
@@ -64,11 +66,45 @@ export async function POST(request: Request) {
   }
 
   const supabase = createSupabaseAdminClient()
-  const { data: currentData, error: existingError } = await supabase
-    .from('app_schedule_entries')
-    .select(scheduleEntrySelect)
-    .eq('cal_booking_uid', booking.uid)
-    .maybeSingle<ExistingScheduleEntry>()
+  const attendeeEmail = normalizeEmail(booking.attendeeEmail)
+
+  async function findExistingEntry(uid: string, bookingIntentId: string | null) {
+    if (bookingIntentId) {
+      const intentMatch = await supabase
+        .from('app_schedule_entries')
+        .select(scheduleEntrySelect)
+        .eq('booking_intent_id', bookingIntentId)
+        .maybeSingle<ExistingScheduleEntry>()
+
+      if (intentMatch.error || intentMatch.data) return intentMatch
+    }
+
+    if (attendeeEmail) {
+      return supabase
+        .from('app_schedule_entries')
+        .select(scheduleEntrySelect)
+        .eq('cal_booking_uid', uid)
+        .eq('attendee_email', attendeeEmail)
+        .limit(1)
+        .maybeSingle<ExistingScheduleEntry>()
+    }
+
+    const uidMatches = await supabase
+      .from('app_schedule_entries')
+      .select(scheduleEntrySelect)
+      .eq('cal_booking_uid', uid)
+      .limit(2)
+
+    return {
+      data: uidMatches.data?.length === 1 ? (uidMatches.data[0] as ExistingScheduleEntry) : null,
+      error: uidMatches.error,
+    }
+  }
+
+  const { data: currentData, error: existingError } = await findExistingEntry(
+    booking.uid,
+    booking.bookingIntentId,
+  )
 
   if (existingError) {
     return Response.json({ error: 'Could not inspect the existing booking.' }, { status: 500 })
@@ -76,11 +112,10 @@ export async function POST(request: Request) {
 
   let existingData = currentData
   if (!existingData && booking.rescheduledFromUid) {
-    const { data: previousData, error: previousError } = await supabase
-      .from('app_schedule_entries')
-      .select(scheduleEntrySelect)
-      .eq('cal_booking_uid', booking.rescheduledFromUid)
-      .maybeSingle<ExistingScheduleEntry>()
+    const { data: previousData, error: previousError } = await findExistingEntry(
+      booking.rescheduledFromUid,
+      null,
+    )
 
     if (previousError) {
       return Response.json({ error: 'Could not inspect the previous booking.' }, { status: 500 })
@@ -88,7 +123,6 @@ export async function POST(request: Request) {
     existingData = previousData
   }
 
-  const attendeeEmail = normalizeEmail(booking.attendeeEmail)
   let userProfileId = existingData?.match_status === 'linked' ? existingData.user_profile_id : null
   let bookingIntentId =
     existingData?.match_status === 'linked' ? existingData.booking_intent_id : null
@@ -161,6 +195,8 @@ export async function POST(request: Request) {
     attendee_email: attendeeEmail ?? existingData?.attendee_email ?? null,
     cal_event_type_id: booking.eventTypeId ?? existingData?.cal_event_type_id ?? null,
     cal_event_type_slug: booking.eventTypeSlug ?? existingData?.cal_event_type_slug ?? null,
+    cal_session_key: booking.sessionKey ?? existingData?.cal_session_key ?? null,
+    seat_capacity: booking.seatCapacity ?? existingData?.seat_capacity ?? null,
     rescheduled_from_uid: booking.rescheduledFromUid ?? existingData?.rescheduled_from_uid ?? null,
     last_synced_at: new Date().toISOString(),
     matched_at: existingData?.matched_at ?? new Date().toISOString(),
@@ -168,9 +204,7 @@ export async function POST(request: Request) {
   }
   const { error: upsertError } = existingData
     ? await supabase.from('app_schedule_entries').update(scheduleEntry).eq('id', existingData.id)
-    : await supabase
-        .from('app_schedule_entries')
-        .upsert(scheduleEntry, { onConflict: 'cal_booking_uid' })
+    : await supabase.from('app_schedule_entries').insert(scheduleEntry)
 
   if (upsertError) {
     return Response.json({ error: 'Could not synchronize the booking.' }, { status: 500 })
