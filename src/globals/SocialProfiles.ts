@@ -77,6 +77,7 @@ export const SocialProfiles: GlobalConfig = {
           name: 'wechatId',
           type: 'text',
           label: 'WeChat ID',
+          defaultValue: 'wudaolaoshi0717',
           admin: {
             description: 'Leave both WeChat fields blank to hide WeChat everywhere.',
             width: '50%',

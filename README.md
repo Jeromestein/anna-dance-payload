@@ -132,14 +132,14 @@ the Homepage and About page:
 pnpm payload run scripts/seed-media-galleries.ts
 ```
 
-Create the reusable social-links demonstration data separately:
+Apply the confirmed WeChat ID and QR code to the reusable social profiles separately:
 
 ```sh
-pnpm payload run scripts/seed-social-profiles.ts
+node --env-file=.env --import=tsx scripts/seed-social-profiles.ts
 ```
 
-The seed uses the Facebook and Instagram platform homepages plus a clearly marked POC WeChat ID.
-Replace all three with client-confirmed profiles before any public launch.
+The seed preserves the existing Facebook, Instagram, invitation-copy, and footer settings. It only
+updates WeChat to `wudaolaoshi0717` and uploads the matching QR code from `public/images/social/`.
 
 Use the database connection shown by the new Supabase project's **Connect** dialog. The correct
 connection mode depends on the runtime:

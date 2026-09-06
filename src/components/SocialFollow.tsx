@@ -111,7 +111,7 @@ export function SocialFollow({ profiles, variant }: SocialFollowProps) {
           <button
             aria-controls={dialogId}
             aria-expanded={isWeChatOpen}
-            aria-label="Open our WeChat details"
+            aria-label="Open our WeChat QR code"
             className="socialLink socialLink--wechat"
             onClick={() => setIsWeChatOpen(true)}
             type="button"
@@ -133,7 +133,7 @@ export function SocialFollow({ profiles, variant }: SocialFollowProps) {
             role="dialog"
           >
             <button
-              aria-label="Close WeChat details"
+              aria-label="Close WeChat QR code"
               className="wechatClose"
               onClick={() => setIsWeChatOpen(false)}
               type="button"
