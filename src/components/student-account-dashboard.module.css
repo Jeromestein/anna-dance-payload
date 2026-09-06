@@ -303,24 +303,57 @@
 
 .calendar {
   padding: 22px;
+  border: 1px solid var(--line);
   border-radius: 20px;
   background: var(--cream);
 }
 
 .calendarTitle {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 17px;
 }
 
 .calendarTitle strong {
+  display: block;
+  margin-top: 4px;
   font-size: 0.92rem;
+  white-space: nowrap;
 }
 
 .calendarTitle span {
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.calendarTitle nav {
+  display: flex;
+  gap: 5px;
+}
+
+.calendarTitle button {
+  min-width: 31px;
+  min-height: 31px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.calendarTitle button:hover,
+.calendarTitle button:focus-visible {
+  border-color: var(--rose);
+  color: var(--rose-dark);
 }
 
 .weekdays,
@@ -341,6 +374,7 @@
 
 .day,
 .emptyDay {
+  position: relative;
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -349,16 +383,45 @@
   font-size: 0.72rem;
 }
 
-.eventDay {
-  background: var(--ink);
+.day {
+  border: 0;
+  background: rgba(255, 255, 255, 0.56);
+  font: inherit;
+  cursor: pointer;
+}
+
+.day:hover,
+.day:focus-visible {
+  outline: 2px solid rgba(199, 71, 131, 0.42);
+  outline-offset: -2px;
+}
+
+.day i {
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  display: grid;
+  width: 14px;
+  height: 14px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--rose-dark);
   color: var(--white);
+  font-size: 0.5rem;
+  font-style: normal;
+  line-height: 1;
+}
+
+.eventDay {
+  background: var(--blush);
+  color: var(--rose-dark);
   font-weight: 700;
 }
 
-.calDay {
+.selectedDay {
   outline: 2px solid var(--rose);
   outline-offset: -2px;
-  background: var(--blush);
+  background: var(--white);
   color: var(--rose-dark);
 }
 
@@ -381,19 +444,53 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--rose-dark);
 }
 
 .calendarLegend span:last-child i {
   border: 2px solid var(--rose);
-  background: var(--blush);
+  background: var(--white);
 }
 
 .scheduleBody {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(230px, 0.92fr);
+  grid-template-columns: minmax(250px, 0.92fr) minmax(0, 1.08fr);
   gap: 20px;
   align-items: start;
+}
+
+.selectedSchedule {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--white);
+}
+
+.selectedScheduleHeader {
+  display: grid;
+  gap: 5px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.selectedScheduleHeader > span {
+  color: var(--rose-dark);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.selectedScheduleHeader strong {
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.selectedScheduleHeader small {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
 }
 
 .eventList {
@@ -403,7 +500,9 @@
 }
 
 .scheduleBody .eventList {
+  gap: 0;
   margin-top: 0;
+  padding: 0 18px;
 }
 
 .scheduleBody .event {
@@ -414,6 +513,72 @@
 .scheduleBody .sourceTag {
   grid-column: 2;
   justify-self: start;
+}
+
+.selectedScheduleEmpty {
+  padding: 34px 20px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.selectedScheduleEmpty strong {
+  display: block;
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+
+.selectedScheduleEmpty p {
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.cancelledSchedule {
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.cancelledSchedule summary {
+  padding: 13px 18px;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelledSchedule summary:hover,
+.cancelledSchedule summary:focus-visible {
+  color: var(--rose-dark);
+}
+
+.cancelledScheduleList {
+  display: grid;
+  gap: 8px;
+  padding: 0 18px 16px;
+}
+
+.cancelledScheduleList article {
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.cancelledScheduleList strong,
+.cancelledScheduleList span {
+  display: block;
+}
+
+.cancelledScheduleList strong {
+  color: var(--ink);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.cancelledScheduleList span {
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 0.66rem;
 }
 
 .eventInfo small {

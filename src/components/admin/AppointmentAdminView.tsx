@@ -11,7 +11,7 @@ import {
   getScheduleStatusLabel,
   mapStoredScheduleEntry,
 } from '@/lib/account/schedule'
-import { groupCalAppointments } from '@/lib/cal/appointment-sessions'
+import { type CalAppointmentSession, groupCalAppointments } from '@/lib/cal/appointment-sessions'
 import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase/admin'
 
 type Appointment = {
@@ -35,6 +35,99 @@ type Appointment = {
 type StudentOption = {
   id: string
   name: string
+}
+
+function selectSessionAppointments(
+  sessions: CalAppointmentSession<Appointment>[],
+  predicate: (appointment: Appointment) => boolean,
+) {
+  const selectedSessions: CalAppointmentSession<Appointment>[] = []
+
+  for (const session of sessions) {
+    const selectedAppointments = session.appointments.filter(predicate)
+    if (selectedAppointments.length === 0) continue
+
+    selectedSessions.push({
+      ...session,
+      appointments: selectedAppointments,
+      representative: selectedAppointments[0],
+      bookedSeats: selectedAppointments.filter((appointment) => appointment.status !== 'cancelled')
+        .length,
+    })
+  }
+
+  return selectedSessions
+}
+
+function groupSessionsByDate(sessions: CalAppointmentSession<Appointment>[]) {
+  const sessionsByDate = new Map<string, CalAppointmentSession<Appointment>[]>()
+
+  for (const session of sessions) {
+    const dateKey = getZonedDateKey(
+      session.representative.starts_at,
+      session.representative.timezone,
+    )
+    const existing = sessionsByDate.get(dateKey)
+    if (existing) existing.push(session)
+    else sessionsByDate.set(dateKey, [session])
+  }
+
+  return sessionsByDate
+}
+
+const adminCalendarTimeZone = 'America/Los_Angeles'
+const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function getZonedDateKey(value: string | Date, timeZone = adminCalendarTimeZone) {
+  const date = typeof value === 'string' ? new Date(value) : value
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const year = parts.find((part) => part.type === 'year')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  const day = parts.find((part) => part.type === 'day')?.value
+
+  return year && month && day ? `${year}-${month}-${day}` : ''
+}
+
+function normalizeMonthKey(value: string | undefined, fallback: string) {
+  return value && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) ? value : fallback
+}
+
+function shiftMonth(monthKey: string, amount: number) {
+  const [year, month] = monthKey.split('-').map(Number)
+  const shifted = new Date(Date.UTC(year, month - 1 + amount, 1))
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+function getMonthDetails(monthKey: string) {
+  const [year, month] = monthKey.split('-').map(Number)
+  const firstDay = new Date(Date.UTC(year, month - 1, 1))
+
+  return {
+    year,
+    month,
+    leadingDays: firstDay.getUTCDay(),
+    dayCount: new Date(Date.UTC(year, month, 0)).getUTCDate(),
+    label: new Intl.DateTimeFormat('en-US', {
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(firstDay),
+  }
+}
+
+function formatSelectedDate(dateKey: string) {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${dateKey}T12:00:00.000Z`))
 }
 
 function getSearchParam(value: string | string[] | undefined) {
@@ -74,6 +167,11 @@ export async function AppointmentAdminView(props: AdminViewServerProps) {
   requireAdministrator(props)
   const routeError = getSearchParam(props.searchParams?.error)
   const message = getSearchParam(props.searchParams?.message)
+  const todayKey = getZonedDateKey(new Date())
+  const visibleMonth = normalizeMonthKey(
+    getSearchParam(props.searchParams?.month),
+    todayKey.slice(0, 7),
+  )
 
   if (!isSupabaseAdminConfigured()) {
     return (
@@ -107,7 +205,50 @@ export async function AppointmentAdminView(props: AdminViewServerProps) {
   const appointments = (appointmentsResult.data ?? []) as Appointment[]
   const students = (studentsResult.data ?? []) as StudentOption[]
   const studentsById = new Map(students.map((student) => [student.id, student]))
-  const appointmentSessions = groupCalAppointments(appointments)
+  const appointmentSessions = groupCalAppointments(appointments).sort(
+    (first, second) =>
+      Date.parse(first.representative.starts_at) - Date.parse(second.representative.starts_at),
+  )
+  const activeSessions = selectSessionAppointments(
+    appointmentSessions,
+    (appointment) => appointment.status !== 'cancelled',
+  )
+  const cancelledSessions = selectSessionAppointments(
+    appointmentSessions,
+    (appointment) => appointment.status === 'cancelled',
+  )
+  const sessionsByDate = groupSessionsByDate(activeSessions)
+  const cancelledSessionsByDate = groupSessionsByDate(cancelledSessions)
+  const monthSessionDates = Array.from(sessionsByDate.keys())
+    .filter((dateKey) => dateKey.startsWith(`${visibleMonth}-`))
+    .sort()
+  const monthCancelledDates = Array.from(cancelledSessionsByDate.keys())
+    .filter((dateKey) => dateKey.startsWith(`${visibleMonth}-`))
+    .sort()
+  const requestedDate = getSearchParam(props.searchParams?.date)
+  const selectedDate =
+    requestedDate &&
+    /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) &&
+    requestedDate.startsWith(visibleMonth)
+      ? requestedDate
+      : monthSessionDates.find((dateKey) => dateKey >= todayKey) ||
+        monthSessionDates[0] ||
+        monthCancelledDates.find((dateKey) => dateKey >= todayKey) ||
+        monthCancelledDates[0] ||
+        (todayKey.startsWith(visibleMonth) ? todayKey : `${visibleMonth}-01`)
+  const selectedSessions = sessionsByDate.get(selectedDate) ?? []
+  const selectedCancelledSessions = cancelledSessionsByDate.get(selectedDate) ?? []
+  const selectedBookedSeats = selectedSessions.reduce(
+    (total, session) => total + session.bookedSeats,
+    0,
+  )
+  const selectedCancelledCount = selectedCancelledSessions.reduce(
+    (total, session) => total + session.appointments.length,
+    0,
+  )
+  const monthDetails = getMonthDetails(visibleMonth)
+  const previousMonth = shiftMonth(visibleMonth, -1)
+  const nextMonth = shiftMonth(visibleMonth, 1)
   const loadError = appointmentsResult.error || studentsResult.error
 
   return (
@@ -142,72 +283,206 @@ export async function AppointmentAdminView(props: AdminViewServerProps) {
             <p>Bookings made by signed-in Students will appear here after secure confirmation.</p>
           </div>
         ) : (
-          <div className="appointment-admin__sessions">
-            {appointmentSessions.map((session) => {
-              const sessionEntry = mapStoredScheduleEntry(session.representative)
-              const display = formatScheduleEntry(sessionEntry)
-              const seatSummary = session.capacity
-                ? `${session.bookedSeats} / ${session.capacity} seats`
-                : `${session.bookedSeats} booked`
+          <div className="appointment-admin__calendar-layout">
+            <section
+              className="appointment-admin__calendar"
+              aria-label={`${monthDetails.label} calendar`}
+            >
+              <header className="appointment-admin__calendar-header">
+                <div>
+                  <span className="appointment-admin__eyebrow">Schedule overview</span>
+                  <h2>{monthDetails.label}</h2>
+                </div>
+                <nav aria-label="Calendar navigation">
+                  <Link
+                    href={`/admin/appointments?month=${previousMonth}`}
+                    aria-label="Previous month"
+                  >
+                    ←
+                  </Link>
+                  <Link href={`/admin/appointments?month=${todayKey.slice(0, 7)}&date=${todayKey}`}>
+                    Today
+                  </Link>
+                  <Link href={`/admin/appointments?month=${nextMonth}`} aria-label="Next month">
+                    →
+                  </Link>
+                </nav>
+              </header>
 
-              return (
-                <section className="appointment-admin__session" key={session.key}>
-                  <header className="appointment-admin__session-header">
-                    <div>
-                      <h2>{session.representative.title}</h2>
-                      <p>
-                        {display.date} · {display.time}
-                      </p>
-                      {session.representative.location && (
-                        <small>{session.representative.location}</small>
+              <div className="appointment-admin__weekdays" aria-hidden="true">
+                {weekdayLabels.map((weekday) => (
+                  <span key={weekday}>{weekday}</span>
+                ))}
+              </div>
+              <div className="appointment-admin__days">
+                {Array.from({ length: monthDetails.leadingDays }, (_, index) => (
+                  <span className="appointment-admin__day--outside" key={`leading-${index}`} />
+                ))}
+                {Array.from({ length: monthDetails.dayCount }, (_, index) => {
+                  const day = index + 1
+                  const dateKey = `${visibleMonth}-${String(day).padStart(2, '0')}`
+                  const daySessions = sessionsByDate.get(dateKey) ?? []
+                  const bookedSeats = daySessions.reduce(
+                    (total, session) => total + session.bookedSeats,
+                    0,
+                  )
+                  const isSelected = dateKey === selectedDate
+                  const isToday = dateKey === todayKey
+
+                  return (
+                    <Link
+                      className={`appointment-admin__day${isSelected ? ' appointment-admin__day--selected' : ''}${isToday ? ' appointment-admin__day--today' : ''}${daySessions.length ? ' appointment-admin__day--has-events' : ''}`}
+                      href={`/admin/appointments?month=${visibleMonth}&date=${dateKey}`}
+                      key={dateKey}
+                      aria-current={isSelected ? 'date' : undefined}
+                      aria-label={`${formatSelectedDate(dateKey)}, ${daySessions.length} active ${daySessions.length === 1 ? 'appointment' : 'appointments'}, ${bookedSeats} ${bookedSeats === 1 ? 'student' : 'students'} booked`}
+                    >
+                      <span>{day}</span>
+                      {daySessions.length > 0 && (
+                        <strong>
+                          {daySessions.length}{' '}
+                          {daySessions.length === 1 ? 'appointment' : 'appointments'}
+                        </strong>
                       )}
-                    </div>
-                    <strong className="appointment-admin__seat-count">{seatSummary}</strong>
-                  </header>
+                      {daySessions.length > 0 && <small>{bookedSeats} booked</small>}
+                    </Link>
+                  )
+                })}
+              </div>
+              <footer className="appointment-admin__calendar-legend">
+                <span>
+                  <i /> Appointment day
+                </span>
+                <span>
+                  <i /> Selected day
+                </span>
+              </footer>
+            </section>
 
-                  <div className="table appointment-admin__table-wrap">
-                    <table className="appointment-admin__table">
-                      <thead>
-                        <tr>
-                          <th scope="col">Attendee</th>
-                          <th scope="col">Status</th>
-                          <th scope="col">Student account</th>
-                          <th scope="col">Cal.com reference</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {session.appointments.map((appointment) => {
-                          const scheduleEntry = mapStoredScheduleEntry(appointment)
-                          const linkedStudent = studentsById.get(appointment.user_profile_id)
+            <aside className="appointment-admin__agenda" aria-label="Selected day appointments">
+              <header>
+                <span className="appointment-admin__eyebrow">Selected day</span>
+                <h2>{formatSelectedDate(selectedDate)}</h2>
+                <p>
+                  {selectedSessions.length
+                    ? `${selectedSessions.length} active ${selectedSessions.length === 1 ? 'appointment' : 'appointments'} · ${selectedBookedSeats} ${selectedBookedSeats === 1 ? 'student' : 'students'} booked`
+                    : 'No active appointments'}
+                </p>
+              </header>
 
-                          return (
-                            <tr key={appointment.id}>
-                              <td>
-                                <strong>{appointment.attendee_name || 'Attendee'}</strong>
-                                <span>{appointment.attendee_email || 'Email not provided'}</span>
-                              </td>
-                              <td>{getScheduleStatusLabel(scheduleEntry)}</td>
-                              <td>
-                                {linkedStudent ? (
-                                  <Link href={`/admin/students/${linkedStudent.id}`}>
-                                    {linkedStudent.name}
-                                  </Link>
-                                ) : (
-                                  <span>Account unavailable</span>
-                                )}
-                              </td>
-                              <td>
-                                <small>{appointment.cal_booking_uid || 'Not provided'}</small>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
+              {selectedSessions.length === 0 ? (
+                <div className="appointment-admin__agenda-empty">
+                  <strong>
+                    {selectedCancelledCount ? 'No active appointments' : 'This day is open'}
+                  </strong>
+                  <p>
+                    {selectedCancelledCount
+                      ? 'Cancelled appointment history is available below.'
+                      : 'Select a highlighted date to review its appointments and attendees.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="appointment-admin__agenda-list">
+                  {selectedSessions.map((session) => {
+                    const sessionEntry = mapStoredScheduleEntry(session.representative)
+                    const display = formatScheduleEntry(sessionEntry)
+                    const seatSummary = session.capacity
+                      ? `${session.bookedSeats} / ${session.capacity} seats`
+                      : `${session.bookedSeats} booked`
+
+                    return (
+                      <section className="appointment-admin__agenda-session" key={session.key}>
+                        <header>
+                          <div>
+                            <span>{display.time}</span>
+                            <h3>{session.representative.title}</h3>
+                            {session.representative.location && (
+                              <small>{session.representative.location}</small>
+                            )}
+                          </div>
+                          <strong className="appointment-admin__seat-count">{seatSummary}</strong>
+                        </header>
+                        <div className="appointment-admin__attendees">
+                          {session.appointments.map((appointment) => {
+                            const scheduleEntry = mapStoredScheduleEntry(appointment)
+                            const linkedStudent = studentsById.get(appointment.user_profile_id)
+
+                            return (
+                              <article key={appointment.id}>
+                                <div>
+                                  <strong>{appointment.attendee_name || 'Attendee'}</strong>
+                                  <span>{appointment.attendee_email || 'Email not provided'}</span>
+                                </div>
+                                <div>
+                                  <small>{getScheduleStatusLabel(scheduleEntry)}</small>
+                                  {linkedStudent ? (
+                                    <Link href={`/admin/students/${linkedStudent.id}`}>
+                                      View student
+                                    </Link>
+                                  ) : (
+                                    <span>Account unavailable</span>
+                                  )}
+                                </div>
+                              </article>
+                            )
+                          })}
+                        </div>
+                      </section>
+                    )
+                  })}
+                </div>
+              )}
+
+              {selectedCancelledCount > 0 && (
+                <details className="appointment-admin__cancelled">
+                  <summary>
+                    <span>Cancelled ({selectedCancelledCount})</span>
+                    <small>History</small>
+                  </summary>
+                  <div className="appointment-admin__cancelled-list">
+                    {selectedCancelledSessions.map((session) => {
+                      const sessionEntry = mapStoredScheduleEntry(session.representative)
+                      const display = formatScheduleEntry(sessionEntry)
+
+                      return (
+                        <section className="appointment-admin__cancelled-session" key={session.key}>
+                          <header>
+                            <span>{display.time}</span>
+                            <h3>{session.representative.title}</h3>
+                          </header>
+                          <div className="appointment-admin__attendees">
+                            {session.appointments.map((appointment) => {
+                              const linkedStudent = studentsById.get(appointment.user_profile_id)
+
+                              return (
+                                <article key={appointment.id}>
+                                  <div>
+                                    <strong>{appointment.attendee_name || 'Attendee'}</strong>
+                                    <span>
+                                      {appointment.attendee_email || 'Email not provided'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <small>Cancelled</small>
+                                    {linkedStudent ? (
+                                      <Link href={`/admin/students/${linkedStudent.id}`}>
+                                        View student
+                                      </Link>
+                                    ) : (
+                                      <span>Account unavailable</span>
+                                    )}
+                                  </div>
+                                </article>
+                              )
+                            })}
+                          </div>
+                        </section>
+                      )
+                    })}
                   </div>
-                </section>
-              )
-            })}
+                </details>
+              )}
+            </aside>
           </div>
         )}
       </div>

@@ -1,15 +1,9 @@
-import Link from 'next/link'
-
 import type { EditableStudentProfile } from '@/components/student-profile-form'
 import { MobileAccountTabs } from '@/components/mobile-account-tabs'
+import { StudentScheduleCalendar } from '@/components/student-schedule-calendar'
 import { StudentProfileForm } from '@/components/student-profile-form'
 import type { MockStudentAccount } from '@/lib/account/mock-student-account'
-import {
-  type AccountScheduleEntry,
-  formatScheduleEntry,
-  getScheduleSourceLabel,
-  getScheduleStatusLabel,
-} from '@/lib/account/schedule'
+import { type AccountScheduleEntry, formatScheduleEntry } from '@/lib/account/schedule'
 
 import styles from './student-account-dashboard.module.css'
 
@@ -130,48 +124,7 @@ export function StudentAccountDashboard({
                 </div>
               </header>
 
-              <div className={styles.scheduleBody}>
-                <div className={styles.eventList} aria-label="Upcoming schedule">
-                  {scheduleLoadError && (
-                    <p className={styles.scheduleMessage} role="alert">
-                      We could not refresh your appointments. Please try again shortly.
-                    </p>
-                  )}
-                  {!scheduleLoadError && scheduleEntries.length === 0 && (
-                    <div className={styles.emptySchedule}>
-                      <strong>No upcoming appointments</strong>
-                      <p>Your linked consultations and lessons will appear here.</p>
-                      <Link className="button button-secondary" href="/schedule#book">
-                        Book a consultation
-                      </Link>
-                    </div>
-                  )}
-                  {scheduleEntries.map((entry) => {
-                    const display = formatScheduleEntry(entry)
-
-                    return (
-                      <article className={styles.event} key={entry.id}>
-                        <time className={styles.eventDate} dateTime={entry.startsAt}>
-                          <span>{display.month}</span>
-                          <strong>{display.day}</strong>
-                        </time>
-                        <div className={styles.eventInfo}>
-                          <strong>{entry.title}</strong>
-                          <span>
-                            {display.time} · {entry.location || 'Location to be confirmed'}
-                          </span>
-                          <small>{getScheduleStatusLabel(entry)}</small>
-                        </div>
-                        <span
-                          className={`${styles.sourceTag} ${entry.source === 'cal_com' ? styles.sourceCal : ''}`}
-                        >
-                          {getScheduleSourceLabel(entry)}
-                        </span>
-                      </article>
-                    )
-                  })}
-                </div>
-              </div>
+              <StudentScheduleCalendar entries={scheduleEntries} loadError={scheduleLoadError} />
             </article>
 
             <div className={styles.profilePanel} data-account-tab="profile">
