@@ -4,8 +4,8 @@ import Cal, { getCalApi } from '@calcom/embed-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
-const calLink = 'anna-dance/trial-class-consultation'
-const namespace = 'trial-class-consultation'
+const defaultCalLink = 'anna-dance/trial-class-consultation'
+const defaultNamespace = 'trial-class-consultation'
 
 type BookingContext = {
   status: 'linked'
@@ -20,7 +20,17 @@ type BookingContextResponse = BookingContext | { status: 'public' }
 type ContextState =
   { status: 'loading' } | { status: 'public' } | { status: 'unavailable' } | BookingContext
 
-export function CalBooking() {
+type CalBookingProps = {
+  calLink?: string
+  namespace?: string
+  loginNext?: string
+}
+
+export function CalBooking({
+  calLink = defaultCalLink,
+  namespace = defaultNamespace,
+  loginNext = '/schedule#book',
+}: CalBookingProps = {}) {
   const [context, setContext] = useState<ContextState>({ status: 'loading' })
   const [bookingReceived, setBookingReceived] = useState(false)
 
@@ -60,7 +70,7 @@ export function CalBooking() {
         callback: () => setBookingReceived(true),
       })
     })()
-  }, [context])
+  }, [context, namespace])
 
   return (
     <>
@@ -74,7 +84,7 @@ export function CalBooking() {
         {context.status === 'public' && (
           <div className="booking-login-required">
             <span>A Student account is required to book a class online.</span>
-            <Link className="button" href="/login?next=/schedule%23book">
+            <Link className="button" href={`/login?next=${encodeURIComponent(loginNext)}`}>
               Log in to book
             </Link>
           </div>
