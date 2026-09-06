@@ -1536,6 +1536,46 @@ textarea:focus-visible {
   font-weight: 700;
   white-space: nowrap;
 }
+.schedule-booking-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 680px;
+  margin: 0 0 16px;
+}
+.schedule-booking-options a {
+  display: grid;
+  gap: 2px;
+  min-height: 68px;
+  padding: 12px 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  background: var(--white);
+  color: var(--teal-dark);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+.schedule-booking-options a:hover {
+  border-color: rgba(194, 51, 119, 0.42);
+  transform: translateY(-1px);
+}
+.schedule-booking-options a.is-active {
+  border-color: var(--rose-dark);
+  background: var(--rose-soft);
+}
+.schedule-booking-options span {
+  font-weight: 700;
+}
+.schedule-booking-options small {
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+.schedule-booking-options a:focus-visible {
+  outline: 3px solid rgba(223, 111, 166, 0.48);
+  outline-offset: 3px;
+}
 .booking-frame {
   padding: 18px;
   border: 1px solid var(--card-border);
@@ -3550,6 +3590,15 @@ body:has(.legal-page) .floating-booking-button {
     margin-top: 7px;
     font-size: 0.82rem;
     line-height: 1.45;
+  }
+  .schedule-booking-options {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .schedule-booking-options a {
+    min-height: 58px;
+    padding: 10px 13px;
   }
   .booking-frame {
     width: 100%;

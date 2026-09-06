@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowIcon } from '@/components/arrow-icon'
 import { CalBooking } from '@/components/cal-booking'
+import { ScheduleBookingOptions } from '@/components/schedule-booking-options'
 import { schedule } from '@/lib/site-data'
 
 export const metadata: Metadata = { title: 'Schedule' }
@@ -19,6 +20,9 @@ export default function SchedulePage() {
             Log in to schedule a class appointment. For general questions or a consultation, call{' '}
             <a href="tel:+17014009213">701-400-9213</a>.
           </p>
+        </div>
+        <div className="page-shell">
+          <ScheduleBookingOptions active="trial" />
         </div>
         <div className="page-shell booking-frame schedule-booking-frame">
           <CalBooking />
