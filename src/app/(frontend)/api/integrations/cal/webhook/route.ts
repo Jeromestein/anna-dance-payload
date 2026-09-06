@@ -35,6 +35,7 @@ type BookingIntent = {
   expires_at: string
   consumed_at: string | null
   cal_booking_uid: string | null
+  created_at: string
 }
 
 type ProfileIdentity = {
@@ -44,6 +45,8 @@ type ProfileIdentity = {
 
 const scheduleEntrySelect =
   'id, user_profile_id, match_status, booking_intent_id, attendee_name, attendee_email, cal_event_type_id, cal_event_type_slug, cal_session_key, seat_capacity, rescheduled_from_uid, matched_at, title, starts_at, ends_at, timezone, location'
+const bookingIntentSelect =
+  'id, user_profile_id, expected_email, expires_at, consumed_at, cal_booking_uid, created_at'
 
 export async function POST(request: Request) {
   const secret = process.env.CAL_WEBHOOK_SECRET?.trim()
@@ -76,7 +79,13 @@ export async function POST(request: Request) {
         .eq('booking_intent_id', bookingIntentId)
         .maybeSingle<ExistingScheduleEntry>()
 
-      if (intentMatch.error || intentMatch.data) return intentMatch
+      if (intentMatch.error) return intentMatch
+      if (
+        intentMatch.data &&
+        (!attendeeEmail || normalizeEmail(intentMatch.data.attendee_email) === attendeeEmail)
+      ) {
+        return intentMatch
+      }
     }
 
     if (attendeeEmail) {
@@ -128,15 +137,78 @@ export async function POST(request: Request) {
     existingData?.match_status === 'linked' ? existingData.booking_intent_id : null
 
   if (!userProfileId) {
-    if (!booking.bookingIntentId || !attendeeEmail) {
+    if (!attendeeEmail) {
       return Response.json({ status: 'ignored', reason: 'account_required' }, { status: 202 })
     }
 
-    const { data: intent } = await supabase
-      .from('app_booking_intents')
-      .select('id, user_profile_id, expected_email, expires_at, consumed_at, cal_booking_uid')
-      .eq('id', booking.bookingIntentId)
-      .maybeSingle<BookingIntent>()
+    let intent: BookingIntent | null = null
+    if (booking.bookingIntentId) {
+      const { data, error } = await supabase
+        .from('app_booking_intents')
+        .select(bookingIntentSelect)
+        .eq('id', booking.bookingIntentId)
+        .maybeSingle<BookingIntent>()
+
+      if (error) {
+        return Response.json({ error: 'Could not inspect the booking context.' }, { status: 500 })
+      }
+      intent = data
+    }
+
+    const suppliedIntentEmail = normalizeEmail(intent?.expected_email)
+    const intentNotExpired = Boolean(intent && Date.parse(intent.expires_at) > Date.now())
+    const intentAvailableForBooking = Boolean(
+      intent &&
+      (!intent.cal_booking_uid ||
+        intent.cal_booking_uid === booking.uid ||
+        intent.cal_booking_uid === booking.rescheduledFromUid),
+    )
+    const suppliedIntentIsValid = Boolean(
+      intent &&
+      suppliedIntentEmail === attendeeEmail &&
+      intentNotExpired &&
+      intentAvailableForBooking,
+    )
+
+    if (!suppliedIntentIsValid && booking.seatCapacity && booking.sessionKey) {
+      // Cal.com keeps the original booking metadata when another attendee joins a
+      // seated event. Recover that attendee's short-lived account context only
+      // after the shared booking has already been securely linked once.
+      const { data: linkedSession, error: sessionError } = await supabase
+        .from('app_schedule_entries')
+        .select('cal_session_key')
+        .eq('cal_booking_uid', booking.uid)
+        .eq('match_status', 'linked')
+        .limit(1)
+        .maybeSingle<{ cal_session_key: string | null }>()
+
+      if (sessionError) {
+        return Response.json({ error: 'Could not inspect the seated booking.' }, { status: 500 })
+      }
+
+      if (linkedSession?.cal_session_key === booking.sessionKey) {
+        const recentIntentThreshold = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+        const { data: recentIntents, error: recentIntentError } = await supabase
+          .from('app_booking_intents')
+          .select(bookingIntentSelect)
+          .eq('expected_email', attendeeEmail)
+          .is('consumed_at', null)
+          .is('cal_booking_uid', null)
+          .gt('expires_at', new Date().toISOString())
+          .gte('created_at', recentIntentThreshold)
+          .order('created_at', { ascending: false })
+          .limit(1)
+
+        if (recentIntentError) {
+          return Response.json(
+            { error: 'Could not inspect the seated booking context.' },
+            { status: 500 },
+          )
+        }
+
+        intent = (recentIntents?.[0] as BookingIntent | undefined) ?? null
+      }
+    }
 
     const intentEmail = normalizeEmail(intent?.expected_email)
     const notExpired = Boolean(intent && Date.parse(intent.expires_at) > Date.now())
