@@ -33,8 +33,11 @@ settings alone do not prove end-to-end delivery.
 - [x] Automated tests verify the new-identity decision, successful delivery payload, missing-key and
       missing-sender skips, provider failure, recipient fallback, and exclusion of passwords,
       tokens, and secrets.
-- [ ] Configure `STUDENT_REGISTRATION_NOTIFICATION_TO` in the deployment environment, redeploy, and
-      verify actual delivery to the Academy for one controlled new Student.
+- [x] Vercel Production Config sets
+      `STUDENT_REGISTRATION_NOTIFICATION_TO=annadanceacademy@gmail.com`; the saved value requires a
+      new deployment before the application can use it.
+- [ ] Deploy commit `1ee598b` with the saved Production environment configuration.
+- [ ] After deployment, verify actual delivery to the Academy for one controlled new Student.
 - [ ] Verify any future registration notification contains only the minimum operational details and
       no password, token, or authentication secret.
 
@@ -68,6 +71,7 @@ settings alone do not prove end-to-end delivery.
 ```text
 Production URL: https://www.annadanceacademy.com
 Recorded: 2026-09-06 17:55 PDT
+Updated: 2026-09-06 (Vercel Production notification recipient saved)
 Result: Partially accepted
 Verified: Signup confirmation delivery, production callback, and My Account entry; password-reset
 delivery and recovery-session establishment through the editable new-password form; absence of an
@@ -75,8 +79,10 @@ Academy internal signup notification; Cal.com booking-created delivery and accou
 Stripe successful-payment Academy notification; Stripe customer email settings enabled.
 Automated: Academy registration notification new-identity gating, safe payload, recipient fallback,
 and non-blocking missing-configuration and provider-failure behavior.
+Configured: Vercel Production Config now includes STUDENT_REGISTRATION_NOTIFICATION_TO for the
+Academy inbox; the value is saved but is not active until a new deployment.
 Pending: Confirmation resend; password submission and login with the new password; Cal.com
 reschedule, reminder, no-show, cancellation, retry, and idempotency checks; Stripe customer receipt,
-failure, refund, dispute, retry, and idempotency checks; Academy registration-notification deployment
-configuration and actual production delivery.
+failure, refund, dispute, retry, and idempotency checks; deployment of commit 1ee598b with the saved
+Production configuration; actual Academy receipt of a controlled registration notification.
 ```
