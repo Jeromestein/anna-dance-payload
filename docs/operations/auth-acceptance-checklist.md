@@ -37,6 +37,11 @@ items remain unchecked until implemented and verified.
       `app_user_profiles.id = auth.uid()`.
 - [x] The local environment targets production Supabase project
       `hsitmgmcekzobksgtjoj`.
+- [x] Vercel Production Config sets
+      `NEXT_PUBLIC_SITE_URL=https://www.annadanceacademy.com`, and the deployment created after the
+      update reached `Ready`.
+- [x] Supabase Site URL and the production callback and reset-password redirect allowlist point to
+      `https://www.annadanceacademy.com`.
 - [ ] Confirm `SUPABASE_SERVICE_ROLE_KEY` is configured only in server-side
       deployment settings.
 - [ ] Confirm the service-role key is absent from client bundles, browser
@@ -91,7 +96,9 @@ items remain unchecked until implemented and verified.
 - [x] Move the self-service profile UI and actions to `/account`.
 - [x] Create a dedicated, confirmed test Student with email and password through the Supabase Admin
       API so the Auth trigger is exercised without sending a real email.
-- [ ] Confirm the registration email and callback complete successfully.
+- [x] Confirm a new email/password Student receives the confirmation email, the link targets the
+      production callback, and the callback reaches My Account when opened in the browser that
+      initiated the PKCE signup.
 - [x] Log in with the confirmed Student and open `/account`.
 - [x] Update name, optional phone, and optional guardian contact information.
 - [x] Verify the Student cannot read another profile through Supabase RLS.
@@ -102,6 +109,9 @@ items remain unchecked until implemented and verified.
 - [ ] Test Google sign-in with a dedicated test identity.
 - [ ] Test resend-confirmation rate-limit messaging.
 - [ ] Test forgot-password and reset-password flows.
+
+The cross-provider email and notification record is maintained in
+[Production email and notification acceptance](production-email-notification-acceptance-checklist.md).
 
 ## 6. Session separation
 

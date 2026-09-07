@@ -28,6 +28,11 @@ README remain authoritative for the Payload implementation.
 
 - [Authentication testing](operations/auth-testing.md) — manual Supabase authentication and
   account-flow test procedures.
+- [Authentication acceptance checklist](operations/auth-acceptance-checklist.md) — implementation,
+  access-control, and production acceptance status for Payload Staff and Supabase Students.
+- [Production email and notification acceptance checklist](operations/production-email-notification-acceptance-checklist.md)
+  — verified delivery state and remaining checks across Supabase, Cal.com, Stripe, and Academy
+  notifications.
 
 ## Content and media references
 
