@@ -26,9 +26,15 @@ settings alone do not prove end-to-end delivery.
       `https://www.annadanceacademy.com/reset-password`; opening it established the recovery session
       and displayed the editable Choose a New Password form.
 - [ ] Submit a new password, then verify the Student can log in with it.
-- [x] Searching the Academy inbox for the controlled Student's complete email address returned no
-      result, confirming that the current signup flow sends no Academy internal notification.
-- [ ] Implement an Academy internal notification when a new Student registers.
+- [x] Before implementation, searching the Academy inbox for the controlled Student's complete email
+      address returned no result, establishing that production sent no internal signup notification.
+- [x] The server action now requests an Academy notification only when Supabase returns a newly
+      created email identity; missing configuration and provider failures cannot reverse signup.
+- [x] Automated tests verify the new-identity decision, successful delivery payload, missing-key and
+      missing-sender skips, provider failure, recipient fallback, and exclusion of passwords,
+      tokens, and secrets.
+- [ ] Configure `STUDENT_REGISTRATION_NOTIFICATION_TO` in the deployment environment, redeploy, and
+      verify actual delivery to the Academy for one controlled new Student.
 - [ ] Verify any future registration notification contains only the minimum operational details and
       no password, token, or authentication secret.
 
@@ -67,8 +73,10 @@ Verified: Signup confirmation delivery, production callback, and My Account entr
 delivery and recovery-session establishment through the editable new-password form; absence of an
 Academy internal signup notification; Cal.com booking-created delivery and account calendar sync;
 Stripe successful-payment Academy notification; Stripe customer email settings enabled.
+Automated: Academy registration notification new-identity gating, safe payload, recipient fallback,
+and non-blocking missing-configuration and provider-failure behavior.
 Pending: Confirmation resend; password submission and login with the new password; Cal.com
 reschedule, reminder, no-show, cancellation, retry, and idempotency checks; Stripe customer receipt,
-failure, refund, dispute, retry, and idempotency checks; Academy internal new-registration
-notification implementation.
+failure, refund, dispute, retry, and idempotency checks; Academy registration-notification deployment
+configuration and actual production delivery.
 ```

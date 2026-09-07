@@ -176,6 +176,15 @@ Payload Staff recovery is separate from Student recovery: `/admin/forgot` resets
 in Payload's `public.users` table, while the public `/forgot-password` route continues to use
 Supabase Auth and its configured SMTP provider.
 
+After Supabase confirms that a signup created a new email identity, the server action also sends a
+plain-text registration notification to `STUDENT_REGISTRATION_NOTIFICATION_TO`. The recipient falls
+back to `CONTACT_TO_EMAIL`, then `annadanceacademy@gmail.com`. This notification uses the same
+server-only `RESEND_API_KEY` and `RESEND_FROM_EMAIL` and contains only the Student name, registration
+email, optional Student and parent/guardian contact fields, and registration time. It never includes
+the submitted password, an authentication token, or another secret. Missing Resend configuration or
+a provider failure is logged without registration details and does not reverse or block the
+successful Supabase signup.
+
 ### Verified test environment
 
 - Supabase project: `anna-dance-payload-poc`

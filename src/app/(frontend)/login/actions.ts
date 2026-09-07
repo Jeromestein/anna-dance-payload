@@ -12,6 +12,10 @@ import {
   normalizeEmail,
 } from '@/lib/auth/validation'
 import { getSafeNextPath } from '@/lib/auth/redirects'
+import {
+  hasNewEmailIdentity,
+  sendStudentRegistrationNotification,
+} from '@/lib/email/student-registration-notification.server'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { createClient } from '@/lib/supabase/server'
 
@@ -142,6 +146,17 @@ export async function signup(formData: FormData) {
 
   if (error) {
     redirectToLogin(mode, 'error', authErrorMessage(error, mode), nextPath)
+  }
+
+  if (hasNewEmailIdentity(data.user)) {
+    await sendStudentRegistrationNotification({
+      studentName: userProfile.name,
+      email: credentials.email,
+      studentPhone: userProfile.phone,
+      guardianName: userProfile.guardian_name,
+      guardianPhone: userProfile.guardian_phone,
+      registeredAt: data.user.created_at,
+    })
   }
 
   if (data.session) {
