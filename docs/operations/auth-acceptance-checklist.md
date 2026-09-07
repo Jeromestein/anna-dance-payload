@@ -108,7 +108,9 @@ items remain unchecked until implemented and verified.
 - [ ] Verify the Student cannot change a Staff role or obtain a Payload cookie.
 - [ ] Test Google sign-in with a dedicated test identity.
 - [ ] Test resend-confirmation rate-limit messaging.
-- [ ] Test forgot-password and reset-password flows.
+- [x] Verify forgot-password delivery, the production reset-password redirect, and recovery-session
+      establishment through the editable Choose a New Password form.
+- [ ] Submit a new password and verify the Student can log in with it.
 
 The cross-provider email and notification record is maintained in
 [Production email and notification acceptance](production-email-notification-acceptance-checklist.md).

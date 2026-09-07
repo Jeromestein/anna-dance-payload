@@ -12,12 +12,22 @@ settings alone do not prove end-to-end delivery.
 - [x] The deployment created after the Vercel environment update reached `Ready`.
 - [x] Supabase Site URL uses `https://www.annadanceacademy.com`.
 - [x] Supabase permits the production authentication callback and reset-password redirect URLs.
-- [x] A new email/password Student received the confirmation email.
-- [x] The confirmation link targeted the production `/auth/callback` route.
-- [x] Opening the link in the same browser that initiated the PKCE signup completed confirmation
-      and opened My Account.
+- [x] At 2026-09-06 17:52-17:55 PDT, the controlled Student
+      `errplusone+anna-e2e-20260907-03@gmail.com` received the confirmation email at
+      `errplusone@gmail.com` from `Anna Dance Academy <no-reply@annadanceacademy.com>`.
+- [x] The confirmation link's `redirect_to` targeted
+      `https://www.annadanceacademy.com/auth/callback?next=%2Faccount`.
+- [x] Opening the link in the same plusone Chrome profile that initiated the PKCE signup completed
+      confirmation and opened that Student's My Account.
 - [ ] Verify confirmation-email resend delivery and rate-limit messaging.
-- [ ] Verify password-recovery email delivery, recovery-session establishment, and password reset.
+- [x] A forgot-password request for the controlled Student succeeded, and the reset email arrived at
+      `errplusone@gmail.com` from `Anna Dance Academy <no-reply@annadanceacademy.com>`.
+- [x] The reset link's `redirect_to` targeted
+      `https://www.annadanceacademy.com/reset-password`; opening it established the recovery session
+      and displayed the editable Choose a New Password form.
+- [ ] Submit a new password, then verify the Student can log in with it.
+- [x] Searching the Academy inbox for the controlled Student's complete email address returned no
+      result, confirming that the current signup flow sends no Academy internal notification.
 - [ ] Implement an Academy internal notification when a new Student registers.
 - [ ] Verify any future registration notification contains only the minimum operational details and
       no password, token, or authentication secret.
@@ -51,11 +61,14 @@ settings alone do not prove end-to-end delivery.
 
 ```text
 Production URL: https://www.annadanceacademy.com
-Recorded: 2026-09-06
+Recorded: 2026-09-06 17:55 PDT
 Result: Partially accepted
-Verified: Signup confirmation and callback; Cal.com booking-created delivery and account calendar
-sync; Stripe successful-payment Academy notification; Stripe customer email settings enabled.
-Pending: Confirmation resend; password recovery; Cal.com reschedule, reminder, no-show,
-cancellation, retry, and idempotency checks; Stripe customer receipt, failure, refund, dispute,
-retry, and idempotency checks; Academy internal new-registration notification.
+Verified: Signup confirmation delivery, production callback, and My Account entry; password-reset
+delivery and recovery-session establishment through the editable new-password form; absence of an
+Academy internal signup notification; Cal.com booking-created delivery and account calendar sync;
+Stripe successful-payment Academy notification; Stripe customer email settings enabled.
+Pending: Confirmation resend; password submission and login with the new password; Cal.com
+reschedule, reminder, no-show, cancellation, retry, and idempotency checks; Stripe customer receipt,
+failure, refund, dispute, retry, and idempotency checks; Academy internal new-registration
+notification implementation.
 ```
