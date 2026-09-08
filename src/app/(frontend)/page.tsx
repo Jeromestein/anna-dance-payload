@@ -75,7 +75,7 @@ export default async function HomePage() {
       <section className="intro-section section-space">
         <div className="page-shell intro-grid">
           <div>
-            <p className="eyebrow">Founder-led in Lutz, Florida</p>
+            <p className="eyebrow">Founder-led in the Tampa / Lutz Area</p>
             <h2 className="display-title">Training shaped around<br /><em>every dancer.</em></h2>
           </div>
           <div className="intro-copy">

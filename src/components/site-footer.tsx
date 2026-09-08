@@ -27,13 +27,7 @@ export function SiteFooter({ socialProfiles }: SiteFooterProps) {
 
         <div className="footer-contact">
           <span className="footer-label">Visit & connect</span>
-          <a
-            href="https://www.google.com/maps/search/?api=1&query=19421+Sandy+Springs+Cir%2C+Lutz%2C+FL+33558"
-            target="_blank"
-            rel="noreferrer"
-          >
-            19421 Sandy Springs Cir, Lutz, FL 33558
-          </a>
+          <p>Tampa / Lutz Area</p>
           <a href="mailto:annadanceacademy@gmail.com">annadanceacademy@gmail.com</a>
           <a href="tel:+17014009213">701-400-9213</a>
         </div>

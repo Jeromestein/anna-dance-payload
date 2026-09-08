@@ -241,8 +241,7 @@ export default function TermsPage() {
             <h2>13. Contact us</h2>
             <address className="legal-contact">
               <strong>Anna Dance Academy</strong><br />
-              19421 Sandy Springs Cir<br />
-              Lutz, FL 33558<br />
+              Tampa / Lutz Area<br />
               <a href="mailto:annadanceacademy@gmail.com">annadanceacademy@gmail.com</a><br />
               <a href="tel:+17014009213">701-400-9213</a>
             </address>
