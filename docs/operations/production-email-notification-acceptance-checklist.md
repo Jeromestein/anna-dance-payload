@@ -95,12 +95,38 @@ not proof of inbox delivery. See `supabase/README.md` for rollout and recovery p
 - [x] For a controlled free-consultation booking, the attendee received the booking-created email.
 - [x] `annadanceacademy@gmail.com` received the booking-created email.
 - [x] The controlled booking synchronized to the attendee's My Account calendar.
-- [ ] Verify attendee and Academy emails for a rescheduled booking.
+- [x] In the 2026-09-07 controlled lifecycle test below, both attendee and Academy received
+      the rescheduled email with the correct new date/time and reschedule reason.
 - [ ] Verify configured reminder emails or messages at their intended delivery times.
 - [ ] Verify the intended no-show workflow and any resulting notification.
-- [ ] Verify cancellation notifications if cancellation email behavior is enabled.
+- [x] Both attendee and Academy received the cancellation email for the same controlled booking,
+      with the correct cancelled time and test-only cancellation reason.
 - [ ] Verify webhook retry and idempotency behavior so duplicate or replayed Cal.com events do not
       create duplicate schedule entries or notifications.
+
+### Controlled free-booking lifecycle acceptance — September 7, 2026
+
+Test reference: `E2E-LIFECYCLE-20260907`. Attendee: `errplusone@gmail.com`, displayed booking name
+`E2E Lifecycle Test 20260907`. Academy recipient: `annadanceacademy@gmail.com`. The test used the
+production website, the signed-in plusone Chrome profile, and the free `trial-class-consultation`
+event type. All times below are Pacific Daylight Time (`America/Los_Angeles`). No payment was made.
+
+| Step | Booking time | Actual email receipt | My Account / database result |
+| --- | --- | --- | --- |
+| Create, 19:13 PDT | September 9, 09:00–09:30 | Attendee and Academy each received confirmation from `hello@cal.com`, including calendar attachments. | One linked `scheduled` entry; September 9 shows one active appointment. |
+| Reschedule, 19:17 PDT | September 10, 09:30–10:00 | Both received the rescheduled message with the new time and test reason. | The same application entry becomes `changed`; September 9 has zero active appointments and September 10 has one. |
+| Cancel, 19:20 PDT | September 10, 09:30–10:00 cancelled | Both received `Canceled: ...` messages with the correct time and cancellation reason. | The same entry becomes `cancelled`; zero active test bookings remain. My Account shows no upcoming appointment, no active appointments for September 10, and `Cancelled (1)`. |
+
+The original Cal.com UID was `cv3NJ6nfbpwaGuYDuL42ZZ`; rescheduling replaced it with
+`8bPjUQiqzVskzrMgGqm8VA`. Application schedule entry `8892df4f-5fe9-4db0-b0ac-a4c1899a52fa`
+was preserved throughout and retained the original UID in `rescheduled_from_uid`. No duplicate
+application appointment was created. The final Cal.com page visibly confirmed `This event is canceled`.
+
+The signed webhook synchronized each change without a manual database edit. An already-open
+My Account page required reload to display external Cal.com changes; realtime browser refresh
+was not part of this acceptance. Existing appointments belonging to other tests/users were not
+modified. This verifies one real lifecycle, not arbitrary webhook replays, retries, reminder
+timing, no-show behavior, or external Google Calendar acceptance/synchronization.
 
 ## Stripe payment notifications
 
@@ -120,12 +146,13 @@ not proof of inbox delivery. See `supabase/README.md` for rollout and recovery p
 ```text
 Production URL: https://www.annadanceacademy.com
 Recorded: 2026-09-06 17:55 PDT
-Updated: 2026-09-07 18:58 PDT (Google first-signup delivery and repeat-login deduplication verified)
+Updated: 2026-09-07 (Google signup and free-booking create/reschedule/cancel delivery verified)
 Result: Partially accepted
 Verified: Signup confirmation delivery, production callback, and My Account entry; password-reset
 delivery and recovery-session establishment through the editable new-password form; absence of an
 Academy internal signup notification before implementation, then actual delivery after deployment;
-Cal.com booking-created delivery and account calendar sync;
+Cal.com create/reschedule/cancel delivery to both participants, account calendar sync after reload,
+one preserved application entry, and zero active bookings left by the controlled lifecycle test;
 Stripe successful-payment Academy notification; Stripe customer email settings enabled;
 Google signup My Account entry and actual Academy receipt, followed by repeat-login deduplication.
 Automated: Academy registration notification new-identity gating, safe payload, recipient fallback,
@@ -133,6 +160,6 @@ and non-blocking missing-configuration and provider-failure behavior; Google reg
 claiming, endpoint authorization, callback behavior, database permissions, and concurrent claims.
 Configured: Production uses STUDENT_REGISTRATION_NOTIFICATION_TO for the Academy inbox.
 Pending: Confirmation resend; password submission and login with the new password; Cal.com
-reschedule, reminder, no-show, cancellation, retry, and idempotency checks; Stripe customer receipt,
+reminder, no-show, webhook retry, and replay-idempotency checks; Stripe customer receipt,
 failure, refund, dispute, retry, and idempotency checks; production Google identity-linking check.
 ```
