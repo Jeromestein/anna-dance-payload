@@ -185,6 +185,15 @@ the submitted password, an authentication token, or another secret. Missing Rese
 a provider failure is logged without registration details and does not reverse or block the
 successful Supabase signup.
 
+First-time Google registrations use the same notification sender and recipient settings. Apply
+`supabase/migrations/20260908020000_google_registration_notifications.sql` before deploying this
+feature. A database insert trigger records new Google accounts, and the successful Auth callback
+asks a server-verified endpoint to atomically claim and send that account's notification. Existing
+accounts, Google identity linking, and repeated callbacks do not create another event. Delivery
+errors do not prevent the callback from opening My Account. This is an Academy notification, not
+a separate welcome email to the Student. See [Supabase setup](supabase/README.md#google-registration-notifications)
+for activation, delivery-state semantics, and manual recovery limitations.
+
 ### Verified test environment
 
 - Supabase project: `anna-dance-payload-poc`

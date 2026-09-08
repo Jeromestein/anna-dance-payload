@@ -23,6 +23,18 @@ export default function AuthCallbackPage() {
       setNextPath(safeNextPath)
       const supabase = createClient({ detectSessionInUrl: false })
 
+      async function completeSignIn() {
+        try {
+          await fetch('/api/auth/registration-notification', {
+            method: 'POST',
+            signal: AbortSignal.timeout(8_000),
+          })
+        } catch {
+          // Notification delivery is independent of successful authentication.
+        }
+        window.location.replace(safeNextPath)
+      }
+
       if (accessToken && refreshToken) {
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: accessToken,
@@ -30,21 +42,21 @@ export default function AuthCallbackPage() {
         })
 
         if (!sessionError) {
-          window.location.replace(safeNextPath)
+          await completeSignIn()
           return
         }
       } else if (code) {
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!exchangeError) {
-          window.location.replace(safeNextPath)
+          await completeSignIn()
           return
         }
       } else {
         const { data } = await supabase.auth.getSession()
 
         if (data.session) {
-          window.location.replace(safeNextPath)
+          await completeSignIn()
           return
         }
       }

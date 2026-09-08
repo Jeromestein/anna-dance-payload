@@ -66,6 +66,55 @@ tables are not granted to `anon`, `authenticated`, or `service_role`; Payload re
 its direct PostgreSQL connection. Default Data API grants are also disabled for future tables and
 functions.
 
+## Google registration notifications
+
+The migration below was applied to production project `hsitmgmcekzobksgtjoj` on September 7, 2026.
+The existing eight Auth users were unchanged and no historical notification events were created.
+
+Apply `20260908020000_google_registration_notifications.sql` to the intended Supabase project
+before deploying the application changes. The migration adds one `app_*` table, an Auth insert
+trigger, and a service-role-only claim function. It does not modify existing users, backfill old
+registrations, or require changes to Google OAuth credentials. As with any Auth trigger, validate
+the migration before rollout: a database trigger error can reject a signup transaction.
+
+Activation checklist:
+
+- Apply the migration once in timestamp order; verify the table, trigger, and function exist.
+- Confirm server-only `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, and `RESEND_FROM_EMAIL` are set.
+- Set `STUDENT_REGISTRATION_NOTIFICATION_TO=annadanceacademy@gmail.com` (existing contact-recipient
+  and Academy fallbacks still apply).
+- Deploy the application after the migration. Restart local development after backend/config changes.
+- Use a Google identity that has never had an Academy Auth account. Verify My Account opens, one
+  notification reaches the Academy inbox, and the event status is `sent`.
+- Sign out/in again and repeat the callback: verify there is still only one notification.
+- Test existing Google and email-to-Google-linked accounts without deleting real user records.
+
+Only `auth.users` INSERTs whose server-controlled `raw_app_meta_data.provider` is `google` create
+events. User-editable metadata cannot claim another provider or recipient. The callback endpoint
+requires same-origin POST and validates the cookie identity with Supabase `getUser()`; it ignores
+request-body identity fields. Students cannot read, insert, update, or claim notification rows.
+
+This version performs **one automatic send attempt per event**, not an automatic retry worker:
+
+- `pending`: created but no successful callback has claimed the event yet. If the browser closes
+  before the callback request, a later successful callback can claim it.
+- `sending`: claimed atomically; concurrent/repeated requests cannot send it again. A crash can
+  leave the event here.
+- `sent`: Resend accepted the send request; verify inbox/provider delivery separately.
+- `failed` / `skipped`: provider/network failure or missing configuration. These remain visible
+  for operator review and are not resent automatically during later logins.
+
+Inspect the ledger only with authorized server/admin access. For `sending`, `failed`, or `skipped`,
+check application and Resend logs before any manual recovery; a timeout may mean the provider
+accepted the message even though the response was lost. Do not blindly reset these rows to
+`pending`, because doing so can produce a duplicate. Do not log or export recipient snapshots
+unnecessarily. The ledger is removed automatically when its Auth user is deleted.
+
+Database regression fixture: run `tests/sql/google-registration-notifications.sql` via `psql -X
+-v ON_ERROR_STOP=1 -f` against a brand-new disposable local PostgreSQL cluster only. It creates mock
+Auth roles/schema and tests first registration, no historical backfill/linking, duplicate claims,
+name fallbacks, and database permissions. Never run the fixture on the shared Supabase project.
+
 ## Cal.com webhook setup
 
 The application endpoint is `/api/integrations/cal/webhook`. Configure the deployment with:

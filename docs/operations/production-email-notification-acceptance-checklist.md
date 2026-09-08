@@ -36,10 +36,47 @@ settings alone do not prove end-to-end delivery.
 - [x] Vercel Production Config sets
       `STUDENT_REGISTRATION_NOTIFICATION_TO=annadanceacademy@gmail.com`; the saved value requires a
       new deployment before the application can use it.
-- [ ] Deploy commit `1ee598b` with the saved Production environment configuration.
-- [ ] After deployment, verify actual delivery to the Academy for one controlled new Student.
-- [ ] Verify any future registration notification contains only the minimum operational details and
-      no password, token, or authentication secret.
+- [x] Production deployment `449f8d3` includes registration notification commit `1ee598b`.
+- [x] On 2026-09-07 at 18:03 PDT, the Academy inbox received
+      `New Student registration: E2E Notification Test 20260907-04` for controlled Student
+      `errplusone+anna-notify-20260907-04@gmail.com`, from `accounts@annadanceacademy.com`.
+- [x] The observed registration notification contained only minimal operational details and no
+      password, token, or authentication secret. The Student separately received the confirmation
+      email and reached My Account after opening its link.
+
+## Google first-registration notification
+
+Implementation checks below are local verification, not production-delivery acceptance.
+
+- [x] Add a forward migration that records only new Google Auth-user INSERTs, with no historical
+      backfill and no events for normal logins or identity-linking updates.
+- [x] Add a cookie-authenticated, same-origin callback endpoint that uses the verified user ID,
+      never browser-supplied identity or recipient fields.
+- [x] Atomically claim the event before sending through the existing Academy Resend helper.
+- [x] Persist sent/failed/skipped status; notification errors do not prevent sign-in.
+- [x] Run 60 local automated tests (including 19 new Google endpoint/callback tests), typecheck,
+      and lint. Exclude the unrelated Payload API test that initializes the shared database.
+- [x] Apply and test the migration in an isolated PostgreSQL 15 cluster: first signup, name
+      fallbacks, old users, email registration, Google linking, permissions, and duplicate claims.
+- [x] Send two concurrent claim requests against the same local test event: returned counts were
+      1 and 0. No real email was sent by these isolated tests.
+- [x] Verify in the Codex in-app browser that the existing local session completes
+      `/auth/callback` and renders My Account. Local unauthenticated/cross-origin endpoint checks
+      returned 401/403 respectively. This is not a fresh Google OAuth signup test.
+- [x] On 2026-09-07, apply `20260908020000_google_registration_notifications.sql` to production
+      Supabase project `hsitmgmcekzobksgtjoj`. Verify the trigger and service-role-only claim
+      function; the existing 8 Auth users remain unchanged and the ledger contains no backfill.
+- [ ] Deploy the application changes with existing server-only email and Supabase configuration.
+- [ ] Register a genuinely new Google identity; verify My Account, one Academy inbox notification,
+      and the matching `sent` ledger row. The user explicitly authorized resetting the exact
+      `errplusone@gmail.com` test account for this acceptance test; preserve a recovery copy of
+      its application test records before deletion. Do not reset other accounts or aliases.
+- [ ] Sign in again and verify no additional registration email. Verify existing-account Google
+      linking also produces no registration email.
+
+This implementation permits one automatic attempt per event. There is no scheduled retry worker:
+interrupted/failed/skipped sends require operator review. `sent` means Resend accepted the request,
+not proof of inbox delivery. See `supabase/README.md` for rollout and recovery precautions.
 
 ## Cal.com consultation notifications
 
@@ -71,18 +108,19 @@ settings alone do not prove end-to-end delivery.
 ```text
 Production URL: https://www.annadanceacademy.com
 Recorded: 2026-09-06 17:55 PDT
-Updated: 2026-09-06 (Vercel Production notification recipient saved)
+Updated: 2026-09-07 (email-signup production receipt verified; Google implementation tested locally)
 Result: Partially accepted
 Verified: Signup confirmation delivery, production callback, and My Account entry; password-reset
 delivery and recovery-session establishment through the editable new-password form; absence of an
-Academy internal signup notification; Cal.com booking-created delivery and account calendar sync;
+Academy internal signup notification before implementation, then actual delivery after deployment;
+Cal.com booking-created delivery and account calendar sync;
 Stripe successful-payment Academy notification; Stripe customer email settings enabled.
 Automated: Academy registration notification new-identity gating, safe payload, recipient fallback,
-and non-blocking missing-configuration and provider-failure behavior.
-Configured: Vercel Production Config now includes STUDENT_REGISTRATION_NOTIFICATION_TO for the
-Academy inbox; the value is saved but is not active until a new deployment.
+and non-blocking missing-configuration and provider-failure behavior; Google registration event
+claiming, endpoint authorization, callback behavior, database permissions, and concurrent claims.
+Configured: Production uses STUDENT_REGISTRATION_NOTIFICATION_TO for the Academy inbox.
 Pending: Confirmation resend; password submission and login with the new password; Cal.com
 reschedule, reminder, no-show, cancellation, retry, and idempotency checks; Stripe customer receipt,
-failure, refund, dispute, retry, and idempotency checks; deployment of commit 1ee598b with the saved
-Production configuration; actual Academy receipt of a controlled registration notification.
+failure, refund, dispute, retry, and idempotency checks; Google notification migration/deployment
+and a genuine first-Google-signup inbox test, followed by a repeat-login no-duplicate check.
 ```
