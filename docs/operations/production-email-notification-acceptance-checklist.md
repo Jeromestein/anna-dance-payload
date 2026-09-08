@@ -46,7 +46,7 @@ settings alone do not prove end-to-end delivery.
 
 ## Google first-registration notification
 
-Implementation checks below are local verification, not production-delivery acceptance.
+Local checks and separately observed production-delivery results are recorded below.
 
 - [x] Add a forward migration that records only new Google Auth-user INSERTs, with no historical
       backfill and no events for normal logins or identity-linking updates.
@@ -66,13 +66,25 @@ Implementation checks below are local verification, not production-delivery acce
 - [x] On 2026-09-07, apply `20260908020000_google_registration_notifications.sql` to production
       Supabase project `hsitmgmcekzobksgtjoj`. Verify the trigger and service-role-only claim
       function; the existing 8 Auth users remain unchanged and the ledger contains no backfill.
-- [ ] Deploy the application changes with existing server-only email and Supabase configuration.
-- [ ] Register a genuinely new Google identity; verify My Account, one Academy inbox notification,
-      and the matching `sent` ledger row. The user explicitly authorized resetting the exact
-      `errplusone@gmail.com` test account for this acceptance test; preserve a recovery copy of
-      its application test records before deletion. Do not reset other accounts or aliases.
-- [ ] Sign in again and verify no additional registration email. Verify existing-account Google
-      linking also produces no registration email.
+- [x] Deploy `93e5348` to Vercel Production (`Ready`). The canonical production endpoint returns
+      401 without authentication and 403 for a cross-origin request.
+- [x] With explicit user authorization, reset only `errplusone@gmail.com` and register it again
+      through the live Google OAuth flow in the plusone Chrome profile. Preserve a private local
+      recovery copy of its old profile, two historical test appointments, and 13 expired booking
+      intents before deletion. There were no application payment records or owned storage objects.
+      Other accounts and aliases were not deleted; Cal.com records were not cancelled or deleted.
+- [x] At 2026-09-07 18:56 PDT, the recreated Google account reached production My Account.
+      A new Auth ID was created (`707d01f4-bd50-4d91-bdf2-62739ad484e3`), and exactly one ledger
+      event reached `sent`. The previous Auth ID no longer exists.
+- [x] The Academy inbox actually received `New Student registration: plusone` at 18:56 PDT from
+      `accounts@annadanceacademy.com`. The body identifies `errplusone@gmail.com`, Student name
+      `plusone`, optional contacts as `Not provided`, and the registration timestamp
+      `2026-09-08T01:56:03.559452+00:00`; no password or authentication token was included.
+- [x] At 18:58 PDT, sign out and use the same Google account again. My Account opens normally,
+      Auth keeps the same new user ID, and the ledger remains one event with unchanged send
+      timestamps (`01:56:06` UTC). The Academy mail search still shows the single 18:56 message.
+- [ ] Verify email-account-to-Google identity linking also produces no registration email in a
+      separate controlled production test; the database regression test already covers updates.
 
 This implementation permits one automatic attempt per event. There is no scheduled retry worker:
 interrupted/failed/skipped sends require operator review. `sent` means Resend accepted the request,
@@ -108,19 +120,19 @@ not proof of inbox delivery. See `supabase/README.md` for rollout and recovery p
 ```text
 Production URL: https://www.annadanceacademy.com
 Recorded: 2026-09-06 17:55 PDT
-Updated: 2026-09-07 (email-signup production receipt verified; Google implementation tested locally)
+Updated: 2026-09-07 18:58 PDT (Google first-signup delivery and repeat-login deduplication verified)
 Result: Partially accepted
 Verified: Signup confirmation delivery, production callback, and My Account entry; password-reset
 delivery and recovery-session establishment through the editable new-password form; absence of an
 Academy internal signup notification before implementation, then actual delivery after deployment;
 Cal.com booking-created delivery and account calendar sync;
-Stripe successful-payment Academy notification; Stripe customer email settings enabled.
+Stripe successful-payment Academy notification; Stripe customer email settings enabled;
+Google signup My Account entry and actual Academy receipt, followed by repeat-login deduplication.
 Automated: Academy registration notification new-identity gating, safe payload, recipient fallback,
 and non-blocking missing-configuration and provider-failure behavior; Google registration event
 claiming, endpoint authorization, callback behavior, database permissions, and concurrent claims.
 Configured: Production uses STUDENT_REGISTRATION_NOTIFICATION_TO for the Academy inbox.
 Pending: Confirmation resend; password submission and login with the new password; Cal.com
 reschedule, reminder, no-show, cancellation, retry, and idempotency checks; Stripe customer receipt,
-failure, refund, dispute, retry, and idempotency checks; Google notification migration/deployment
-and a genuine first-Google-signup inbox test, followed by a repeat-login no-duplicate check.
+failure, refund, dispute, retry, and idempotency checks; production Google identity-linking check.
 ```
