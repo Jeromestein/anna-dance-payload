@@ -405,6 +405,7 @@
   letter-spacing: 0;
   line-height: 1.7;
   text-transform: none;
+  white-space: pre-line;
 }
 
 .emptyState {
