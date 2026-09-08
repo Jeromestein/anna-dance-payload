@@ -223,7 +223,7 @@ export interface Class {
   _order?: string | null;
   title: string;
   /**
-   * For example: Ages 2½+ · Placement required or Saturday training.
+   * For example: Ages 3+ · Placement required or Saturday training.
    */
   audience: string;
   description: string;

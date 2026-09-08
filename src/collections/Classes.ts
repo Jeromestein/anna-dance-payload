@@ -44,7 +44,7 @@ export const Classes: CollectionConfig = {
       label: 'Age / availability line',
       required: true,
       admin: {
-        description: 'For example: Ages 2½+ · Placement required or Saturday training.',
+        description: 'For example: Ages 3+ · Placement required or Saturday training.',
       },
     },
     {

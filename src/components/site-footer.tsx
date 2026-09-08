@@ -16,7 +16,7 @@ export function SiteFooter({ socialProfiles }: SiteFooterProps) {
           <Link href="/" className="wordmark wordmark-light">
             <BrandLogo />
           </Link>
-          <p>Personalized, bilingual dance training rooted in Chinese classical and ethnic folk traditions for young dancers ages 2½ and up.</p>
+          <p>Personalized, bilingual dance training rooted in Chinese classical and ethnic folk traditions for young dancers ages 3 and up.</p>
         </div>
 
         <div className="footer-links">

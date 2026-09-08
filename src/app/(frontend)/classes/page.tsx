@@ -17,14 +17,14 @@ export default async function ClassesPage() {
       <PageHero
         eyebrow="Programs & training pathways"
         title="The right class starts with the dancer."
-        description="We welcome young dancers ages 2½ and up. Placement is based on age, experience, readiness, goals, and schedule—with teacher guidance before enrollment."
+        description="We welcome young dancers ages 3 and up. Placement is thoughtfully based on each student’s age, experience, readiness, goals, and schedule—with teacher guidance before enrollment."
         image="/images/classes/technique-fundamentals.jpg"
         imageClassName="page-hero-image-classes"
       />
       <section className="section-space page-shell">
         <div className="program-intro">
           <p className="eyebrow">Our programs</p>
-          <h2 className="display-title">Strong foundations.<br /><em>Personal direction.</em></h2>
+          <h2 className="display-title">Strong Foundations.<br /><em>Personal Direction.</em></h2>
           <p>Age is one part of placement—not the whole answer. Mixed-age placement may be recommended when it best supports a student&apos;s learning and scheduling needs.</p>
         </div>
         <div className="program-list" role="region" aria-label="Class programs" tabIndex={0}>

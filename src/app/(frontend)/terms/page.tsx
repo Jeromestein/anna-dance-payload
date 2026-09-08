@@ -81,7 +81,7 @@ export default function TermsPage() {
           <section id="programs">
             <h2>3. Programs, ages, and placement</h2>
             <p>
-              Anna Dance Academy welcomes young dancers ages 2½ and up. Age is only
+              Anna Dance Academy welcomes young dancers ages 3 and up. Age is only
               one part of placement. Recommendations may also consider experience,
               readiness, learning goals, maturity, and family schedule. Mixed-age
               placement may be used when appropriate.

@@ -24,7 +24,7 @@ export function FloatingBookingButton() {
       </span>
       <span className="floating-booking-copy">
         <strong>Book a consultation</strong>
-        <small>Ages 2.5+ · Teacher-guided</small>
+        <small>Ages 3+ · Teacher-guided</small>
       </span>
       <span className="floating-booking-arrow" aria-hidden="true">→</span>
     </Link>

@@ -46,7 +46,7 @@ export default async function HomePage() {
         </video>
         <div className="hero-wash" />
         <div className="page-shell hero-content">
-          <p className="eyebrow eyebrow-light">Bilingual dance education · Ages 2½+</p>
+          <p className="eyebrow eyebrow-light">Bilingual dance education · Ages 3+</p>
           <div className="hero-content-grid">
             <h1>Expert Guidance.<br />Individual Attention.<br /><em>A Colorful World of Dance.</em></h1>
             <div className="hero-copy-block">

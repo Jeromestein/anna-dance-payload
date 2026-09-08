@@ -9,7 +9,7 @@ export const navigation = [
 export const classes = [
   {
     title: "Level-Based Group Classes",
-    age: "Ages 2½+ · Placement required",
+    age: "Ages 3+ · Placement required",
     description: "Weekly group training in technique, musicality, teamwork, and stage awareness, with placement guided by each dancer’s readiness and goals.",
     image: "/images/classes/level-based-group-classes.jpg",
     tone: "blush",

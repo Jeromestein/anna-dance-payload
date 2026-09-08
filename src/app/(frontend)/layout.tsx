@@ -23,7 +23,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: { default: 'Anna Dance Academy', template: '%s | Anna Dance Academy' },
   description:
-    'Personalized, bilingual Chinese dance training for young dancers ages 2½ and up in the Tampa / Lutz Area.',
+    'Personalized, bilingual Chinese dance training for young dancers ages 3 and up in the Tampa / Lutz Area.',
   icons: {
     icon: '/images/branding/anna-dance-academy-mark.png',
     apple: '/images/branding/anna-dance-academy-mark.png',
