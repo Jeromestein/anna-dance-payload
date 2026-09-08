@@ -76,11 +76,13 @@ export default async function HomePage() {
         <div className="page-shell intro-grid">
           <div>
             <p className="eyebrow">Founder-led in the Tampa / Lutz Area</p>
-            <h2 className="display-title">Training shaped around<br /><em>every dancer.</em></h2>
+            <h2 className="display-title">Thoughtful Teaching.<br /><em>Strong Results.</em></h2>
           </div>
           <div className="intro-copy">
-            <p className="lead">Age is only one part of finding the right class.</p>
-            <p>We consider each student’s experience, readiness, personality, goals, and schedule before recommending a placement. Small-group, bilingual instruction gives us room to teach with care and adapt choreography to the dancers in front of us.</p>
+            <p className="lead">We teach every student with patience, care, and attention to detail.</p>
+            <p>From dance styles, music, and choreography to technical training, we adapt our instruction to each dancer’s level, personality, and goals.</p>
+            <p>With diverse training styles and personalized guidance, students build confidence, improve efficiently, and achieve strong results in both performances and competitions.</p>
+            <p>This thoughtful, individualized approach is one of the reasons families choose and trust us.</p>
             <Link href="/about" className="text-link">Discover our approach <ArrowIcon /></Link>
           </div>
         </div>
