@@ -186,7 +186,7 @@ export default async function HomePage() {
           <p className="section-side-copy">Anna leads the Academy’s artistic direction, with teaching artists joining selected classes, rehearsals, and performance projects as needs evolve each term.</p>
         </div>
         <div className="page-shell">
-          <FacultyCards members={faculty} />
+          <FacultyCards members={faculty} compact />
         </div>
       </section>
 

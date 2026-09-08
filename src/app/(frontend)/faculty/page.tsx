@@ -25,7 +25,7 @@ export default async function FacultyPage() {
           <h2 className="display-title">Founder-led.<br /><em>Thoughtfully supported.</em></h2>
           <p>Teaching assignments and projects vary by term. Families receive current class and instructor information during placement and enrollment.</p>
         </div>
-        <FacultyCards members={faculty} />
+        <FacultyCards members={faculty} variant="profiles" />
       </section>
       <CtaSection />
     </>

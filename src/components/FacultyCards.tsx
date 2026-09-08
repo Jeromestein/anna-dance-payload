@@ -6,6 +6,20 @@ type FacultyCardsProps = {
   emptyActionHref?: string
   emptyActionLabel?: string
   members: Faculty[]
+  variant?: 'cards' | 'profiles'
+  compact?: boolean
+}
+
+function getParagraphs(description: string) {
+  return description.split(/\n\s*\n/).map((text) => text.trim()).filter((text) => text && text !== 'Dance Teacher Introduction')
+}
+
+function getSummary(description: string) {
+  const text = getParagraphs(description).join(' ')
+  if (text.length <= 240) return text
+  const excerpt = text.slice(0, 240)
+  const sentenceEnd = excerpt.lastIndexOf('. ')
+  return sentenceEnd > 80 ? excerpt.slice(0, sentenceEnd + 1) : `${excerpt.slice(0, excerpt.lastIndexOf(' '))}…`
 }
 
 function getProfilePhoto(photo: Faculty['profilePhoto']): Image | null {
@@ -16,6 +30,8 @@ export function FacultyCards({
   emptyActionHref = '/admin/collections/faculty/create',
   emptyActionLabel = 'Add Faculty member',
   members,
+  variant = 'cards',
+  compact = false,
 }: FacultyCardsProps) {
   if (members.length === 0) {
     return (
@@ -36,9 +52,9 @@ export function FacultyCards({
   return (
     <div
       aria-label="Faculty members"
-      className="facultyGrid mobileCardRail"
+      className={variant === 'profiles' ? 'facultyProfiles' : 'facultyGrid mobileCardRail'}
       role="list"
-      tabIndex={0}
+      tabIndex={variant === 'profiles' ? undefined : 0}
     >
       {members.map((member) => {
         const photo = getProfilePhoto(member.profilePhoto)
@@ -46,7 +62,8 @@ export function FacultyCards({
 
         return (
           <article
-            className="facultyCard mobileCardRailItem"
+            className={variant === 'profiles' ? 'facultyProfile' : 'facultyCard mobileCardRailItem'}
+            id={`teacher-${member.id}`}
             key={member.id}
             role="listitem"
           >
@@ -60,12 +77,16 @@ export function FacultyCards({
               )}
             </div>
             <div className="facultyContent">
+              {variant === 'profiles' ? <h3>{member.name}</h3> : null}
               <p className="facultyTitle">{member.title}</p>
-              <h3>{member.name}</h3>
+              {variant === 'cards' ? <h3>{member.name}</h3> : null}
               <p className="facultySpecialties">{member.introduction}</p>
               {member.description ? (
-                <p className="facultyDescription">{member.description}</p>
+                <div className="facultyDescription">
+                  {(compact ? [getSummary(member.description)] : getParagraphs(member.description)).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                </div>
               ) : null}
+              {compact ? <Link className="facultyReadMore" href={`/faculty#teacher-${member.id}`}>Read full introduction <span aria-hidden="true">↗</span></Link> : null}
             </div>
           </article>
         )
