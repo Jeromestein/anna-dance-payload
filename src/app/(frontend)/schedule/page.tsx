@@ -3,32 +3,53 @@ import Link from 'next/link'
 import { ArrowIcon } from '@/components/arrow-icon'
 import { CalBooking } from '@/components/cal-booking'
 import { ScheduleBookingOptions } from '@/components/schedule-booking-options'
+import { getStudentAccountAccess } from '@/lib/auth/student-access'
+import { getScheduleBooking } from '@/lib/cal/booking-options'
 import { schedule } from '@/lib/site-data'
 
 export const metadata: Metadata = { title: 'Schedule' }
 
-export default function SchedulePage() {
+export const dynamic = 'force-dynamic'
+
+export default async function SchedulePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ class?: string | string[] }>
+}) {
+  const [isAuthenticated, params] = await Promise.all([getStudentAccountAccess(), searchParams])
+  const booking = getScheduleBooking(isAuthenticated, params.class)
+  const title = isAuthenticated ? 'Book a class' : 'Book a free consultation'
+
   return (
     <>
       <section className="schedule-booking-page" id="book" aria-labelledby="schedule-booking-title">
         <div className="page-shell schedule-booking-heading">
           <div>
-            <p className="eyebrow">Student booking</p>
-            <h1 id="schedule-booking-title">Book a trial class</h1>
+            <p className="eyebrow">{isAuthenticated ? "Student booking" : "Let’s meet"}</p>
+            <h1 id="schedule-booking-title">{title}</h1>
           </div>
           <p className="schedule-booking-copy">
-            Log in to schedule a class appointment. For general questions or a consultation, call{' '}
-            <a href="tel:+17014009213">701-400-9213</a>.
+            {isAuthenticated
+              ? 'Choose your class and an available time, then complete payment to reserve your place. The final price is shown before payment.'
+              : 'Book a complimentary 30-minute in-studio consultation. We’ll discuss your dancer’s age, experience, goals, and class placement. No account is needed.'}
           </p>
         </div>
-        <div className="page-shell">
-          <ScheduleBookingOptions active="trial" />
-        </div>
+        {isAuthenticated ? (
+          <div className="page-shell">
+            <ScheduleBookingOptions active={booking.slug} />
+          </div>
+        ) : null}
         <div className="page-shell booking-frame schedule-booking-frame">
-          <CalBooking />
+          <CalBooking
+            key={booking.slug}
+            calLink={`anna-dance/${booking.slug}`}
+            namespace={booking.slug}
+            loginNext={`/schedule?class=${booking.slug}#book`}
+            allowGuest={!isAuthenticated}
+          />
         </div>
       </section>
-      <section className="schedule-section section-space">
+      {isAuthenticated ? <section className="schedule-section section-space">
         <div className="page-shell schedule-layout">
           <aside className="schedule-note">
             <p className="eyebrow">Program rhythm</p>
@@ -39,7 +60,7 @@ export default function SchedulePage() {
               each week for 60 minutes.
             </p>
             <Link href="#book" className="text-link">
-              Book a trial class <ArrowIcon />
+              {title} <ArrowIcon />
             </Link>
           </aside>
           <div
@@ -65,7 +86,7 @@ export default function SchedulePage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> : null}
     </>
   )
 }

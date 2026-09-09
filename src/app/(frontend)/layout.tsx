@@ -5,8 +5,7 @@ import { StaffToolbar } from '@/components/admin/staff-toolbar'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { getPayloadStaffUser } from '@/lib/staff/auth'
-import { isSupabaseConfigured } from '@/lib/supabase/config'
-import { createClient } from '@/lib/supabase/server'
+import { getStudentAccountAccess } from '@/lib/auth/student-access'
 import { getSocialProfiles } from '@/lib/social'
 
 import './globals.css'
@@ -28,19 +27,6 @@ export const metadata: Metadata = {
     icon: '/images/branding/anna-dance-academy-mark.png',
     apple: '/images/branding/anna-dance-academy-mark.png',
   },
-}
-
-async function getStudentAccountAccess() {
-  if (!isSupabaseConfigured()) return false
-
-  try {
-    const supabase = await createClient()
-    const { data } = await supabase.auth.getClaims()
-
-    return Boolean(data?.claims?.sub)
-  } catch {
-    return false
-  }
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

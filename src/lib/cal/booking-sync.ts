@@ -1,3 +1,5 @@
+import { consultationBooking, paidClassBookings } from './booking-options'
+
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
 export const CAL_BOOKING_EVENTS = [
@@ -196,8 +198,7 @@ export function parseCalWebhook(rawBody: string): NormalizedCalBooking | null {
 }
 
 export function isAllowedCalEventType(slug: string | null, configuredSlugs?: string) {
-  const allowed = (configuredSlugs || 'trial-class-consultation')
-    .split(',')
+  const allowed = [consultationBooking.slug, ...paidClassBookings.map((option) => option.slug), ...(configuredSlugs || '').split(',')]
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean)
 

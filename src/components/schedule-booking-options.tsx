@@ -1,28 +1,24 @@
 import Link from 'next/link'
+import { paidClassBookings } from '@/lib/cal/booking-options'
 
 type ScheduleBookingOptionsProps = {
-  active: 'trial' | 'payment'
+  active: string
 }
 
 export function ScheduleBookingOptions({ active }: ScheduleBookingOptionsProps) {
   return (
-    <nav className="schedule-booking-options" aria-label="Booking options">
-      <Link
-        className={active === 'trial' ? 'is-active' : undefined}
-        href="/schedule#book"
-        aria-current={active === 'trial' ? 'page' : undefined}
-      >
-        <span>Trial class</span>
-        <small>Standard booking</small>
-      </Link>
-      <Link
-        className={active === 'payment' ? 'is-active' : undefined}
-        href="/schedule/group-test#book"
-        aria-current={active === 'payment' ? 'page' : undefined}
-      >
-        <span>Payment test</span>
-        <small>$0.50 after choosing a time</small>
-      </Link>
+    <nav className="schedule-booking-options" aria-label="Paid classes">
+      {paidClassBookings.map((option) => (
+        <Link
+          key={option.slug}
+          className={active === option.slug ? 'is-active' : undefined}
+          href={`/schedule?class=${option.slug}#book`}
+          aria-current={active === option.slug ? 'page' : undefined}
+        >
+          <span>{option.title}</span>
+          <small>{option.details}</small>
+        </Link>
+      ))}
     </nav>
   )
 }
