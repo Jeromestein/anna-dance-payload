@@ -9,6 +9,8 @@ import { getPublicClasses } from "@/lib/classes";
 export const metadata: Metadata = { title: "Classes" };
 export const dynamic = "force-dynamic";
 
+const danceStyles = ["Chinese Dance", "Ballet", "Jazz", "Contemporary", "K-pop", "Acro Dance"];
+
 export default async function ClassesPage() {
   const classes = await getPublicClasses();
 
@@ -21,8 +23,28 @@ export default async function ClassesPage() {
         image="/images/classes/technique-fundamentals.jpg"
         imageClassName="page-hero-image-classes"
       />
-      <section className="section-space page-shell">
-        <div className="program-intro">
+      <section className="dance-styles-summary section-space page-shell" aria-labelledby="dance-styles-title">
+        <div className="dance-styles-heading">
+          <p className="eyebrow">Our Dance Styles</p>
+          <h2 className="display-title" id="dance-styles-title">Rooted in Chinese dance.<br /><em>Inspired by multiple styles.</em></h2>
+          <p className="lead">Our dance studio offers a variety of classes for dancers ages 3 and up, at all skill levels.</p>
+        </div>
+        <ul className="dance-styles-grid" aria-label="Dance styles">
+          {danceStyles.map((style, index) => (
+            <li key={style}>
+              <span className="dance-style-number" aria-hidden="true">0{index + 1}</span>
+              <h3>{style}</h3>
+            </li>
+          ))}
+        </ul>
+        <div className="dance-styles-copy">
+          <p>Chinese Dance is at the heart of our training and choreography. We also incorporate elements of Ballet, Jazz, Contemporary, K-pop, and Acro to create a broader and more dynamic learning experience.</p>
+          <p>By blending different movement styles with the foundation and expression of Chinese dance, our choreography is designed to connect with today’s young dancers while developing technique, musicality, versatility, and stage presence.</p>
+        </div>
+      </section>
+
+      <section className="section-space page-shell classes-programs-section">
+        <div className="program-intro" hidden style={{ display: "none" }}>
           <p className="eyebrow">Our programs</p>
           <h2 className="display-title">Strong Foundations.<br /><em>Personal Direction.</em></h2>
           <p>Age is one part of placement—not the whole answer. Mixed-age placement may be recommended when it best supports a student&apos;s learning and scheduling needs.</p>
