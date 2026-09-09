@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowIcon } from "@/components/arrow-icon";
+import { ChineseDanceIntroduction } from "@/components/chinese-dance-introduction";
 import { CtaSection } from "@/components/cta-section";
 import { PageHero } from "@/components/page-hero";
 import { getPublicClasses } from "@/lib/classes";
@@ -97,6 +98,8 @@ export default async function ClassesPage() {
           })}
         </div>
       </section>
+
+      <ChineseDanceIntroduction />
 
       <section className="repertoire-section section-space">
         <div className="page-shell repertoire-layout">
