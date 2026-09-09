@@ -4198,3 +4198,111 @@ body:has(.legal-page) .floating-booking-button {
     min-width: 760px;
   }
 }
+
+.galleryMedia {
+  position: relative;
+  margin: 0;
+  height: 100%;
+  min-height: 0;
+}
+.galleryItemWithAward {
+  display: flex;
+  flex-direction: column;
+}
+.galleryItemWithAward .galleryMedia {
+  flex: 1;
+}
+.award-certificate-card {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 18px;
+  border: 0;
+  background: #faf5e9;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.galleryItem .award-certificate-card img {
+  width: 90px;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid #d6c799;
+  border-radius: 3px;
+}
+.award-certificate-card strong,
+.award-certificate-card em,
+.award-certificate-card small {
+  display: block;
+  line-height: 1.5;
+}
+.award-certificate-card strong { font-size: .86rem; }
+.award-certificate-card em { font-size: .8rem; margin-top: 3px; }
+.award-certificate-card small { color: var(--rose-dark); margin-top: 6px; }
+.award-certificate-link {
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--rose-dark);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.award-certificate-dialog {
+  width: min(1100px, 95vw);
+  max-width: 95vw;
+  max-height: 94dvh;
+  padding: 16px;
+  border: 0;
+  border-radius: 12px;
+  background: white;
+}
+.award-certificate-dialog::backdrop { background: rgb(0 20 28 / 80%); }
+.award-certificate-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: .85rem;
+}
+.award-certificate-toolbar button {
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: white;
+  cursor: pointer;
+}
+.galleryItem .award-certificate-dialog img,
+.award-certificate-dialog img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: calc(94dvh - 90px);
+  object-fit: contain;
+}
+@media (max-width: 680px) {
+  .award-certificate-card { gap: 10px; padding: 14px; }
+  .galleryItem .award-certificate-card img { width: 66px; }
+}
+
+.award-recognition-note {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-size: .75rem;
+  line-height: 1.6;
+}
+.galleryItemWithAward {
+  height: auto;
+}
+.galleryItemWithAward .galleryMedia {
+  flex: none;
+  height: clamp(280px, 28vw, 430px);
+}
+@media (max-width: 680px) {
+  .galleryItemWithAward { aspect-ratio: auto; }
+  .galleryItemWithAward .galleryMedia { height: 300px; }
+}

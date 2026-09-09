@@ -1,3 +1,4 @@
+import { AwardCertificate } from "@/components/award-certificate";
 import type { Metadata } from "next";
 import { CtaSection } from "@/components/cta-section";
 import { GalleryWall } from "@/components/GalleryWall";
@@ -53,7 +54,7 @@ export default async function AboutPage() {
             <p>Anna holds a bachelor&apos;s degree in Dance Education and Dance Performance and brings more than 15 years of experience in teaching, choreography, performance, artistic direction, and student development.</p>
             <p>Her work connects strong technical training with creativity, cultural storytelling, confidence, and meaningful opportunities to perform.</p>
             <div className="achievement-grid">
-              <article><span>2026</span><p><em>The Dance of the Cloud Fae</em> earned Top 12 in the YAGP Chicago Small Ensemble category.</p></article>
+              <article><span>2026</span><p><em>The Dance of the Cloud Fae</em> earned Top 12 in the YAGP Chicago Small Ensemble category.</p><AwardCertificate compact /></article>
               <article><span>Choreography</span><p>Recipient of the Best Choreographer Award at the International Taoli World Competition.</p></article>
               <article><span>2025</span><p>Artistic Director of the dance drama <em>Jasmine Flower</em> at Tampa&apos;s Straz Center.</p></article>
             </div>

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { AwardCertificate } from '@/components/award-certificate'
 
 import { SocialFollow } from '@/components/SocialFollow'
 import type { Image, MediaGallery, SocialProfile, Video } from '@/payload-types'
@@ -101,12 +102,15 @@ export function GalleryWall({ canEdit = false, gallery, sectionKey, socialProfil
             {items.map((item, index) => {
               const caption = item.caption?.trim()
 
+              const hasAward = sectionKey === 'home-studio' && item.type === 'video' && item.media.filename === 'competition-duet-stage-performance-web.mp4'
+
               return (
-                <figure
-                  className={`galleryItem galleryItem${(index % 6) + 1}`}
+                <div
+                  className={`galleryItem galleryItem${(index % 6) + 1}${hasAward ? ' galleryItemWithAward' : ''}`}
                   key={item.id || `${item.type}-${item.media.id}-${index}`}
                   role="listitem"
                 >
+                  <figure className="galleryMedia">
                   {item.type === 'image' ? (
                     // Payload serves local and S3-backed files through the same stored URL.
                     // eslint-disable-next-line @next/next/no-img-element
@@ -129,7 +133,9 @@ export function GalleryWall({ canEdit = false, gallery, sectionKey, socialProfil
                     </video>
                   )}
                   {caption ? <figcaption>{caption}</figcaption> : null}
-                </figure>
+                  </figure>
+                  {hasAward ? <AwardCertificate /> : null}
+                </div>
               )
             })}
             {gallery.showSocialLinks && socialProfiles ? (
