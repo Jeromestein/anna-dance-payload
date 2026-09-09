@@ -53,40 +53,46 @@ export default async function ClassesPage() {
           {classes.map((item, index) => {
             const curriculum = classCurriculum[item.title];
             return (
-            <article className="program-row" key={item.id}>
-              <span className="program-index">0{index + 1}</span>
-              <div className="program-image" style={{ backgroundImage: `url(${item.image})` }} />
-              <div className="program-content">
-                <span className="class-age">{item.age}</span>
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
+              <article className="program-row" key={item.id}>
+                <span className="program-index">0{index + 1}</span>
+                <div className="program-image" style={{ backgroundImage: `url(${item.image})` }} />
+                <div className="program-content">
+                  <span className="class-age">{item.age}</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
+                  <div className="program-content-footer">
+                    <ul>
+                      {item.features.map((feature) => <li key={feature}>{feature}</li>)}
+                    </ul>
+                    <Link href="/contact" className="program-action" aria-label={`Ask about ${item.title}`}>
+                      <span>Ask about this class</span>
+                      <ArrowIcon />
+                    </Link>
+                  </div>
+                </div>
                 {curriculum?.objectives ? (
-                  <dl className="program-objectives">
+                  <div className="program-details">
+                    <h4 className="program-details-title">What dancers develop</h4>
+                    <dl className="program-objectives">
                     {curriculum.objectives.map((objective) => (
                       <div key={objective.title}>
                         <dt>{objective.title}</dt>
                         <dd>{objective.description}</dd>
                       </div>
                     ))}
-                  </dl>
-                ) : null}
-                {curriculum?.paragraphs ? (
-                  <div className="program-full-description">
-                    <h4>{curriculum.heading}</h4>
-                    {curriculum.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                    </dl>
                   </div>
                 ) : null}
-                <div className="program-content-footer">
-                  <ul>
-                    {item.features.map((feature) => <li key={feature}>{feature}</li>)}
-                  </ul>
-                  <Link href="/contact" className="program-action" aria-label={`Ask about ${item.title}`}>
-                    <span>Ask about this class</span>
-                    <ArrowIcon />
-                  </Link>
-                </div>
-              </div>
-            </article>
+                {curriculum?.paragraphs ? (
+                  <div className="program-details program-full-description">
+                    <h4 className="program-details-title">{curriculum.heading}</h4>
+                    <div className="program-description-columns">
+                      {curriculum.paragraphs.slice(0, -1).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                    </div>
+                    <aside className="program-requirement"><h5>Training requirements</h5><p>{curriculum.paragraphs.at(-1)}</p></aside>
+                  </div>
+                ) : null}
+              </article>
             );
           })}
         </div>
