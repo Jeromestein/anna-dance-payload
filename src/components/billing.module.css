@@ -163,3 +163,134 @@
 .bill summary span:last-child {
   flex-shrink: 0;
 }
+
+.refundSection {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--theme-elevation-200, #d4e1e1);
+}
+.refundHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.refundHeader h3,
+.refundHeader p {
+  margin: 0;
+}
+.refundHeader > strong {
+  white-space: nowrap;
+  font-size: 1.2rem;
+}
+.refundNotice {
+  padding: 14px 16px;
+  margin: 16px 0;
+  border: 1px solid var(--theme-elevation-200, #d4e1e1);
+  border-radius: 8px;
+  background: var(--theme-elevation-50, #f2f7f6);
+}
+.refundNotice p {
+  margin: 5px 0 0;
+}
+.refundNotice[data-state='failed'] {
+  border-left: 4px solid #b14c30;
+}
+.refundNotice[data-state='pending'] {
+  border-left: 4px solid #987021;
+}
+.refundNotice[data-state='succeeded'] {
+  border-left: 4px solid #28795b;
+}
+.refundButton {
+  padding: 11px 16px;
+  border: 1px solid var(--theme-elevation-300, #aac2c2);
+  border-radius: 7px;
+  background: var(--theme-elevation-100, #e7f2f0);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.refundButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.refundButton:focus-visible {
+  outline: 2px solid #08788e;
+  outline-offset: 2px;
+}
+.refundReview {
+  border: 1px solid var(--theme-elevation-200, #d4e1e1);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.refundReview h4 {
+  margin: 0 0 20px;
+}
+.refundReview .totals dt {
+  flex-shrink: 0;
+}
+.refundActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.refundActions button {
+  flex: 1;
+}
+.refundReason {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.manualRefund {
+  margin-top: 20px;
+  border-top: 1px solid var(--theme-elevation-200, #d4e1e1);
+}
+.bill .manualRefund > summary {
+  justify-content: start;
+  font-size: 0.85rem;
+  padding: 14px 0;
+  background: transparent;
+}
+.bill .manualRefund > summary::before {
+  content: '+';
+}
+.bill .manualRefund[open] > summary::before {
+  content: '−';
+}
+.manualRefund .form {
+  margin-top: 0;
+  padding-top: 8px;
+  border-top: 0;
+}
+
+.refundLauncher {
+  padding: 18px;
+  border: 1px solid var(--theme-elevation-200, #c9dedb);
+  border-radius: 10px;
+  background: var(--theme-elevation-50, #f2f7f6);
+}
+.refundLauncher .refundActions > button:first-child {
+  font-weight: 700;
+  border-color: var(--theme-elevation-500, #08788e);
+}
+.refundLauncher > div:not(.refundActions) > .refundButton:last-child {
+  margin-top: 16px;
+}
+.refundSelect {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+.refundSelect select {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  padding: 10px;
+  border: 1px solid var(--theme-elevation-250, #c1cece);
+  border-radius: 6px;
+  background: var(--theme-elevation-0, white);
+}

@@ -130,13 +130,19 @@ timing, no-show behavior, or external Google Calendar acceptance/synchronization
 
 ## Stripe payment notifications
 
+Payment emails and database synchronization are separate acceptance checks. The required
+[payment synchronization checklist](../project/account-billing.md#required-payment-synchronization-checklist)
+tracks Jason's reported USD 0.50 historical payment, future automatic payment/refund updates,
+deduplication, reconciliation, and Student/Admin verification. These remain unfinished.
+
 - [x] Stripe customer emails for successful payments are enabled.
 - [x] Stripe customer emails for refunds are enabled.
 - [x] The Academy received the Stripe account notification for a successful payment.
 - [ ] During the next controlled payment, verify that the customer actually receives the successful
       payment receipt; the enabled setting alone is not accepted as delivery proof.
 - [ ] Verify customer and Academy notification behavior for payment failure.
-- [ ] Verify customer and Academy notification behavior for full and partial refunds.
+- [ ] Verify customer and Academy notification behavior for completed full refunds. New website
+      bills support full refunds only; amount changes require a replacement bill and new payment.
 - [ ] Verify Academy notification behavior for disputes and the intended internal response.
 - [ ] Verify Stripe event retry and idempotency behavior before any webhook-driven payment status or
       notification is treated as production-complete.

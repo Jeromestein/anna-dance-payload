@@ -405,6 +405,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
               </header>
               <BillingAdmin
                 newBillId={crypto.randomUUID()}
+                ownerName={data.name}
                 owner={id}
                 bills={billing.bills}
                 unavailable={billing.unavailable}

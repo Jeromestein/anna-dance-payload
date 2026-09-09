@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react'
 import { manageBill } from '@/actions/billing'
 import { money, type Bill } from '@/lib/billing/model'
 import { BillDetails } from './billing-records'
+import { BillingRefund, RefundLauncher } from './billing-refund'
 import styles from './billing.module.css'
 
 function BillAction({
@@ -13,7 +14,7 @@ function BillAction({
 }: {
   owner: string
   bill: Bill
-  operation: 'paid' | 'refunded' | 'cancelled'
+  operation: 'paid' | 'cancelled'
 }) {
   const [state, action, pending] = useActionState(manageBill, {})
   return (
@@ -21,13 +22,7 @@ function BillAction({
       <input type="hidden" name="owner" value={owner} />
       <input type="hidden" name="id" value={bill.id} />
       <input type="hidden" name="operation" value={operation} />
-      <h4>
-        {operation === 'paid'
-          ? 'Record verified full payment'
-          : operation === 'refunded'
-            ? 'Record completed full refund'
-            : 'Cancel unpaid bill'}
-      </h4>
+      <h4>{operation === 'paid' ? 'Record verified full payment' : 'Cancel unpaid bill'}</h4>
       {operation === 'paid' && (
         <label>
           Payment method
@@ -41,25 +36,15 @@ function BillAction({
       )}
       {operation !== 'cancelled' && (
         <label>
-          {operation === 'paid'
-            ? 'Payment reference (Stripe: use PaymentIntent ID)'
-            : 'Completed refund reference'}
+          Payment reference (Stripe: use PaymentIntent ID)
           <input name="reference" required maxLength={200} />
-        </label>
-      )}
-      {operation === 'refunded' && (
-        <label>
-          Refund reason
-          <textarea name="reason" required maxLength={500} />
         </label>
       )}
       <label className={styles.confirm}>
         <input type="checkbox" name="confirmed" value="yes" required />
         {operation === 'paid'
           ? `I verified receipt of the full ${money(bill.amount_cents, bill.currency)}.`
-          : operation === 'refunded'
-            ? `I verified the full ${money(bill.amount_cents, bill.currency)} refund has completed. This only records the refund; it does not send money.`
-            : 'I verified that no payment has been collected for this bill.'}
+          : 'I verified that no payment has been collected for this bill.'}
       </label>
       <button disabled={pending || Boolean(state.success)}>
         {pending ? 'Saving…' : 'Save record'}
@@ -195,20 +180,26 @@ export function BillingAdmin({
   bills,
   unavailable,
   newBillId,
+  ownerName,
 }: {
   owner: string
   bills: Bill[]
   unavailable: boolean
   newBillId: string
+  ownerName: string
 }) {
   if (unavailable)
     return (
-      <p role="alert">
-        Billing is unavailable. Check the database migration and connection before issuing bills.
-      </p>
+      <div className={styles.records}>
+        <RefundLauncher owner={owner} ownerName={ownerName} bills={[]} unavailable />
+        <p role="alert">
+          Billing is unavailable. Check the database migration and connection before issuing bills.
+        </p>
+      </div>
     )
   return (
     <div className={styles.records}>
+      <RefundLauncher owner={owner} ownerName={ownerName} bills={bills} />
       {bills.length === 0 && <p>No billing activity yet.</p>}
       {bills.map((bill) => (
         <BillDetails key={bill.id} bill={bill} bills={bills}>
@@ -218,7 +209,7 @@ export function BillingAdmin({
           {bill.status === 'payment_due' && (
             <BillAction owner={owner} bill={bill} operation="cancelled" />
           )}
-          {bill.status === 'paid' && <BillAction owner={owner} bill={bill} operation="refunded" />}
+          <BillingRefund owner={owner} ownerName={ownerName} bill={bill} />
         </BillDetails>
       ))}
       <details className={styles.bill}>
