@@ -1,0 +1,165 @@
+.records {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.bill {
+  border: 1px solid var(--theme-elevation-200, #d4e1e1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.bill summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  cursor: pointer;
+  background: var(--theme-elevation-50, #f2f7f6);
+}
+.bill summary::before {
+  content: '+';
+  flex-shrink: 0;
+}
+.bill[open] summary::before {
+  content: '−';
+}
+.bill summary span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.bill summary span:last-child {
+  margin-left: auto;
+  text-align: right;
+}
+.bill small {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+.body {
+  padding: 18px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.body a {
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+.reference {
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+  opacity: 0.8;
+}
+.items {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+.items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--theme-elevation-150, #e1e8e8);
+}
+.items li span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.items li strong {
+  flex-shrink: 0;
+}
+.totals {
+  display: grid;
+  gap: 10px;
+}
+.totals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.totals dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.form {
+  display: grid;
+  gap: 14px;
+  border-top: 1px solid var(--theme-elevation-200, #d4e1e1);
+  padding-top: 20px;
+  margin-top: 20px;
+}
+.form h3,
+.form h4,
+.form p {
+  margin: 0;
+}
+.form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+.form input:not([type='checkbox']),
+.form select,
+.form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--theme-elevation-250, #c1cece);
+  border-radius: 6px;
+  color: inherit;
+  background: var(--theme-elevation-0, white);
+  font: inherit;
+}
+.form fieldset {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--theme-elevation-200, #d4e1e1);
+  border-radius: 8px;
+  padding: 14px;
+}
+.form button {
+  padding: 10px 14px;
+  border: 1px solid var(--theme-elevation-300, #aac2c2);
+  border-radius: 6px;
+  background: var(--theme-elevation-100, #e7f2f0);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.form button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.form .confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.confirm input {
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.bill summary:focus-visible,
+.form button:focus-visible {
+  outline: 2px solid #08788e;
+  outline-offset: -2px;
+}
+
+.bill summary span:last-child strong {
+  white-space: nowrap;
+}
+.bill summary span:last-child {
+  flex-shrink: 0;
+}

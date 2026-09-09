@@ -44,6 +44,7 @@ next-env.d.ts
 /images
 
 # Playwright
+/output/playwright/
 node_modules/
 /test-results/
 /playwright-report/

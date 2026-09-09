@@ -2,13 +2,15 @@ import type { EditableStudentProfile } from '@/components/student-profile-form'
 import { MobileAccountTabs } from '@/components/mobile-account-tabs'
 import { StudentScheduleCalendar } from '@/components/student-schedule-calendar'
 import { StudentProfileForm } from '@/components/student-profile-form'
-import type { MockStudentAccount } from '@/lib/account/mock-student-account'
+import { BillingRecords } from '@/components/billing-records'
+import { billingSummary, type Bill } from '@/lib/billing/model'
 import { type AccountScheduleEntry, formatScheduleEntry } from '@/lib/account/schedule'
 
 import styles from './student-account-dashboard.module.css'
 
 type StudentAccountDashboardProps = {
-  account: MockStudentAccount
+  bills: Bill[]
+  billingUnavailable: boolean
   profile: EditableStudentProfile
   scheduleEntries: AccountScheduleEntry[]
   scheduleLoadError?: boolean
@@ -18,7 +20,8 @@ type StudentAccountDashboardProps = {
 }
 
 export function StudentAccountDashboard({
-  account,
+  bills,
+  billingUnavailable,
   profile,
   scheduleEntries,
   scheduleLoadError = false,
@@ -37,21 +40,14 @@ export function StudentAccountDashboard({
             <p className={styles.eyebrow}>Student</p>
             <h1>My Account</h1>
             <p className={styles.headerCopy}>
-              Welcome back, {profile.name}. Review your semester, payments, schedule, and profile.
+              Welcome back, {profile.name}. Review your billing, schedule, and profile.
             </p>
           </div>
-          <span className={styles.termPill}>{account.term.name}</span>
         </header>
-
-        <p className={styles.previewNotice} role="status">
-          <strong>Sample data</strong>
-          Semester and payment details are still a preview. Appointments below use synchronized
-          schedule records.
-        </p>
 
         <nav className={styles.sectionNav} aria-label="My Account sections">
           <a href="#overview">Overview</a>
-          <a href="#payments">Payments</a>
+          <a href="#payments">Billing</a>
           <a href="#schedule">Schedule</a>
           <a href="#profile">Profile</a>
         </nav>
@@ -68,14 +64,9 @@ export function StudentAccountDashboard({
               </p>
             </article>
             <article className={styles.summaryCard}>
-              <span className={styles.summaryLabel}>Payment</span>
-              <strong className={styles.paymentStatus}>{account.payment.status}</strong>
-              <p>{account.payment.amount} sample tuition</p>
-            </article>
-            <article className={styles.summaryCard}>
-              <span className={styles.summaryLabel}>Current term</span>
-              <strong>{account.term.program}</strong>
-              <p>{account.term.lessonCount} scheduled lessons</p>
+              <span className={styles.summaryLabel}>Billing</span>
+              <strong>{billingSummary(bills, billingUnavailable)}</strong>
+              <p>View itemized charges and verified payment records.</p>
             </article>
           </div>
 
@@ -87,33 +78,11 @@ export function StudentAccountDashboard({
             >
               <header className={styles.panelHeader}>
                 <div>
-                  <h2>Payment</h2>
-                  <p>One full-semester payment.</p>
+                  <h2>Billing</h2>
+                  <p>Your charges, payments, and full refunds.</p>
                 </div>
-                <span className={styles.sampleTag}>Sample</span>
               </header>
-              <div className={styles.paymentAmount}>
-                <span>Amount due</span>
-                <strong>{account.payment.amount}</strong>
-              </div>
-              <dl className={styles.detailList}>
-                <div>
-                  <dt>Status</dt>
-                  <dd className={styles.paymentStatus}>{account.payment.status}</dd>
-                </div>
-                <div>
-                  <dt>Due date</dt>
-                  <dd>{account.payment.dueDate}</dd>
-                </div>
-                <div>
-                  <dt>Paid</dt>
-                  <dd>{account.payment.paidAmount}</dd>
-                </div>
-              </dl>
-              <button className={styles.disabledButton} type="button" disabled>
-                Pay with Stripe — preview only
-              </button>
-              <p className={styles.buttonNote}>This preview cannot collect a payment.</p>
+              <BillingRecords bills={bills} unavailable={billingUnavailable} />
             </article>
 
             <article className={styles.panel} id="schedule" data-account-tab="schedule">

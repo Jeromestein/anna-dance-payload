@@ -6,7 +6,9 @@ import { notFound, redirect } from 'next/navigation'
 
 import { updateManagedStudentProfile } from '@/actions/student-profiles'
 import { isAdministratorUser } from '@/access/staff'
-import { getMockStudentAccount } from '@/lib/account/mock-student-account'
+import { loadBills } from '@/lib/billing/load'
+import { billingSummary } from '@/lib/billing/model'
+import { BillingAdmin } from '@/components/billing-admin'
 import {
   type AccountScheduleEntry,
   formatScheduleEntry,
@@ -331,7 +333,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
 
   const routeError = getSearchParam(props.searchParams?.error)
   const message = getSearchParam(props.searchParams?.message)
-  const account = getMockStudentAccount()
+  const billing = await loadBills(supabase, id)
   const scheduleEntries = ((scheduleResult.data ?? []) as StoredScheduleEntry[]).map(
     mapStoredScheduleEntry,
   )
@@ -364,12 +366,6 @@ export async function StudentDetailView(props: AdminViewServerProps) {
           </p>
         )}
 
-        <p className={previewStyles.notice} role="status">
-          <strong>Sample data</strong>
-          Semester and payment details remain a preview. Appointments below use synchronized
-          schedule records.
-        </p>
-
         <MobileStudentAdminTabs>
           <div
             className={previewStyles.summary}
@@ -377,14 +373,11 @@ export async function StudentDetailView(props: AdminViewServerProps) {
             data-admin-tab="overview"
           >
             <article>
-              <span className={previewStyles.label}>Current term</span>
-              <strong>{account.term.name}</strong>
-              <p>{account.term.program}</p>
-            </article>
-            <article>
-              <span className={previewStyles.label}>Payment</span>
-              <strong className={previewStyles.due}>{account.payment.status}</strong>
-              <p>{account.payment.amount} sample tuition</p>
+              <span className={previewStyles.label}>Billing</span>
+              <strong className={previewStyles.due}>
+                {billingSummary(billing.bills, billing.unavailable)}
+              </strong>
+              <p>Itemized charges and verified payments</p>
             </article>
             <article>
               <span className={previewStyles.label}>Next appointment</span>
@@ -406,29 +399,16 @@ export async function StudentDetailView(props: AdminViewServerProps) {
             >
               <header className={previewStyles.panelHeader}>
                 <div>
-                  <h2 id="admin-payment-heading">Semester payment</h2>
-                  <p>{account.term.dateRange}</p>
+                  <h2 id="admin-payment-heading">Billing</h2>
+                  <p>Issue bills and record externally verified payments or full refunds.</p>
                 </div>
-                <span className={previewStyles.tag}>Sample</span>
               </header>
-              <div className={previewStyles.amount}>
-                <strong>{account.payment.amount}</strong>
-                <span>{account.term.lessonCount} lessons</span>
-              </div>
-              <dl className={previewStyles.details}>
-                <div>
-                  <dt>Status</dt>
-                  <dd className={previewStyles.due}>{account.payment.status}</dd>
-                </div>
-                <div>
-                  <dt>Due date</dt>
-                  <dd>{account.payment.dueDate}</dd>
-                </div>
-                <div>
-                  <dt>Paid</dt>
-                  <dd>{account.payment.paidAmount}</dd>
-                </div>
-              </dl>
+              <BillingAdmin
+                newBillId={crypto.randomUUID()}
+                owner={id}
+                bills={billing.bills}
+                unavailable={billing.unavailable}
+              />
             </section>
 
             <section

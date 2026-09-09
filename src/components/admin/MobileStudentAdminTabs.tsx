@@ -12,7 +12,7 @@ type MobileStudentAdminTabsProps = {
 
 const tabs: Array<{ id: AdminStudentTab; label: string; controls: string }> = [
   { id: 'overview', label: 'Overview', controls: 'admin-student-overview' },
-  { id: 'payment', label: 'Payment', controls: 'admin-student-payment' },
+  { id: 'payment', label: 'Billing', controls: 'admin-student-payment' },
   { id: 'schedule', label: 'Schedule', controls: 'admin-student-schedule' },
   { id: 'profile', label: 'Profile', controls: 'admin-student-profile' },
 ]

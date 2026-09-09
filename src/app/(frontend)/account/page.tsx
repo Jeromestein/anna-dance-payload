@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 
 import { StudentAccountDashboard } from '@/components/student-account-dashboard'
 import type { EditableStudentProfile } from '@/components/student-profile-form'
-import { getMockStudentAccount } from '@/lib/account/mock-student-account'
+import { loadBills } from '@/lib/billing/load'
 import { mapStoredScheduleEntry } from '@/lib/account/schedule'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { createClient } from '@/lib/supabase/server'
@@ -61,6 +61,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     .order('starts_at', { ascending: true })
     .limit(50)
 
+  const billing = await loadBills(supabase, studentId)
+
   const profile: EditableStudentProfile = {
     id: studentId,
     email: storedProfile?.email ?? authEmail,
@@ -79,7 +81,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   return (
     <StudentAccountDashboard
-      account={getMockStudentAccount()}
+      bills={billing.bills}
+      billingUnavailable={billing.unavailable}
       profile={profile}
       scheduleEntries={(storedSchedule ?? []).map(mapStoredScheduleEntry)}
       scheduleLoadError={Boolean(scheduleError)}

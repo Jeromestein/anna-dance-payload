@@ -12,7 +12,7 @@ type MobileAccountTabsProps = {
 
 const tabs: Array<{ id: AccountTabId; label: string }> = [
   { id: 'overview', label: 'Overview' },
-  { id: 'payments', label: 'Payments' },
+  { id: 'payments', label: 'Billing' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'profile', label: 'Profile' },
 ]

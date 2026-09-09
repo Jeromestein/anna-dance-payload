@@ -2,6 +2,8 @@
 
 **Decision date:** September 2, 2026
 
+> September 9 update: [Account Billing](./account-billing.md) supersedes this document’s semester, enrollment, payment, invoice, and refund design. Current term is hidden; Billing uses `app_payments` plus `app_payment_items`, one full payment per bill, and full refunds only. The earlier checklist below is historical and does not represent current completion status. Schedule and authentication boundaries still apply.
+
 **Status:** Approved design direction; Cal.com synchronization is implemented locally and in the
 database, while deployment and external-service configuration remain pending.
 
