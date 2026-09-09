@@ -4306,3 +4306,31 @@ body:has(.legal-page) .floating-booking-button {
   .galleryItemWithAward { aspect-ratio: auto; }
   .galleryItemWithAward .galleryMedia { height: 300px; }
 }
+
+.interviewGallery .galleryWall {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  overflow: visible;
+}
+.interviewGallery .galleryItem {
+  grid-column: auto;
+  height: auto;
+  aspect-ratio: auto;
+  background: #071b22;
+}
+.interviewGallery .galleryMedia { height: auto; }
+.interviewGallery .galleryMedia video {
+  width: 100%;
+  height: clamp(420px, 45vw, 620px);
+  object-fit: contain;
+}
+.interviewGallery .galleryMedia figcaption {
+  position: static;
+  padding: 18px 22px;
+  background: #071b22;
+}
+@media (max-width: 680px) {
+  .interviewGallery .galleryWall { grid-template-columns: minmax(0, 1fr); grid-auto-flow: row; }
+  .interviewGallery .galleryMedia video { height: 480px; }
+}

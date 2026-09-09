@@ -32,6 +32,7 @@ function getVideo(video: number | Video | null | undefined): Video | null {
 }
 
 export function GalleryWall({ canEdit = false, gallery, sectionKey, socialProfiles }: GalleryWallProps) {
+  const interviews = sectionKey === 'faculty-interviews'
   const items: ResolvedGalleryItem[] = []
   const headingId = `media-gallery-${sectionKey}-heading`
   const eyebrow = gallery.eyebrow?.trim()
@@ -62,7 +63,7 @@ export function GalleryWall({ canEdit = false, gallery, sectionKey, socialProfil
     <section
       aria-label={heading ? undefined : eyebrow || 'Selected photos and videos'}
       aria-labelledby={heading ? headingId : undefined}
-      className="mediaGallerySection"
+      className={`mediaGallerySection${interviews ? ' interviewGallery' : ''}`}
     >
       {hasHeaderContent ? (
         <div
@@ -118,10 +119,10 @@ export function GalleryWall({ canEdit = false, gallery, sectionKey, socialProfil
                   ) : (
                     <video
                       aria-label={item.media.description}
-                      autoPlay
+                      autoPlay={!interviews}
                       controls
-                      loop
-                      muted
+                      loop={!interviews}
+                      muted={!interviews}
                       playsInline
                       poster={getImage(item.media.posterImage)?.url || undefined}
                       preload="metadata"

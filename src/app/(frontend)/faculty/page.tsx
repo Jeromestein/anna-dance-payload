@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { CtaSection } from "@/components/cta-section";
 import { FacultyCards } from "@/components/FacultyCards";
+import { GalleryWall } from "@/components/GalleryWall";
+import { getMediaGalleryBySlug } from "@/lib/gallery";
+import { getPayloadStaffUser } from "@/lib/staff/auth";
 import { PageHero } from "@/components/page-hero";
 import { getPublicFaculty } from "@/lib/faculty";
 
@@ -8,7 +11,7 @@ export const metadata: Metadata = { title: "Faculty" };
 export const dynamic = "force-dynamic";
 
 export default async function FacultyPage() {
-  const faculty = await getPublicFaculty();
+  const [faculty, gallery, staffUser] = await Promise.all([getPublicFaculty(), getMediaGalleryBySlug("faculty-interviews"), getPayloadStaffUser()]);
 
   return (
     <>
@@ -27,6 +30,7 @@ export default async function FacultyPage() {
         </div>
         <FacultyCards members={faculty} variant="profiles" />
       </section>
+      {gallery ? <GalleryWall gallery={gallery} sectionKey="faculty-interviews" canEdit={Boolean(staffUser)} /> : null}
       <CtaSection />
     </>
   );
