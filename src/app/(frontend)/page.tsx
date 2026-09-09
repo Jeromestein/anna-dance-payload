@@ -1,3 +1,4 @@
+import { SectionEditLink } from "@/components/SectionEditLink";
 import Link from "next/link";
 import { ArrowIcon } from "@/components/arrow-icon";
 import { CtaSection } from "@/components/cta-section";
@@ -153,11 +154,13 @@ export default async function HomePage() {
           </div>
           <Link href="/classes" className="text-link">Explore all programs <ArrowIcon /></Link>
         </div>
+        <div className="page-shell"><SectionEditLink canEdit={Boolean(staffUser)} href="/admin/collections/classes" label="Classes" /></div>
         <div className="class-grid page-shell" role="region" aria-label="Class programs" tabIndex={0}>
           {classes.map((item) => (
             <article className={`class-card ${item.tone}`} key={item.id}>
               <div className="class-card-image" style={{ backgroundImage: `url(${item.image})` }} />
               <div className="class-card-body">
+                <SectionEditLink canEdit={Boolean(staffUser) && typeof item.id === "number"} href={`/admin/collections/classes/${item.id}`} label={item.title} />
                 <span className="class-age">{item.age}</span>
                 <h3>{item.title}</h3>
                 <p>{item.description}</p>
@@ -187,7 +190,7 @@ export default async function HomePage() {
           <p className="section-side-copy">Anna leads the Academy’s artistic direction, with teaching artists joining selected classes, rehearsals, and performance projects as needs evolve each term.</p>
         </div>
         <div className="page-shell">
-          <FacultyCards members={faculty} compact />
+          <FacultyCards canEdit={Boolean(staffUser)} members={faculty} compact />
         </div>
       </section>
 

@@ -1,3 +1,5 @@
+import { getPayloadStaffUser } from "@/lib/staff/auth";
+import { SectionEditLink } from "@/components/SectionEditLink";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowIcon } from "@/components/arrow-icon";
@@ -13,7 +15,7 @@ export const dynamic = "force-dynamic";
 const danceStyles = ["Chinese Dance", "Ballet", "Jazz", "Contemporary", "K-pop", "Acro Dance"];
 
 export default async function ClassesPage() {
-  const classes = await getPublicClasses();
+  const [classes, staffUser] = await Promise.all([getPublicClasses(), getPayloadStaffUser()]);
 
   return (
     <div className="classes-page">
@@ -50,6 +52,7 @@ export default async function ClassesPage() {
           <h2 className="display-title">Strong Foundations.<br /><em>Personal Direction.</em></h2>
           <p>Age is one part of placement—not the whole answer. Mixed-age placement may be recommended when it best supports a student&apos;s learning and scheduling needs.</p>
         </div>
+        <SectionEditLink canEdit={Boolean(staffUser)} href="/admin/collections/classes" label="Classes" />
         <div className="program-list" role="region" aria-label="Class programs" tabIndex={0}>
           {classes.map((item, index) => {
             const curriculum = classCurriculum[item.title];
@@ -58,6 +61,7 @@ export default async function ClassesPage() {
                 <span className="program-index">0{index + 1}</span>
                 <div className="program-image" style={{ backgroundImage: `url(${item.image})` }} />
                 <div className="program-content">
+                  <SectionEditLink canEdit={Boolean(staffUser) && typeof item.id === "number"} href={`/admin/collections/classes/${item.id}`} label={item.title} />
                   <span className="class-age">{item.age}</span>
                   <h3>{item.title}</h3>
                   <p>{item.description}</p>

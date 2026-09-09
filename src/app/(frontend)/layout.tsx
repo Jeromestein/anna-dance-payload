@@ -56,7 +56,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         {staffUser && <StaffToolbar user={staffUser} />}
         <SiteHeader isAuthenticated={isAuthenticated} />
         <main>{children}</main>
-        <SiteFooter socialProfiles={socialProfiles?.showInFooter ? socialProfiles : null} />
+        <SiteFooter canEdit={Boolean(staffUser)} socialProfiles={socialProfiles?.showInFooter || staffUser ? socialProfiles : null} />
         <FloatingBookingButton />
       </body>
     </html>

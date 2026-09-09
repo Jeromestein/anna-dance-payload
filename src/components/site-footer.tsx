@@ -5,10 +5,11 @@ import { navigation } from "@/lib/site-data";
 import type { SocialProfile } from "@/payload-types";
 
 type SiteFooterProps = {
+  canEdit?: boolean;
   socialProfiles?: SocialProfile | null;
 };
 
-export function SiteFooter({ socialProfiles }: SiteFooterProps) {
+export function SiteFooter({ canEdit = false, socialProfiles }: SiteFooterProps) {
   return (
     <footer className="site-footer">
       <div className="footer-main page-shell">
@@ -34,7 +35,7 @@ export function SiteFooter({ socialProfiles }: SiteFooterProps) {
 
         {socialProfiles ? (
           <div className="footer-social">
-            <SocialFollow profiles={socialProfiles} variant="footer" />
+            <SocialFollow canEdit={canEdit} profiles={socialProfiles} variant="footer" />
           </div>
         ) : null}
       </div>

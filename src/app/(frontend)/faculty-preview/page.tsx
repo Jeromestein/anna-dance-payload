@@ -1,12 +1,13 @@
 import Link from 'next/link'
 
 import { FacultyCards } from '@/components/FacultyCards'
+import { getPayloadStaffUser } from '@/lib/staff/auth'
 import { getPublicFaculty } from '@/lib/faculty'
 
 export const dynamic = 'force-dynamic'
 
 export default async function FacultyPreviewPage() {
-  const faculty = await getPublicFaculty()
+  const [faculty, staffUser] = await Promise.all([getPublicFaculty(), getPayloadStaffUser()])
 
   return (
     <div className="previewShell">
@@ -22,13 +23,13 @@ export default async function FacultyPreviewPage() {
           <Link className="secondaryButton" href="/">
             POC overview
           </Link>
-          <Link className="primaryButton" href="/admin/collections/faculty">
+          {staffUser ? <Link className="primaryButton" href="/admin/collections/faculty">
             Edit Faculty
-          </Link>
+          </Link> : null}
         </div>
       </header>
 
-      <FacultyCards members={faculty} />
+      <FacultyCards canEdit={Boolean(staffUser)} members={faculty} />
     </div>
   )
 }

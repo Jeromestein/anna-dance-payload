@@ -1,8 +1,10 @@
 import Link from 'next/link'
+import { SectionEditLink } from '@/components/SectionEditLink'
 
 import type { Faculty, Image } from '@/payload-types'
 
 type FacultyCardsProps = {
+  canEdit?: boolean
   emptyActionHref?: string
   emptyActionLabel?: string
   members: Faculty[]
@@ -27,6 +29,7 @@ function getProfilePhoto(photo: Faculty['profilePhoto']): Image | null {
 }
 
 export function FacultyCards({
+  canEdit = false,
   emptyActionHref = '/admin/collections/faculty/create',
   emptyActionLabel = 'Add Faculty member',
   members,
@@ -42,55 +45,59 @@ export function FacultyCards({
           Create a profile in the CMS, choose a photo, publish it, and turn on “Show on website.”
           The homepage will update automatically.
         </p>
-        <Link className="primaryButton" href={emptyActionHref}>
+        {canEdit ? <Link className="primaryButton" href={emptyActionHref}>
           {emptyActionLabel}
-        </Link>
+        </Link> : null}
       </div>
     )
   }
 
   return (
-    <div
-      aria-label="Faculty members"
-      className={variant === 'profiles' ? 'facultyProfiles' : 'facultyGrid mobileCardRail'}
-      role="list"
-      tabIndex={variant === 'profiles' ? undefined : 0}
-    >
-      {members.map((member) => {
-        const photo = getProfilePhoto(member.profilePhoto)
-        const photoURL = photo?.sizes?.facultyCard?.url || photo?.url
+    <>
+      <SectionEditLink canEdit={canEdit} href="/admin/collections/faculty" label="Faculty" />
+      <div
+        aria-label="Faculty members"
+        className={variant === 'profiles' ? 'facultyProfiles' : 'facultyGrid mobileCardRail'}
+        role="list"
+        tabIndex={variant === 'profiles' ? undefined : 0}
+      >
+        {members.map((member) => {
+          const photo = getProfilePhoto(member.profilePhoto)
+          const photoURL = photo?.sizes?.facultyCard?.url || photo?.url
 
-        return (
-          <article
-            className={variant === 'profiles' ? 'facultyProfile' : 'facultyCard mobileCardRailItem'}
-            id={`teacher-${member.id}`}
-            key={member.id}
-            role="listitem"
-          >
-            <div className="facultyPhotoFrame">
-              {photoURL ? (
-                // Payload serves local and S3-backed files through the same stored URL.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img alt={photo.altText} src={photoURL} />
-              ) : (
-                <div className="photoPlaceholder">Photo unavailable</div>
-              )}
-            </div>
-            <div className="facultyContent">
-              {variant === 'profiles' ? <h3>{member.name}</h3> : null}
-              <p className="facultyTitle">{member.title}</p>
-              {variant === 'cards' ? <h3>{member.name}</h3> : null}
-              <p className="facultySpecialties">{member.introduction}</p>
-              {member.description ? (
-                <div className="facultyDescription">
-                  {(compact ? [getSummary(member.description)] : getParagraphs(member.description)).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-                </div>
-              ) : null}
-              {compact ? <Link className="facultyReadMore" href={`/faculty#teacher-${member.id}`}>Read full introduction <span aria-hidden="true">↗</span></Link> : null}
-            </div>
-          </article>
-        )
-      })}
-    </div>
+          return (
+            <article
+              className={variant === 'profiles' ? 'facultyProfile' : 'facultyCard mobileCardRailItem'}
+              id={`teacher-${member.id}`}
+              key={member.id}
+              role="listitem"
+            >
+              <div className="facultyPhotoFrame">
+                {photoURL ? (
+                  // Payload serves local and S3-backed files through the same stored URL.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img alt={photo.altText} src={photoURL} />
+                ) : (
+                  <div className="photoPlaceholder">Photo unavailable</div>
+                )}
+              </div>
+              <div className="facultyContent">
+                <SectionEditLink canEdit={canEdit} href={`/admin/collections/faculty/${member.id}`} label={member.name} />
+                {variant === 'profiles' ? <h3>{member.name}</h3> : null}
+                <p className="facultyTitle">{member.title}</p>
+                {variant === 'cards' ? <h3>{member.name}</h3> : null}
+                <p className="facultySpecialties">{member.introduction}</p>
+                {member.description ? (
+                  <div className="facultyDescription">
+                    {(compact ? [getSummary(member.description)] : getParagraphs(member.description)).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                  </div>
+                ) : null}
+                {compact ? <Link className="facultyReadMore" href={`/faculty#teacher-${member.id}`}>Read full introduction <span aria-hidden="true">↗</span></Link> : null}
+              </div>
+            </article>
+          )
+        })}
+      </div>
+    </>
   )
 }

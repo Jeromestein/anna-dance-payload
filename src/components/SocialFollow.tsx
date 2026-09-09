@@ -1,10 +1,13 @@
 'use client'
 
+import { SectionEditLink } from '@/components/SectionEditLink'
+
 import { useEffect, useId, useState } from 'react'
 
 import type { Image, SocialProfile } from '@/payload-types'
 
 type SocialFollowProps = {
+  canEdit?: boolean
   profiles: SocialProfile
   variant: 'footer' | 'gallery'
 }
@@ -48,7 +51,7 @@ function getQrCode(image: number | Image | null | undefined): Image | null {
   return typeof image === 'object' && image !== null ? image : null
 }
 
-export function SocialFollow({ profiles, variant }: SocialFollowProps) {
+export function SocialFollow({ canEdit = false, profiles, variant }: SocialFollowProps) {
   const [isWeChatOpen, setIsWeChatOpen] = useState(false)
   const dialogId = useId()
   const facebookUrl = profiles.facebookUrl?.trim()
@@ -68,7 +71,7 @@ export function SocialFollow({ profiles, variant }: SocialFollowProps) {
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [isWeChatOpen])
 
-  if (!facebookUrl && !instagramUrl && !hasWeChat) return null
+  if (!canEdit && !facebookUrl && !instagramUrl && !hasWeChat) return null
 
   return (
     <section
@@ -77,6 +80,7 @@ export function SocialFollow({ profiles, variant }: SocialFollowProps) {
       role={variant === 'gallery' ? 'listitem' : undefined}
     >
       <div className="socialFollowCopy">
+        <SectionEditLink canEdit={canEdit} href="/admin/globals/social-profiles" label="Social Profiles" />
         <p className="socialFollowLabel">Stay connected</p>
         <h3>{profiles.heading}</h3>
         <p>{profiles.message}</p>
