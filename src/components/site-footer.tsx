@@ -22,7 +22,7 @@ export function SiteFooter({ socialProfiles }: SiteFooterProps) {
         <div className="footer-links">
           <span className="footer-label">Explore</span>
           {navigation.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}
-          <Link href="/#faq">FAQ</Link>
+          <Link href="/about#faq">FAQ</Link>
         </div>
 
         <div className="footer-contact">

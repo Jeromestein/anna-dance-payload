@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CtaSection } from "@/components/cta-section";
 import { GalleryWall } from "@/components/GalleryWall";
 import { PageHero } from "@/components/page-hero";
+import { ProgramFaq } from "@/components/program-faq";
 import { getMediaGalleryBySlug } from "@/lib/gallery";
 import { getSocialProfiles } from "@/lib/social";
 import { getPayloadStaffUser } from "@/lib/staff/auth";
@@ -137,6 +138,7 @@ export default async function AboutPage() {
           </div>
         </div>
       </section>
+      <ProgramFaq id="faq" />
       <CtaSection />
     </>
   );

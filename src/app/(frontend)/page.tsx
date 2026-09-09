@@ -3,7 +3,6 @@ import { ArrowIcon } from "@/components/arrow-icon";
 import { CtaSection } from "@/components/cta-section";
 import { FacultyCards } from "@/components/FacultyCards";
 import { GalleryWall } from "@/components/GalleryWall";
-import { ProgramFaq } from "@/components/program-faq";
 import { getPublicClasses } from "@/lib/classes";
 import { getPublicFaculty } from "@/lib/faculty";
 import { getMediaGalleryBySlug } from "@/lib/gallery";
@@ -198,16 +197,15 @@ export default async function HomePage() {
             <p className="eyebrow">Competition pathway</p>
             <h2 className="display-title">Group training<br /><em>comes first.</em></h2>
           </div>
-          <p>Competition solo and duet coaching is available only to students who are concurrently enrolled in a Level-Based Group Class. Group training builds the consistency, teamwork, and stage experience that individual competition work depends on.</p>
+          <p>Students participating in the competition program are required to attend Level Classes and complete a minimum of 2 hours of training each week. Personalized choreography builds on this foundation to develop each dancer’s confidence and individual performance style.</p>
         </div>
         <div className="page-shell pathway-steps" aria-label="Competition training pathway">
           <article><span>01</span><h3>Placement</h3><p>A teacher recommends the best available group class after speaking with the family.</p></article>
           <article><span>02</span><h3>Group foundation</h3><p>Weekly 60-minute Level training develops technique, musicality, and stage awareness.</p></article>
-          <article><span>03</span><h3>Personalized coaching</h3><p>Solo or duet works begin with at least ten 60-minute sessions and original choreography.</p></article>
+          <article><span>03</span><h3>Personalized coaching</h3><p>Music, movement, and stage presentation are tailored to each dancer’s age, technical level, strengths, personality, and musicality.</p></article>
         </div>
       </section>
 
-      <ProgramFaq id="faq" />
       <CtaSection />
     </>
   );

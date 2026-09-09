@@ -3,8 +3,8 @@ import Link from "next/link";
 import { ArrowIcon } from "@/components/arrow-icon";
 import { CtaSection } from "@/components/cta-section";
 import { PageHero } from "@/components/page-hero";
-import { ProgramFaq } from "@/components/program-faq";
 import { getPublicClasses } from "@/lib/classes";
+import { classCurriculum } from "@/lib/class-curriculum";
 
 export const metadata: Metadata = { title: "Classes" };
 export const dynamic = "force-dynamic";
@@ -50,7 +50,9 @@ export default async function ClassesPage() {
           <p>Age is one part of placement—not the whole answer. Mixed-age placement may be recommended when it best supports a student&apos;s learning and scheduling needs.</p>
         </div>
         <div className="program-list" role="region" aria-label="Class programs" tabIndex={0}>
-          {classes.map((item, index) => (
+          {classes.map((item, index) => {
+            const curriculum = classCurriculum[item.title];
+            return (
             <article className="program-row" key={item.id}>
               <span className="program-index">0{index + 1}</span>
               <div className="program-image" style={{ backgroundImage: `url(${item.image})` }} />
@@ -58,6 +60,22 @@ export default async function ClassesPage() {
                 <span className="class-age">{item.age}</span>
                 <h3>{item.title}</h3>
                 <p>{item.description}</p>
+                {curriculum?.objectives ? (
+                  <dl className="program-objectives">
+                    {curriculum.objectives.map((objective) => (
+                      <div key={objective.title}>
+                        <dt>{objective.title}</dt>
+                        <dd>{objective.description}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+                {curriculum?.paragraphs ? (
+                  <div className="program-full-description">
+                    <h4>{curriculum.heading}</h4>
+                    {curriculum.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                  </div>
+                ) : null}
                 <div className="program-content-footer">
                   <ul>
                     {item.features.map((feature) => <li key={feature}>{feature}</li>)}
@@ -69,7 +87,8 @@ export default async function ClassesPage() {
                 </div>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -105,7 +124,6 @@ export default async function ClassesPage() {
         </div>
       </section>
 
-      <ProgramFaq />
       <CtaSection />
     </div>
   );

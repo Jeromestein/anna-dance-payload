@@ -10,7 +10,7 @@ export const classes = [
   {
     title: "Level-Based Group Classes",
     age: "Ages 3+ · Placement required",
-    description: "Weekly group training in technique, musicality, teamwork, and stage awareness, with placement guided by each dancer’s readiness and goals.",
+    description: "Playful, teacher-led movement builds musical awareness, coordination, imitation skills, and spatial awareness while developing classroom habits, confident expression, and teamwork.",
     image: "/images/classes/level-based-group-classes.jpg",
     tone: "blush",
     features: ["Weekly, 60 minutes", "Small-group instruction", "English & Chinese"],
@@ -18,7 +18,7 @@ export const classes = [
   {
     title: "Technique & Fundamentals",
     age: "Saturday training",
-    description: "Focused work in alignment, flexibility, strength, coordination, and age-appropriate dance skills for safer, more confident progress.",
+    description: "Focused training develops core strength, body control, endurance, jumping power, foot and ankle strength, turns, musicality, spatial awareness, movement memory, posture, and stage presence.",
     image: "/images/classes/technique-fundamentals.jpg",
     tone: "cream",
     features: ["Strong foundations", "Age-appropriate skills", "Recommended for competitors"],
@@ -26,10 +26,10 @@ export const classes = [
   {
     title: "Competition Solo & Duet",
     age: "Group enrollment required",
-    description: "Personalized coaching and original choreography selected for each dancer’s strengths, readiness, and competition goals.",
+    description: "Customized competition choreography brings together music, movement, and stage presentation to highlight each dancer’s age, ability, strengths, and personality. Level Classes and at least 2 hours of weekly training are required.",
     image: "/images/classes/competition-solo-duet.jpg",
     tone: "sage",
-    features: ["Minimum 10 sessions", "60-minute coaching", "Custom choreography"],
+    features: ["Level Classes required", "Minimum 2 hours per week", "Custom choreography"],
   },
   {
     title: "Seasonal Summer Camps",

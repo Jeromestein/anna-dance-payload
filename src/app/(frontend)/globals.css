@@ -1395,6 +1395,44 @@ textarea:focus-visible {
   gap: 24px;
   margin-top: 22px;
 }
+.program-row:has(.program-objectives),
+.program-row:has(.program-full-description) {
+  align-items: start;
+}
+
+.program-objectives {
+  margin: 28px 0;
+}
+
+.program-objectives > div {
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+
+.program-objectives dt,
+.program-full-description h4 {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.program-objectives dd {
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+
+.program-full-description {
+  margin-top: 28px;
+}
+
+.program-full-description > p:last-child {
+  padding: 18px;
+  border-left: 3px solid var(--rose);
+  background: var(--paper);
+  font-weight: 600;
+}
 .program-content ul {
   display: flex;
   flex-wrap: wrap;
