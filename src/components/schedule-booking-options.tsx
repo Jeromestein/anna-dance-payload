@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { paidClassBookings } from '@/lib/cal/booking-options'
+import { scheduleBookings } from '@/lib/cal/booking-options'
 
 type ScheduleBookingOptionsProps = {
   active: string
@@ -7,8 +7,8 @@ type ScheduleBookingOptionsProps = {
 
 export function ScheduleBookingOptions({ active }: ScheduleBookingOptionsProps) {
   return (
-    <nav className="schedule-booking-options" aria-label="Paid classes">
-      {paidClassBookings.map((option) => (
+    <nav className="schedule-booking-options" aria-label="Booking options">
+      {scheduleBookings.map((option) => (
         <Link
           key={option.slug}
           className={active === option.slug ? 'is-active' : undefined}

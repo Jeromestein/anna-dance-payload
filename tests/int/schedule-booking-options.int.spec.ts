@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { consultationBooking, getScheduleBooking, paidClassBookings } from '@/lib/cal/booking-options'
+import { consultationBooking, getProgramBookings, getScheduleBooking, paidClassBookings, scheduleBookings } from '@/lib/cal/booking-options'
 import { isAllowedCalEventType } from '@/lib/cal/booking-sync'
 
 describe('Schedule booking access', () => {
@@ -10,12 +10,21 @@ describe('Schedule booking access', () => {
     expect(getScheduleBooking(false)).toBe(consultationBooking)
   })
 
-  it('only selects official paid classes for authenticated students', () => {
-    for (const option of paidClassBookings) {
+  it('offers free trial and four paid classes and defaults signed-in students to free trial', () => {
+    expect(scheduleBookings).toHaveLength(5)
+    for (const option of scheduleBookings) {
       expect(getScheduleBooking(true, option.slug)).toBe(option)
     }
-    for (const query of ['group-class-sync-test', 'trial-class-consultation', 'unknown', ['solo-class']]) {
-      expect(getScheduleBooking(true, query)).toBe(paidClassBookings[0])
+    for (const query of [undefined, 'trial-class-consultation', 'group-class-sync-test', 'unknown', ['solo-class']]) {
+      expect(getScheduleBooking(true, query)).toBe(consultationBooking)
+    }
+  })
+
+  it('links programs to matching bookings and keeps unconfigured programs on consultation', () => {
+    expect(getProgramBookings('Level-Based Group Classes').map(({ slug }) => slug)).toEqual(['level-class'])
+    expect(getProgramBookings('Competition Solo & Duet').map(({ slug }) => slug)).toEqual(['solo-class-30min', 'solo-class', 'duet-class'])
+    for (const title of ['Technique & Fundamentals', 'Seasonal Summer Camps', 'New program']) {
+      expect(getProgramBookings(title)).toEqual([consultationBooking])
     }
   })
 

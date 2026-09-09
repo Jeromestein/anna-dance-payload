@@ -8,6 +8,8 @@ import { CtaSection } from "@/components/cta-section";
 import { PageHero } from "@/components/page-hero";
 import { getPublicClasses } from "@/lib/classes";
 import { classCurriculum } from "@/lib/class-curriculum";
+import { getStudentAccountAccess } from "@/lib/auth/student-access";
+import { consultationBooking, getProgramBookings } from "@/lib/cal/booking-options";
 
 export const metadata: Metadata = { title: "Classes" };
 export const dynamic = "force-dynamic";
@@ -15,7 +17,9 @@ export const dynamic = "force-dynamic";
 const danceStyles = ["Chinese Dance", "Ballet", "Jazz", "Contemporary", "K-pop", "Acro Dance"];
 
 export default async function ClassesPage() {
-  const [classes, staffUser] = await Promise.all([getPublicClasses(), getPayloadStaffUser()]);
+  const [classes, staffUser, isAuthenticated] = await Promise.all([
+    getPublicClasses(), getPayloadStaffUser(), getStudentAccountAccess(),
+  ]);
 
   return (
     <div className="classes-page">
@@ -69,10 +73,20 @@ export default async function ClassesPage() {
                     <ul>
                       {item.features.map((feature) => <li key={feature}>{feature}</li>)}
                     </ul>
-                    <Link href="/contact" className="program-action" aria-label={`Ask about ${item.title}`}>
-                      <span>Ask about this class</span>
-                      <ArrowIcon />
-                    </Link>
+                    <div className="program-booking-actions">
+                      {isAuthenticated ? getProgramBookings(item.title).map((booking) => (
+                        <Link key={booking.slug} href={`/schedule?class=${booking.slug}#book`} className="program-action"
+                          aria-label={`Book ${booking.title} for ${item.title}`}>
+                          <span>{booking.slug === consultationBooking.slug ? 'Book a free consultation' : `Book ${booking.title}`}</span>
+                          <ArrowIcon />
+                        </Link>
+                      )) : (
+                        <Link href="/schedule" className="program-action" aria-label={`Get started with ${item.title}`}>
+                          <span>Book a free trial</span>
+                          <ArrowIcon />
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
                 {curriculum?.objectives ? (

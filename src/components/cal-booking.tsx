@@ -21,24 +21,20 @@ type ContextState =
   { status: 'loading' } | { status: 'public' } | { status: 'unavailable' } | BookingContext
 
 type CalBookingProps = {
-  allowGuest?: boolean
   calLink?: string
   namespace?: string
   loginNext?: string
 }
 
 export function CalBooking({
-  allowGuest = false,
   calLink = defaultCalLink,
   namespace = defaultNamespace,
   loginNext = '/schedule#book',
 }: CalBookingProps = {}) {
-  const [context, setContext] = useState<ContextState>({ status: allowGuest ? 'public' : 'loading' })
+  const [context, setContext] = useState<ContextState>({ status: 'loading' })
   const [bookingReceived, setBookingReceived] = useState(false)
 
   useEffect(() => {
-    if (allowGuest) return
-
     const controller = new AbortController()
 
     void fetch('/api/integrations/cal/booking-intent', {
@@ -61,7 +57,7 @@ export function CalBooking({
       })
 
     return () => controller.abort()
-  }, [allowGuest])
+  }, [])
 
   useEffect(() => {
     if (context.status !== 'linked') return
@@ -78,19 +74,20 @@ export function CalBooking({
 
   return (
     <>
-      {!allowGuest ? <div className="booking-account-context" aria-live="polite">
+      <div className="booking-account-context" aria-live="polite">
         {context.status === 'loading' && <span>Preparing secure account matching…</span>}
         {context.status === 'linked' && (
           <span>
             Signed in as <strong>{context.email}</strong>. This booking will appear in My Account.
           </span>
         )}
-        {context.status === 'public' && !allowGuest && (
+        {context.status === 'public' && (
           <div className="booking-login-required">
-            <span>A Student account is required to book a class online.</span>
+            <span>Please log in to book an appointment online.</span>
             <Link className="button" href={`/login?next=${encodeURIComponent(loginNext)}`}>
               Log in to book
             </Link>
+            <a href="tel:+17014009213">Call 701-400-9213</a>
           </div>
         )}
         {context.status === 'unavailable' && (
@@ -101,8 +98,8 @@ export function CalBooking({
             Appointment received. Your account will update after secure confirmation.
           </strong>
         )}
-      </div> : null}
-      {(context.status === 'linked' || (allowGuest && context.status === 'public')) && (
+      </div>
+      {context.status === 'linked' && (
         <div className="cal-booking-shell">
           <Cal
             namespace={namespace}
@@ -111,11 +108,9 @@ export function CalBooking({
             config={{
               layout: 'month_view',
               useSlotsViewOnSmallScreen: 'true',
-              ...(context.status === 'linked' ? {
-                name: context.name,
-                email: context.email,
-                'metadata[bookingIntentId]': context.intentId,
-              } : {}),
+              name: context.name,
+              email: context.email,
+              'metadata[bookingIntentId]': context.intentId,
             }}
           />
         </div>

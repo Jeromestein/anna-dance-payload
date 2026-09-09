@@ -1640,8 +1640,11 @@ textarea:focus-visible {
   display: flex;
   align-items: end;
   justify-content: space-between;
-  gap: 56px;
-  margin-bottom: 20px;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+.schedule-booking-heading > div {
+  flex: 1 0 auto;
 }
 .schedule-booking-heading .eyebrow {
   margin-bottom: 7px;
@@ -1668,10 +1671,15 @@ textarea:focus-visible {
 }
 .schedule-booking-options {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  max-width: 680px;
-  margin: 0 0 16px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin: 0 0 24px;
+}
+.program-booking-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
 }
 .schedule-booking-options a {
   display: grid;
@@ -1720,9 +1728,9 @@ textarea:focus-visible {
 .booking-account-context {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 10px;
-  min-height: 46px;
+  min-height: 40px;
   margin: 2px 4px 10px;
   padding: 10px 14px;
   border-radius: 12px;
@@ -1730,7 +1738,8 @@ textarea:focus-visible {
   color: var(--ink-soft);
   font-size: 0.82rem;
   line-height: 1.45;
-  text-align: center;
+  text-align: left;
+  overflow-wrap: anywhere;
 }
 .booking-account-context a {
   color: var(--rose-dark);
@@ -4333,4 +4342,44 @@ body:has(.legal-page) .floating-booking-button {
 @media (max-width: 680px) {
   .interviewGallery .galleryWall { grid-template-columns: minmax(0, 1fr); grid-auto-flow: row; }
   .interviewGallery .galleryMedia video { height: 480px; }
+}
+
+@media (min-width: 681px) and (max-width: 1050px) {
+  .schedule-booking-heading {
+    display: block;
+  }
+  .schedule-booking-copy {
+    max-width: 680px;
+    margin-top: 12px;
+  }
+  .schedule-booking-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cal-booking-shell:has(iframe) {
+  min-height: 0;
+}
+
+.consultation-login-panel {
+  padding: clamp(24px, 5vw, 64px);
+}
+.consultation-login-panel h2 {
+  margin: 0 0 12px;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.2;
+}
+.consultation-login-panel > p:not(.eyebrow) {
+  color: var(--ink-soft);
+}
+.consultation-login-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px 28px;
+  margin: 24px 0;
+}
+.consultation-location {
+  margin-bottom: 0;
+  font-size: 0.85rem;
 }

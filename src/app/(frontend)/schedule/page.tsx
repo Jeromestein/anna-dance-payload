@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { ArrowIcon } from '@/components/arrow-icon'
 import { CalBooking } from '@/components/cal-booking'
 import { ScheduleBookingOptions } from '@/components/schedule-booking-options'
 import { getStudentAccountAccess } from '@/lib/auth/student-access'
-import { getScheduleBooking } from '@/lib/cal/booking-options'
+import { consultationBooking, getScheduleBooking } from '@/lib/cal/booking-options'
 import { schedule } from '@/lib/site-data'
 
 export const metadata: Metadata = { title: 'Schedule' }
@@ -18,7 +19,12 @@ export default async function SchedulePage({
 }) {
   const [isAuthenticated, params] = await Promise.all([getStudentAccountAccess(), searchParams])
   const booking = getScheduleBooking(isAuthenticated, params.class)
-  const title = isAuthenticated ? 'Book a class' : 'Book a free consultation'
+  const isConsultation = booking.slug === consultationBooking.slug
+  const title = isConsultation ? 'Book a free trial consultation' : 'Book a class'
+  const bookingPath = `/schedule?class=${booking.slug}#book`
+  const loginBookingPath = `/schedule?class=${getScheduleBooking(true).slug}#book`
+
+  if (isAuthenticated && params.class !== booking.slug) redirect(bookingPath)
 
   return (
     <>
@@ -29,9 +35,11 @@ export default async function SchedulePage({
             <h1 id="schedule-booking-title">{title}</h1>
           </div>
           <p className="schedule-booking-copy">
-            {isAuthenticated
+            {!isConsultation
               ? 'Choose your class and an available time, then complete payment to reserve your place. The final price is shown before payment.'
-              : 'Book a complimentary 30-minute in-studio consultation. We’ll discuss your dancer’s age, experience, goals, and class placement. No account is needed.'}
+              : isAuthenticated
+                ? 'Choose an available time for your complimentary 30-minute in-studio consultation. We’ll discuss your dancer’s age, experience, goals, and class placement.'
+                : 'Book a complimentary 30-minute in-studio consultation. We’ll discuss your dancer’s age, experience, goals, and class placement. Log in to book online, or call us to arrange your consultation.'}
           </p>
         </div>
         {isAuthenticated ? (
@@ -40,13 +48,25 @@ export default async function SchedulePage({
           </div>
         ) : null}
         <div className="page-shell booking-frame schedule-booking-frame">
-          <CalBooking
+          {isAuthenticated ? <CalBooking
             key={booking.slug}
             calLink={`anna-dance/${booking.slug}`}
             namespace={booking.slug}
-            loginNext={`/schedule?class=${booking.slug}#book`}
-            allowGuest={!isAuthenticated}
-          />
+            loginNext={bookingPath}
+          /> : (
+            <div className="consultation-login-panel">
+              <p className="eyebrow">30 minutes · Complimentary</p>
+              <h2>Log in to book your free trial</h2>
+              <p>Choose an available time after logging in, or call us to arrange your free consultation.</p>
+              <div className="consultation-login-actions">
+                <Link className="button" href={`/login?next=${encodeURIComponent(loginBookingPath)}`}>
+                  Log in to book <ArrowIcon />
+                </Link>
+                <a className="text-link" href="tel:+17014009213">Call 701-400-9213</a>
+              </div>
+              <p className="consultation-location">Tampa / Lutz Area</p>
+            </div>
+          )}
         </div>
       </section>
       {isAuthenticated ? <section className="schedule-section section-space">
