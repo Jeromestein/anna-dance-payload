@@ -85,12 +85,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </p>
           )}
 
-          <GoogleSignInButton nextPath={nextPath} />
+          <GoogleSignInButton
+            key={isSignup ? 'signup' : 'login'}
+            nextPath={nextPath}
+            requireTerms
+          />
           <div className="auth-divider">
             <span>or continue with email</span>
           </div>
 
-          <form action={isSignup ? signup : login} className="auth-form">
+          <form id="student-auth-form" action={isSignup ? signup : login} className="auth-form">
             <input type="hidden" name="next" value={nextPath} />
             {isSignup && (
               <label htmlFor="student_name">

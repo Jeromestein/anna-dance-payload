@@ -2,6 +2,7 @@
 
 import Cal, { getCalApi } from '@calcom/embed-react'
 import Link from 'next/link'
+import { TermsConsent } from './terms-consent'
 import { useEffect, useState } from 'react'
 
 const defaultCalLink = 'anna-dance/trial-class-consultation'
@@ -31,10 +32,12 @@ export function CalBooking({
   namespace = defaultNamespace,
   loginNext = '/schedule#book',
 }: CalBookingProps = {}) {
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [context, setContext] = useState<ContextState>({ status: 'loading' })
   const [bookingReceived, setBookingReceived] = useState(false)
 
   useEffect(() => {
+    if (!termsAccepted) return
     const controller = new AbortController()
 
     void fetch('/api/integrations/cal/booking-intent', {
@@ -57,10 +60,10 @@ export function CalBooking({
       })
 
     return () => controller.abort()
-  }, [])
+  }, [termsAccepted])
 
   useEffect(() => {
-    if (context.status !== 'linked') return
+    if (!termsAccepted || context.status !== 'linked') return
 
     void (async () => {
       const cal = await getCalApi({ namespace })
@@ -70,36 +73,47 @@ export function CalBooking({
         callback: () => setBookingReceived(true),
       })
     })()
-  }, [context, namespace])
+  }, [context, namespace, termsAccepted])
 
   return (
     <>
-      <div className="booking-account-context" aria-live="polite">
-        {context.status === 'loading' && <span>Preparing secure account matching…</span>}
-        {context.status === 'linked' && (
-          <span>
-            Signed in as <strong>{context.email}</strong>. This booking will appear in My Account.
-          </span>
-        )}
-        {context.status === 'public' && (
-          <div className="booking-login-required">
-            <span>Please log in to book an appointment online.</span>
-            <Link className="button" href={`/login?next=${encodeURIComponent(loginNext)}`}>
-              Log in to book
-            </Link>
-            <a href="tel:+17014009213">Call 701-400-9213</a>
-          </div>
-        )}
-        {context.status === 'unavailable' && (
-          <span>Online class booking is temporarily unavailable. Please call 701-400-9213.</span>
-        )}
-        {bookingReceived && (
-          <strong className="booking-sync-status">
-            Appointment received. Your account will update after secure confirmation.
-          </strong>
-        )}
-      </div>
-      {context.status === 'linked' && (
+      <TermsConsent
+        checked={termsAccepted}
+        onChange={(accepted) => {
+          setContext({ status: 'loading' })
+          setBookingReceived(false)
+          setTermsAccepted(accepted)
+        }}
+      />
+      {!termsAccepted && <p>Please agree to the Website Terms of Use to continue booking.</p>}
+      {termsAccepted && (
+        <div className="booking-account-context" aria-live="polite">
+          {context.status === 'loading' && <span>Preparing secure account matching…</span>}
+          {context.status === 'linked' && (
+            <span>
+              Signed in as <strong>{context.email}</strong>. This booking will appear in My Account.
+            </span>
+          )}
+          {context.status === 'public' && (
+            <div className="booking-login-required">
+              <span>Please log in to book an appointment online.</span>
+              <Link className="button" href={`/login?next=${encodeURIComponent(loginNext)}`}>
+                Log in to book
+              </Link>
+              <a href="tel:+17014009213">Call 701-400-9213</a>
+            </div>
+          )}
+          {context.status === 'unavailable' && (
+            <span>Online class booking is temporarily unavailable. Please call 701-400-9213.</span>
+          )}
+          {bookingReceived && (
+            <strong className="booking-sync-status">
+              Appointment received. Your account will update after secure confirmation.
+            </strong>
+          )}
+        </div>
+      )}
+      {termsAccepted && context.status === 'linked' && (
         <div className="cal-booking-shell">
           <Cal
             namespace={namespace}

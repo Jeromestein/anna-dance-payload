@@ -1,13 +1,22 @@
 'use client'
 
 import { useState } from 'react'
+import { TermsConsent } from '@/components/terms-consent'
 import { createClient } from '@/lib/supabase/client'
 
-export function GoogleSignInButton({ nextPath = '/account' }: { nextPath?: string }) {
+export function GoogleSignInButton({
+  nextPath = '/account',
+  requireTerms = false,
+}: {
+  nextPath?: string
+  requireTerms?: boolean
+}) {
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function signInWithGoogle() {
+    if (requireTerms && !termsAccepted) return
     setPending(true)
     setError(null)
 
@@ -27,11 +36,18 @@ export function GoogleSignInButton({ nextPath = '/account' }: { nextPath?: strin
 
   return (
     <div className="auth-google-section">
+      {requireTerms && (
+        <TermsConsent
+          checked={termsAccepted}
+          onChange={setTermsAccepted}
+          form="student-auth-form"
+        />
+      )}
       <button
         className="auth-google-button"
         type="button"
         onClick={signInWithGoogle}
-        disabled={pending}
+        disabled={pending || (requireTerms && !termsAccepted)}
       >
         <svg aria-hidden="true" viewBox="0 0 24 24">
           <path
