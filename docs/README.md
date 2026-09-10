@@ -47,6 +47,12 @@ README remain authoritative for the Payload implementation.
 ## Original source material
 
 - [Anna Liu biography — Apple Pages source](source-material/anna-liu-biography.pages)
+- [Student enrollment agreement and studio policies — English](source-material/anna-dance-academy-student-enrollment-agreement-en.docx)
+
+The English enrollment agreement was supplied on September 10, 2026 and renamed without changing its
+contents. It informs the program-policy summary on `/terms`. The website checkbox does not replace
+signing the enrollment agreement or its waiver and media authorization. See
+[Enrollment policy source notes](content/enrollment-policy-source-notes.md) for the source mapping.
 
 The full-resolution photo and video archive is intentionally not stored in this Git repository.
 Website-ready assets live in `public/`, while Payload-managed media is stored through the configured
