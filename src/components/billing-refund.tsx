@@ -1,6 +1,7 @@
 'use client'
 
-import { startTransition, useActionState, useId, useRef, useState } from 'react'
+import { startTransition, useActionState, useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { refundStripeBill } from '@/actions/stripe-billing'
 import { StripeStatusRefresh } from './stripe-billing-controls'
 import { manageBill } from '@/actions/billing'
@@ -90,6 +91,7 @@ export function BillingRefund({
   const [demoComplete, setDemoComplete] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const panelId = useId()
+  const dialog = useRef<HTMLDialogElement>(null)
   const heading = useRef<HTMLHeadingElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
   const fullPayment = bill.paid_amount_cents === bill.amount_cents && bill.amount_cents > 0
@@ -100,13 +102,25 @@ export function BillingRefund({
     ? 'Refunds from this website are currently disabled. An administrator can refund this payment in Stripe, then refresh its status here.'
     : 'Connect Stripe and refresh this payment’s status before requesting a website refund.'
 
+  useEffect(() => {
+    if (step !== 'closed' && dialog.current && !dialog.current.open) {
+      dialog.current.showModal()
+      heading.current?.focus({ preventScroll: true })
+    }
+  }, [step])
+
   function moveTo(next: 'closed' | 'details' | 'review') {
+    if (next === 'closed') dialog.current?.close()
     setStep(next)
     setConfirmed(false)
     if (next === 'closed') setReason('')
-    requestAnimationFrame(() =>
-      next === 'closed' ? trigger.current?.focus() : heading.current?.focus(),
-    )
+    requestAnimationFrame(() => {
+      if (next === 'closed') trigger.current?.focus()
+      else {
+        heading.current?.focus({ preventScroll: true })
+        if (dialog.current) dialog.current.scrollTop = 0
+      }
+    })
   }
   if (demoComplete)
     return (
@@ -143,7 +157,11 @@ export function BillingRefund({
   if (bill.status !== 'paid') return null
 
   return (
-    <section className={styles.refundSection} aria-label="Full refund">
+    <section
+      className={styles.refundSection}
+      aria-label="Full refund"
+      data-demo={demo || bill.stripe_livemode === false}
+    >
       <div className={styles.refundHeader}>
         <div>
           <h3>Full refund</h3>
@@ -151,7 +169,16 @@ export function BillingRefund({
         </div>
         <strong>{money(bill.amount_cents, bill.currency)}</strong>
       </div>
-      <div className={styles.refundNotice}>
+      <div
+        className={styles.refundNotice}
+        data-state={
+          demo || bill.stripe_livemode === false
+            ? 'demo'
+            : bill.refund_available
+              ? 'warning'
+              : undefined
+        }
+      >
         <strong>
           {demo
             ? 'DEMO — sample payment, no money moves'
@@ -167,7 +194,7 @@ export function BillingRefund({
           {demo
             ? 'Try the full review and confirmation flow using a $10 sample payment. Nothing is saved or sent to Stripe.'
             : bill.refund_available
-              ? 'Review the original payment and confirm the full refund below.'
+              ? 'Check the student and amount before continuing. The entire payment will be returned.'
               : unavailableMessage}
         </p>
       </div>
@@ -191,142 +218,203 @@ export function BillingRefund({
           Review full refund
         </button>
       ) : (
-        <div id={panelId} className={styles.refundReview}>
-          <h4 ref={heading} tabIndex={-1}>
-            {step === 'details' ? '1. Refund details' : '2. Confirm full refund'}
-          </h4>
-          <dl className={styles.totals}>
-            <div>
-              <dt>Student</dt>
-              <dd>{ownerName}</dd>
-            </div>
-            <div>
-              <dt>Bill</dt>
-              <dd>{bill.bill_number}</dd>
-            </div>
-            <div>
-              <dt>Original payment</dt>
-              <dd>{bill.transaction_reference}</dd>
-            </div>
-            <div>
-              <dt>Refund amount</dt>
-              <dd>
-                <strong>{money(bill.amount_cents, bill.currency)}</strong>
-              </dd>
-            </div>
-            <div>
-              <dt>Destination</dt>
-              <dd>Original payment method</dd>
-            </div>
-          </dl>
-          <ul className={styles.items}>
-            {bill.app_payment_items.map((item, index) => (
-              <li key={index}>
-                <span>
-                  {item.description}
-                  <small>
-                    {item.quantity} × {money(item.unit_amount_cents, bill.currency)}
-                  </small>
-                </span>
-                <strong>{money(item.quantity * item.unit_amount_cents, bill.currency)}</strong>
-              </li>
-            ))}
-          </ul>
-          {step === 'details' ? (
-            <form
-              className={styles.form}
-              onSubmit={(event) => {
-                event.preventDefault()
-                if (reason.trim()) moveTo('review')
-              }}
-            >
-              <label>
-                Refund reason
-                <textarea
-                  required
-                  maxLength={500}
-                  rows={3}
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                />
-              </label>
-              <p>
-                Only full refunds are supported. To change the amount, refund this payment in full
-                and create a replacement bill for a separate payment.
-              </p>
-              <div className={styles.refundActions}>
-                <button type="button" onClick={() => moveTo('closed')}>
-                  Cancel
-                </button>
-                <button type="submit" disabled={!reason.trim()}>
-                  Review confirmation
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className={styles.form}>
-              <div>
-                <strong>Reason</strong>
-                <p className={styles.refundReason}>{reason.trim()}</p>
-              </div>
-              <label className={styles.confirm}>
-                <input
-                  type="checkbox"
-                  checked={confirmed}
-                  onChange={(event) => setConfirmed(event.target.checked)}
-                />
-                I confirm the full {money(bill.amount_cents, bill.currency)} refund to the original
-                payment method.
-              </label>
-              <p id={`${panelId}-unavailable`}>
+        createPortal(
+          <dialog
+            ref={dialog}
+            id={panelId}
+            className={styles.refundReview}
+            data-demo={demo || bill.stripe_livemode === false}
+            aria-labelledby={`${panelId}-heading`}
+            onCancel={(event) => {
+              event.preventDefault()
+              if (!refundPending) moveTo('closed')
+            }}
+          >
+            <div className={styles.refundDialogHeader}>
+              <span className={styles.refundBadge}>
                 {demo
-                  ? 'This demo does not contact Stripe or update any account. Confirm below to finish the preview.'
-                  : bill.refund_available
-                    ? 'Confirming will request the full refund through Stripe. Completion is shown only after Stripe verifies it.'
-                    : `No refund request has been sent. ${unavailableMessage}`}
-              </p>
-              <div className={styles.refundActions}>
-                <button type="button" onClick={() => moveTo('details')}>
-                  Back
-                </button>
-                <button type="button" onClick={() => moveTo('closed')}>
-                  Close
-                </button>
-              </div>
+                  ? 'DEMO · NO MONEY MOVES'
+                  : bill.stripe_livemode === false
+                    ? 'TEST PAYMENT'
+                    : 'PAYMENT REFUND'}
+              </span>
               <button
                 type="button"
-                disabled={
-                  !confirmed ||
-                  refundPending ||
-                  Boolean(refundResult.success) ||
-                  (!demo && !bill.refund_available)
-                }
-                aria-describedby={`${panelId}-unavailable`}
-                onClick={() => {
-                  if (!confirmed) return
-                  if (demo) setDemoComplete(true)
-                  else if (bill.refund_available) {
-                    const form = new FormData()
-                    form.set('owner', owner)
-                    form.set('id', bill.id)
-                    form.set('reason', reason.trim())
-                    form.set('confirmed', 'yes')
-                    startTransition(() => refundAction(form))
-                  }
-                }}
+                className={styles.refundDismiss}
+                aria-label="Close refund dialog"
+                disabled={refundPending}
+                onClick={() => moveTo('closed')}
               >
-                {demo
-                  ? 'Finish demo — no money moves'
-                  : refundPending
-                    ? 'Requesting refund…'
-                    : `Refund ${money(bill.amount_cents, bill.currency)}${bill.refund_available ? '' : ' — unavailable'}`}
+                ×
               </button>
             </div>
-          )}
-        </div>
+            <ol className={styles.refundSteps} aria-label="Refund steps">
+              <li aria-current={step === 'details' ? 'step' : undefined}>
+                <span>1</span> Review details
+              </li>
+              <li aria-current={step === 'review' ? 'step' : undefined}>
+                <span>2</span> Confirm refund
+              </li>
+            </ol>
+            <h4 id={`${panelId}-heading`} ref={heading} tabIndex={-1}>
+              {step === 'details' ? '1. Refund details' : '2. Confirm full refund'}
+            </h4>
+            <div className={styles.refundAmount}>
+              <div>
+                <span>Full refund to {ownerName}</span>
+                <strong>{money(bill.amount_cents, bill.currency)}</strong>
+              </div>
+              <span>Original payment method</span>
+            </div>
+            <div className={styles.refundCaution}>
+              <strong>
+                {demo || bill.stripe_livemode === false
+                  ? 'No real money will move'
+                  : 'This sends money back'}
+              </strong>
+              <p>
+                {step === 'details'
+                  ? 'Review the payment and enter a reason. No refund is sent at this step.'
+                  : demo || bill.stripe_livemode === false
+                    ? 'This is a test flow. Review the details before confirming.'
+                    : 'Confirm only if you intend to return the full amount. A replacement bill would require a separate payment.'}
+              </p>
+            </div>
+            <details className={styles.refundReferences}>
+              <summary>Payment references</summary>
+              <dl className={styles.totals}>
+                <div>
+                  <dt>Bill</dt>
+                  <dd>{bill.bill_number}</dd>
+                </div>
+                <div>
+                  <dt>Original payment</dt>
+                  <dd>{bill.transaction_reference}</dd>
+                </div>
+              </dl>
+            </details>
+            <ul className={styles.items}>
+              {bill.app_payment_items.map((item, index) => (
+                <li key={index}>
+                  <span>
+                    {item.description}
+                    <small>
+                      {item.quantity} × {money(item.unit_amount_cents, bill.currency)}
+                    </small>
+                  </span>
+                  <strong>{money(item.quantity * item.unit_amount_cents, bill.currency)}</strong>
+                </li>
+              ))}
+            </ul>
+            {step === 'details' ? (
+              <form
+                className={styles.form}
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  if (reason.trim()) moveTo('review')
+                }}
+              >
+                <label>
+                  Refund reason
+                  <textarea
+                    required
+                    maxLength={500}
+                    rows={3}
+                    value={reason}
+                    onChange={(event) => setReason(event.target.value)}
+                  />
+                </label>
+                <p>
+                  Only full refunds are supported. To change the amount, refund this payment in full
+                  and create a replacement bill for a separate payment.
+                </p>
+                <div className={styles.refundActions}>
+                  <button type="button" disabled={refundPending} onClick={() => moveTo('closed')}>
+                    Cancel
+                  </button>
+                  <button type="submit" className={styles.refundContinue} disabled={!reason.trim()}>
+                    Review confirmation
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className={styles.form}>
+                <div>
+                  <strong>Reason</strong>
+                  <p className={styles.refundReason}>{reason.trim()}</p>
+                </div>
+                <label className={`${styles.confirm} ${styles.refundConsent}`}>
+                  <input
+                    type="checkbox"
+                    checked={confirmed}
+                    disabled={refundPending || Boolean(refundResult.success)}
+                    onChange={(event) => setConfirmed(event.target.checked)}
+                  />
+                  <span>
+                    I confirm the full <strong>{money(bill.amount_cents, bill.currency)}</strong>{' '}
+                    refund to the original payment method for <strong>{ownerName}</strong>.
+                  </span>
+                </label>
+                <p id={`${panelId}-unavailable`}>
+                  {demo
+                    ? 'This demo does not contact Stripe or update any account. Confirm below to finish the preview.'
+                    : bill.refund_available
+                      ? 'Confirming will request the full refund through Stripe. Completion is shown only after Stripe verifies it.'
+                      : `No refund request has been sent. ${unavailableMessage}`}
+                </p>
+                <div className={styles.refundActions}>
+                  <button type="button" disabled={refundPending} onClick={() => moveTo('details')}>
+                    Back
+                  </button>
+                  <button type="button" disabled={refundPending} onClick={() => moveTo('closed')}>
+                    Close
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className={styles.refundSubmit}
+                  disabled={
+                    !confirmed ||
+                    refundPending ||
+                    Boolean(refundResult.success) ||
+                    (!demo && !bill.refund_available)
+                  }
+                  aria-describedby={`${panelId}-unavailable`}
+                  onClick={() => {
+                    if (!confirmed) return
+                    if (demo) setDemoComplete(true)
+                    else if (bill.refund_available) {
+                      const form = new FormData()
+                      form.set('owner', owner)
+                      form.set('id', bill.id)
+                      form.set('reason', reason.trim())
+                      form.set('confirmed', 'yes')
+                      startTransition(() => refundAction(form))
+                    }
+                  }}
+                >
+                  {demo
+                    ? 'Finish demo — no money moves'
+                    : refundPending
+                      ? 'Requesting refund…'
+                      : `Refund ${money(bill.amount_cents, bill.currency)}${bill.refund_available ? '' : ' — unavailable'}`}
+                </button>
+              </div>
+            )}
+            {refundResult.error && (
+              <div className={styles.refundNotice} data-state="failed" role="alert">
+                {refundResult.error}
+              </div>
+            )}
+            {refundResult.success && (
+              <div className={styles.refundNotice} data-state="succeeded" role="status">
+                {refundResult.success}
+              </div>
+            )}
+          </dialog>,
+          document.body,
+        )
       )}
-      {refundResult.error && <p role="alert">{refundResult.error}</p>}
-      {refundResult.success && <p role="status">{refundResult.success}</p>}
       {!demo && !bill.stripe_synced_at && !bill.refund_state?.match(/requested|pending/) && (
         <RecordExternalRefund owner={owner} bill={bill} />
       )}
@@ -376,13 +464,13 @@ export function RefundLauncher({
       <div className={styles.refundHeader}>
         <div>
           <h3>Refunds</h3>
-          <p>Review a payment or try the demo.</p>
+          <p>Return a paid bill in full. Review and confirmation are required.</p>
         </div>
       </div>
       <div className={styles.refundActions}>
         <button
           type="button"
-          className={styles.refundButton}
+          className={`${styles.refundButton} ${styles.refundEntry}`}
           aria-expanded={mode === 'real'}
           aria-controls={panelId}
           onClick={() => setMode(mode === 'real' ? 'closed' : 'real')}

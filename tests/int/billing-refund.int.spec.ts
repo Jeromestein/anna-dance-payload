@@ -7,8 +7,8 @@ vi.mock('@/actions/stripe-billing', () => ({
   importStripePayment: vi.fn(),
 }))
 import { createElement } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterAll, beforeAll, afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { BillingRefund, RefundLauncher, RefundProgress } from '@/components/billing-refund'
 import type { Bill } from '@/lib/billing/model'
 const action = vi.hoisted(() => vi.fn())
@@ -31,6 +31,25 @@ const bill: Bill = {
   replaces_payment_id: null,
   app_payment_items: [{ description: 'Lesson', quantity: 1, unit_amount_cents: 5000 }],
 }
+// jsdom has no native dialog top layer; native modal behavior needs browser verification.
+beforeAll(() => {
+  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+    configurable: true,
+    value() {
+      this.setAttribute('open', '')
+    },
+  })
+  Object.defineProperty(HTMLDialogElement.prototype, 'close', {
+    configurable: true,
+    value() {
+      this.removeAttribute('open')
+    },
+  })
+})
+afterAll(() => {
+  Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal')
+  Reflect.deleteProperty(HTMLDialogElement.prototype, 'close')
+})
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
@@ -76,7 +95,7 @@ describe('refund front end', () => {
     expect(screen.getByText('DEMO — sample payment, no money moves')).toBeDefined()
     expect(screen.queryByText('Already refunded outside this website?')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Review full refund' }))
-    expect(screen.getByText('Demo customer (not this student)')).toBeDefined()
+    expect(screen.getByText('Full refund to Demo customer (not this student)')).toBeDefined()
     fireEvent.change(screen.getByLabelText('Refund reason'), { target: { value: 'Demo review' } })
     fireEvent.click(screen.getByRole('button', { name: 'Review confirmation' }))
     const finish = screen.getByRole('button', {
@@ -110,11 +129,11 @@ describe('refund front end', () => {
   it('requires a reason and keeps actual refund submission disabled even after confirmation', () => {
     show()
     fireEvent.click(screen.getByRole('button', { name: 'Review full refund' }))
-    expect(screen.getByText('Student Example')).toBeDefined()
+    expect(screen.getByText('Full refund to Student Example')).toBeDefined()
     expect(
       (screen.getByRole('button', { name: 'Review confirmation' }) as HTMLButtonElement).disabled,
     ).toBe(true)
-    fireEvent.change(screen.getAllByLabelText('Refund reason')[0], {
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText('Refund reason'), {
       target: { value: 'Schedule change' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Review confirmation' }))
@@ -130,6 +149,53 @@ describe('refund front end', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     expect(screen.getByRole('button', { name: 'Review full refund' })).toBeDefined()
   })
+  it('clears confirmation after going back and lets Escape cancel without submitting', () => {
+    show({ ...bill, refund_available: true })
+    fireEvent.click(screen.getByRole('button', { name: 'Review full refund' }))
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText('Refund reason'), {
+      target: { value: 'Schedule change' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Review confirmation' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /I confirm the full/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review confirmation' }))
+    expect(
+      (screen.getByRole('button', { name: 'Refund $50.00' }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(requestRefund).not.toHaveBeenCalled()
+  })
+
+  it('keeps the modal open and blocks another submission while a refund is pending', async () => {
+    let finish!: (result: { error: string }) => void
+    requestRefund.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
+    show({ ...bill, refund_available: true, stripe_synced_at: '2026-09-17T12:00:00Z' })
+    fireEvent.click(screen.getByRole('button', { name: 'Review full refund' }))
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText('Refund reason'), {
+      target: { value: 'Schedule change' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Review confirmation' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /I confirm the full/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Refund $50.00' }))
+    await waitFor(() => expect(requestRefund).toHaveBeenCalledTimes(1))
+    expect(
+      (screen.getByRole('button', { name: 'Requesting refund…' }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+    expect(
+      (screen.getByRole('button', { name: 'Close refund dialog' }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }))
+    expect(screen.getByRole('dialog')).toBeDefined()
+    finish({ error: 'Review the provider status before retrying.' })
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('provider status'))
+  })
+
   it('does not offer a new refund for refunded or unpaid bills', () => {
     const view = show({ ...bill, status: 'refunded' })
     expect(screen.getByText('Full refund completed')).toBeDefined()

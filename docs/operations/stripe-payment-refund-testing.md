@@ -8,7 +8,7 @@ Design and diagrams: [Payment and Billing Design](../project/account-billing.md)
 
 The website now has server-side Stripe Checkout, signed payment/refund notifications, verified historical import, and administrator-only full refunds. State lives in `app_payments`; itemized charges remain in `app_payment_items`. No invoice, refunds, or event tables were added.
 
-Code completion is separate from provider acceptance. Stripe API and webhook credentials were configured in Vercel Production on September 17. No live transaction or refund has been initiated by this rollout. Live API reconciliation and duplicate signed delivery were verified on September 17; actual live refund acceptance remains pending. The isolated sandbox acceptance results below cover test payment and refund initiation. The production Admin view and its Stripe refresh action passed after administrator login on September 17. Do not claim live acceptance has passed until the evidence below is collected. The owner subsequently chose sandbox testing to avoid using a personal credit card. Sandbox acceptance is complete. The owner subsequently requested that the original live USD 0.50 refund be initiated from the website Admin interface. Production refund write access is approved and saved; actual live refund acceptance remains pending.
+Code completion is separate from provider acceptance. Stripe API and webhook credentials were configured in Vercel Production on September 17. Live API reconciliation and duplicate signed payment-event delivery were verified that day. Isolated sandbox acceptance covers test payment and refund initiation without a personal credit card. The administrator subsequently submitted the intended full refund of the original live USD 0.50 payment from the website Admin. Admin displayed Fully refunded and the provider refund reference; Refresh Stripe status completed successfully and retained that result. This verifies live Admin refund submission and provider reconciliation, but does not independently verify delivery of this refund's webhook, the student's Account display, or bank settlement. Those checks remain pending below.
 
 ## Sandbox setup and acceptance — September 17
 
@@ -90,7 +90,7 @@ All amounts below are simulated USD 0.50 payments in `acct_1U02vtDKpszykgKY`; no
 - After administrator login in the Codex in-app browser, Jason's production Admin page showed All paid, one itemized USD 0.50 Paid bill, USD 0.00 due, the original September 6 payment date, and the correct PaymentIntent. Clicking Refresh Stripe status returned `Payment and refund status refreshed from Stripe.` The full-refund review opened with the same student, transaction, item, and USD 0.50 amount; it was canceled without a request. Visual inspection passed. Student Account ownership/display, new Cal booking association, and actual intended full refunds remain open.
 - `STRIPE_LIVE_PAYMENTS_ENABLED=false` and read-only key permissions remain unchanged. Website Checkout/refund initiation is not enabled by these tests.
 
-## Admin-only live refund rollout — deployed, awaiting final refund submission
+## Admin-only live refund rollout — submitted and reconciled
 
 The owner requested refund initiation from the website Admin interface. The independent `STRIPE_LIVE_REFUNDS_ENABLED` gate is deployed in commit `a2b3d68`; enabling it does not enable website Checkout. The owner approved Charges and Refunds Write on the existing live restricted key, plus commit, push, and deployment. Stripe identity verification completed, and reopening the live key confirmed Charges and Refunds Write. Vercel saved the Production-only `STRIPE_LIVE_REFUNDS_ENABLED=true` config variable. Deployment `AbyaF2E9CA45mPiWtobLc2GruQUp` reached Ready on the production domain using commit `a2b3d68`.
 
@@ -101,8 +101,18 @@ The owner requested refund initiation from the website Admin interface. The inde
 - [x] Commit/push and deploy the reviewed code with `STRIPE_LIVE_REFUNDS_ENABLED=true` and `STRIPE_LIVE_PAYMENTS_ENABLED=false`.
 - [x] Sign back into production Admin and locate Jason's original USD 0.50 Paid bill.
 - [x] Verify the deployed Admin refund review: Jason, original PaymentIntent `pi_3UCoX3DRBUG2kOng0aJ1GrLV`, USD 0.50, original payment method, administrator-requested full-refund reason, confirmation checkbox, and `Refund $0.50` submission button. Visual inspection passed in the in-app browser.
-- [ ] Submit the intended full refund from the website. The final confirmation page is ready for the administrator; no live refund has been submitted by the agent.
-- [ ] Verify the provider refund, signed webhook delivery, and final database/Admin/Account state. No live refund was submitted during preparation.
+- [x] Administrator submitted the intended full refund from the production website Admin. No additional purchase was created.
+- [x] Verify the final Admin record and provider reconciliation: original PaymentIntent `pi_3UCoX3DRBUG2kOng0aJ1GrLV`, refund `re_3UCoX3DRBUG2kOng0TiLJ5sx`, Fully refunded USD 0.50, amount due USD 0.00, recorded September 17. Refresh Stripe status returned “Payment and refund status refreshed from Stripe.” and retained Fully refunded.
+- [ ] Independently inspect this refund's signed webhook delivery and the final Student Account display. The observed Admin result and manual provider refresh alone do not prove automatic webhook delivery or bank settlement.
+
+## Refund interface refinement — local verification, pending release
+
+- [x] Replace inline confirmation with a native modal dialog and dimmed backdrop. Render it at the document root so mobile tabs cannot hide it or cover its controls.
+- [x] Emphasize the recipient and full amount, use amber warning/consent panels and a burgundy live-refund button, and distinguish test/demo flows with blue labels.
+- [x] Keep the mandatory reason and explicit confirmation; clear consent on back navigation; disable close/back/consent controls during submission. Payment references remain available in an expandable section.
+- [x] Verify the local Admin demo flow, modal cancellation, native modal state, and desktop/mobile rendering in the in-app browser. A local visual fixture also verified the live-refund color treatment without submitting a payment action.
+- [x] Pass 21 focused UI/billing/action tests, including pending submission and reset-on-back coverage; TypeScript and targeted lint pass.
+- [ ] Verify the redesigned refund modal on production after this changeset is published. The completed live refund above used the earlier interface; the new modal has local verification only.
 
 ## Configure the live environment
 
@@ -169,7 +179,7 @@ The hosted Cal.com booking flow has not been verified to support a merchant-sele
 - [x] Verify focused local tests, TypeScript, targeted ESLint, and actual PostgreSQL 15 constraints, including two concurrent refund reservations producing one key and one stored reason.
 - [x] Verify Admin test/import controls and refund confirmation/error handling in desktop and 390px Codex in-app component previews. The actual Admin page redirects to login; authenticated/provider-backed acceptance remains pending. The actual local Stripe webhook returns HTTP 503 when credentials are absent.
 - [x] Configure the merchant's live credentials and endpoint signing secret; verify API access/account identity through successful hosted reconciliation.
-- [ ] Sign in to Admin, import an existing genuine live payment, and verify reconciliation. Verify full refund submission only for an intended actual refund.
+- [x] Sign in to Admin, import an existing genuine live payment, and verify reconciliation. Verify intended full refund submission from Admin and refresh its provider status; see the September 17 evidence above.
 - [ ] Verify live notification delivery, replay, intended Dashboard-initiated refunds, and both Account/Admin displays. Pending/failure and wrong-user cases have local automated coverage; confirm operational behavior when those cases occur without manufacturing live transactions.
 - [ ] Verify actual Cal.com booking metadata, signed booking ID delivery, and a payment-before-booking replay.
 - [x] Locate Jason's original successful live payment and match the Dashboard identity to his student profile.
