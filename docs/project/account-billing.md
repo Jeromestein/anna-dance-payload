@@ -14,10 +14,10 @@ The design uses `app_payments` and `app_payment_items`. It does not add invoice,
 | Stripe synchronization, import, Checkout and refund actions | Deployed; focused tests and signed live payment replay passed | Verify new booking association and actual intended refunds |
 | Database migrations | Billing and Stripe migrations applied; refund reversal correction applied | Verify the actual imported record |
 | Jason's historical USD 0.50 | Imported from verified current live Dashboard charge; Paid, USD 0.50, no refund, original payment timestamp retained | Student Account visual acceptance; Admin passed |
-| Stripe connection | Read-only key issued; API and webhook secrets saved in Vercel Production; API reads verified | Complete remaining operational cases |
+| Stripe connection | API and webhook secrets active in Production; Charges and Refunds Write saved; Admin refund initiation enabled | Submit and verify the intended live refund |
 | Hosted Stripe webhook | Active; two genuine payment-event replays returned 200 synchronized with no duplicates | Verify intended refund events and future booking association |
 
-The current operational checklist is [Stripe payment and full-refund verification](../operations/stripe-payment-refund-testing.md). The owner chose sandbox testing on September 17 to verify payment/refund initiation without a personal credit card. Use the existing Stripe sandbox, an isolated test application and database, and separate webhook credentials. Production reconciliation remains read-only. Earlier progress is preserved in [historical checkpoints](account-billing-20260909-checkpoint.md), whose unchecked items are not the current implementation status.
+The current operational checklist is [Stripe payment and full-refund verification](../operations/stripe-payment-refund-testing.md). The owner chose sandbox testing on September 17 to verify payment/refund initiation without a personal credit card. Use the existing Stripe sandbox, an isolated test application and database, and separate webhook credentials. Production reconciliation is active; the owner approved enabling Admin-initiated live full refunds after sandbox acceptance. Earlier progress is preserved in [historical checkpoints](account-billing-20260909-checkpoint.md), whose unchecked items are not the current implementation status.
 
 ## System flow
 
@@ -52,7 +52,7 @@ Solid paths show payment/refund result synchronization. Dashed paths initiate ne
 | Website full refund | Request the return of the original full payment | Refund write access and live initiation enabled |
 | Manual recording | Record externally verified money movement in the website only | No Stripe API required; unavailable for provider-managed records |
 
-Synchronization does not require website refund permissions. Start with read-only synchronization if that is the chosen rollout scope. The approved key scope is read-only: Accounts, Payment Intents, and Charges and Refunds. As of September 17, identity verification is complete and the issued key is stored as a Vercel Production Secret; Checkout and refund write permissions are outside the current synchronization rollout. Exact restricted-key permissions must be verified against the actual endpoints; Stripe groups Charges and Refunds together.
+Synchronization does not require website refund permissions. Start with read-only synchronization if that is the chosen rollout scope. The live key is stored as a Vercel Production Secret. On September 17, after explicit owner approval and identity verification, Charges and Refunds was upgraded from Read to Write for website Admin refunds. Accounts and Payment Intents remain Read; Checkout Sessions remains None. The key retains its original display name, `Anna Dance billing sync - live read only`, although its refund scope now allows writes. Exact restricted-key permissions must be verified against the actual endpoints; Stripe groups Charges and Refunds together.
 
 The current configuration requires both API and webhook secrets even for the existing import/refresh actions. Live initiation uses two independent, default-off switches: `STRIPE_LIVE_PAYMENTS_ENABLED` controls website Checkout and `STRIPE_LIVE_REFUNDS_ENABLED` controls Admin refunds. Both can remain false for reconciliation. Enabling refunds alone does not enable Checkout. Keep secrets server-only. No code may mark Paid simply because a user returns from Checkout.
 
@@ -149,7 +149,8 @@ Once a bill is Stripe-managed or has an active provider request, manual status e
 - [x] Fix the Account CSS Modules compilation error found during verification; preserve mobile behavior by moving page-wide rules to global CSS.
 - [ ] Verify automatic association for the next genuine Cal payment and recovery when payment arrives before the booking.
 - [x] Separate the live Admin refund switch from website Checkout; preserve default-off behavior and account/mode checks.
-- [ ] Enable the requested production Admin refund flow: approve Charges and Refunds Write on the existing live key, deploy the separate switch, set `STRIPE_LIVE_REFUNDS_ENABLED=true`, and verify Jason's intended USD 0.50 refund from Admin. Keep `STRIPE_LIVE_PAYMENTS_ENABLED=false`.
+- [x] Enable the requested production Admin refund flow: save approved Charges and Refunds Write, deploy the independent refund gate, and set `STRIPE_LIVE_REFUNDS_ENABLED=true` while retaining `STRIPE_LIVE_PAYMENTS_ENABLED=false`. Production Admin refund review passed.
+- [ ] Complete Jason's intended USD 0.50 refund from the prepared Admin confirmation page; final submission is awaiting the administrator.
 - [ ] Verify signed live refund delivery and final Account/Admin state.
 - [ ] Verify both authenticated UI views, wrong-user denial, error recovery and repeated notification handling with the deployed integration.
 

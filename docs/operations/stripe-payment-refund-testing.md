@@ -8,7 +8,7 @@ Design and diagrams: [Payment and Billing Design](../project/account-billing.md)
 
 The website now has server-side Stripe Checkout, signed payment/refund notifications, verified historical import, and administrator-only full refunds. State lives in `app_payments`; itemized charges remain in `app_payment_items`. No invoice, refunds, or event tables were added.
 
-Code completion is separate from provider acceptance. Stripe API and webhook credentials were configured in Vercel Production on September 17. No live transaction or refund has been initiated by this rollout. Live API reconciliation and duplicate signed delivery were verified on September 17; actual live refund acceptance remains pending. The isolated sandbox acceptance results below cover test payment and refund initiation. The production Admin view and its Stripe refresh action passed after administrator login on September 17. Do not claim live acceptance has passed until the evidence below is collected. The owner subsequently chose sandbox testing to avoid using a personal credit card. Sandbox acceptance is complete. The owner subsequently requested that the original live USD 0.50 refund be initiated from the website Admin interface. Production refund write access, deployment, and actual live refund acceptance remain pending.
+Code completion is separate from provider acceptance. Stripe API and webhook credentials were configured in Vercel Production on September 17. No live transaction or refund has been initiated by this rollout. Live API reconciliation and duplicate signed delivery were verified on September 17; actual live refund acceptance remains pending. The isolated sandbox acceptance results below cover test payment and refund initiation. The production Admin view and its Stripe refresh action passed after administrator login on September 17. Do not claim live acceptance has passed until the evidence below is collected. The owner subsequently chose sandbox testing to avoid using a personal credit card. Sandbox acceptance is complete. The owner subsequently requested that the original live USD 0.50 refund be initiated from the website Admin interface. Production refund write access is approved and saved; actual live refund acceptance remains pending.
 
 ## Sandbox setup and acceptance — September 17
 
@@ -90,17 +90,18 @@ All amounts below are simulated USD 0.50 payments in `acct_1U02vtDKpszykgKY`; no
 - After administrator login in the Codex in-app browser, Jason's production Admin page showed All paid, one itemized USD 0.50 Paid bill, USD 0.00 due, the original September 6 payment date, and the correct PaymentIntent. Clicking Refresh Stripe status returned `Payment and refund status refreshed from Stripe.` The full-refund review opened with the same student, transaction, item, and USD 0.50 amount; it was canceled without a request. Visual inspection passed. Student Account ownership/display, new Cal booking association, and actual intended full refunds remain open.
 - `STRIPE_LIVE_PAYMENTS_ENABLED=false` and read-only key permissions remain unchanged. Website Checkout/refund initiation is not enabled by these tests.
 
-## Admin-only live refund rollout — pending deployment
+## Admin-only live refund rollout — deployed, awaiting final refund submission
 
-The owner requested refund initiation from the website Admin interface. The independent `STRIPE_LIVE_REFUNDS_ENABLED` gate is implemented locally; enabling it does not enable website Checkout. The owner approved Charges and Refunds Write on the existing live restricted key, plus commit, push, and deployment. Saving the permission change is awaiting Stripe identity verification.
+The owner requested refund initiation from the website Admin interface. The independent `STRIPE_LIVE_REFUNDS_ENABLED` gate is deployed in commit `a2b3d68`; enabling it does not enable website Checkout. The owner approved Charges and Refunds Write on the existing live restricted key, plus commit, push, and deployment. Stripe identity verification completed, and reopening the live key confirmed Charges and Refunds Write. Vercel saved the Production-only `STRIPE_LIVE_REFUNDS_ENABLED=true` config variable. Deployment `AbyaF2E9CA45mPiWtobLc2GruQUp` reached Ready on the production domain using commit `a2b3d68`.
 
 - [x] Verify the independent gates and refund orchestration: 50 focused billing/Stripe tests passed; TypeScript and targeted ESLint passed.
 - [x] Inspect the isolated Admin refund panel in the in-app browser. Separately inspect the actual refund component with a local visual fixture: amount, reason, confirmation checkbox, and enabled `Refund $0.50` button. This fixture does not prove a live refund.
 - [x] Obtain approval for the live restricted-key permission change and deployment.
-- [ ] Complete Stripe identity verification and save the live permission change; leave Checkout Sessions None.
-- [ ] Commit/push and deploy the reviewed code with `STRIPE_LIVE_REFUNDS_ENABLED=true` and `STRIPE_LIVE_PAYMENTS_ENABLED=false`.
+- [x] Complete Stripe identity verification and save the live permission change; leave Checkout Sessions None.
+- [x] Commit/push and deploy the reviewed code with `STRIPE_LIVE_REFUNDS_ENABLED=true` and `STRIPE_LIVE_PAYMENTS_ENABLED=false`.
 - [x] Sign back into production Admin and locate Jason's original USD 0.50 Paid bill.
-- [ ] Review and submit the intended full refund from the website after deployment.
+- [x] Verify the deployed Admin refund review: Jason, original PaymentIntent `pi_3UCoX3DRBUG2kOng0aJ1GrLV`, USD 0.50, original payment method, administrator-requested full-refund reason, confirmation checkbox, and `Refund $0.50` submission button. Visual inspection passed in the in-app browser.
+- [ ] Submit the intended full refund from the website. The final confirmation page is ready for the administrator; no live refund has been submitted by the agent.
 - [ ] Verify the provider refund, signed webhook delivery, and final database/Admin/Account state. No live refund was submitted during preparation.
 
 ## Configure the live environment
