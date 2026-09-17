@@ -19,7 +19,7 @@ export default async function FacultyPage() {
         eyebrow="Founder & teaching artists"
         title="Artistic direction with a personal point of view."
         description="Anna Liu leads the Academy’s teaching and choreography, with teaching artists supporting selected classes, rehearsals, and performance projects as needs evolve each term."
-        image="/images/faculty/grace-leung.jpg"
+        image="/images/anna-liu/anna-liu-2026-07-03-2624.webp"
         imageClassName="page-hero-image-faculty"
       />
       <section className="section-space page-shell">

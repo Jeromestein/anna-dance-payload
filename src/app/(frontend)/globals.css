@@ -1252,32 +1252,63 @@ textarea:focus-visible {
 }
 .page-hero-image-faculty {
   background-color: #7b8c96;
-  background-position: right 42%;
+  background-position: right top;
   background-repeat: no-repeat;
   background-size: auto 132%;
 }
 @media (min-width: 769px) {
   .page-hero-image-about {
     transform: translateX(30%);
-  }
-  .page-hero-image-classes,
-  .page-hero-image-faculty {
+    /* Soften the shifted image's edge without changing its composition. */
     -webkit-mask-image: linear-gradient(
       90deg,
-      transparent 0%,
-      transparent 42%,
-      rgba(0, 0, 0, 0.2) 49%,
-      #000 62%,
-      #000 100%
+      transparent,
+      rgba(0, 0, 0, 0.15) 6%,
+      rgba(0, 0, 0, 0.65) 15%,
+      #000 24%
     );
     mask-image: linear-gradient(
       90deg,
-      transparent 0%,
-      transparent 42%,
-      rgba(0, 0, 0, 0.2) 49%,
-      #000 62%,
-      #000 100%
+      transparent,
+      rgba(0, 0, 0, 0.15) 6%,
+      rgba(0, 0, 0, 0.65) 15%,
+      #000 24%
     );
+  }
+  .page-hero-image-classes,
+  .page-hero-image-faculty {
+    overflow: hidden;
+    background: none;
+  }
+  .page-hero-image-classes::before,
+  .page-hero-image-faculty::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 132%;
+    aspect-ratio: 2 / 3;
+    background: var(--page-hero-image) right top / cover no-repeat;
+    /* Feather the photo's actual edge, independently of the viewport width. */
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent,
+      rgba(0, 0, 0, 0.15) 12%,
+      rgba(0, 0, 0, 0.65) 30%,
+      #000 48%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent,
+      rgba(0, 0, 0, 0.15) 12%,
+      rgba(0, 0, 0, 0.65) 30%,
+      #000 48%
+    );
+  }
+  .page-hero-image-classes::before {
+    /* Preserve auto 138% sizing and the original 46% vertical alignment. */
+    top: -17.48%;
+    height: 138%;
   }
 }
 .page-hero-overlay {
