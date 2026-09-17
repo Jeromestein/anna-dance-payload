@@ -264,7 +264,7 @@ export async function startCheckout(owner: string, id: string) {
 
 export async function requestFullRefund(owner: string, id: string, actor: string, reason: string) {
   const ctx = await stripeContext()
-  if (!ctx.enabled) throw new Error('Website refunds are not enabled.')
+  if (!ctx.refundEnabled) throw new Error('Website refunds are not enabled.')
   let bill = await getBill(owner, id)
   assertEnvironment(bill, ctx)
   const piId = bill.stripe_payment_intent_id

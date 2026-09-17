@@ -15,15 +15,24 @@ export function stripeSettings() {
     throw new Error('Stripe is not configured for this environment.')
   // Live money remains opt-in even when live credentials have been supplied.
   const enabled = mode === 'test' || process.env.STRIPE_LIVE_PAYMENTS_ENABLED === 'true'
-  return { mode: mode as 'test' | 'live', livemode: mode === 'live', key, account, secret, enabled }
+  const refundEnabled = mode === 'test' || process.env.STRIPE_LIVE_REFUNDS_ENABLED === 'true'
+  return {
+    mode: mode as 'test' | 'live',
+    livemode: mode === 'live',
+    key,
+    account,
+    secret,
+    enabled,
+    refundEnabled,
+  }
 }
 
 export function stripeAvailability() {
   try {
     const settings = stripeSettings()
-    return { enabled: settings.enabled, mode: settings.mode }
+    return { enabled: settings.enabled, refundEnabled: settings.refundEnabled, mode: settings.mode }
   } catch {
-    return { enabled: false, mode: null }
+    return { enabled: false, refundEnabled: false, mode: null }
   }
 }
 

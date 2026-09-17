@@ -8,7 +8,7 @@ Design and diagrams: [Payment and Billing Design](../project/account-billing.md)
 
 The website now has server-side Stripe Checkout, signed payment/refund notifications, verified historical import, and administrator-only full refunds. State lives in `app_payments`; itemized charges remain in `app_payment_items`. No invoice, refunds, or event tables were added.
 
-Code completion is separate from provider acceptance. Stripe API and webhook credentials were configured in Vercel Production on September 17. No live transaction or refund has been initiated by this rollout. Live API reconciliation and duplicate signed delivery were verified on September 17; actual live refund acceptance remains pending. The isolated sandbox acceptance results below cover test payment and refund initiation. The production Admin view and its Stripe refresh action passed after administrator login on September 17. Do not claim live acceptance has passed until the evidence below is collected. The owner subsequently chose sandbox testing to avoid using a personal credit card. Test payment and refund initiation in the sandbox; preserve the production read-only synchronization configuration.
+Code completion is separate from provider acceptance. Stripe API and webhook credentials were configured in Vercel Production on September 17. No live transaction or refund has been initiated by this rollout. Live API reconciliation and duplicate signed delivery were verified on September 17; actual live refund acceptance remains pending. The isolated sandbox acceptance results below cover test payment and refund initiation. The production Admin view and its Stripe refresh action passed after administrator login on September 17. Do not claim live acceptance has passed until the evidence below is collected. The owner subsequently chose sandbox testing to avoid using a personal credit card. Sandbox acceptance is complete. The owner subsequently requested that the original live USD 0.50 refund be initiated from the website Admin interface. Production refund write access, deployment, and actual live refund acceptance remain pending.
 
 ## Sandbox setup and acceptance — September 17
 
@@ -90,6 +90,19 @@ All amounts below are simulated USD 0.50 payments in `acct_1U02vtDKpszykgKY`; no
 - After administrator login in the Codex in-app browser, Jason's production Admin page showed All paid, one itemized USD 0.50 Paid bill, USD 0.00 due, the original September 6 payment date, and the correct PaymentIntent. Clicking Refresh Stripe status returned `Payment and refund status refreshed from Stripe.` The full-refund review opened with the same student, transaction, item, and USD 0.50 amount; it was canceled without a request. Visual inspection passed. Student Account ownership/display, new Cal booking association, and actual intended full refunds remain open.
 - `STRIPE_LIVE_PAYMENTS_ENABLED=false` and read-only key permissions remain unchanged. Website Checkout/refund initiation is not enabled by these tests.
 
+## Admin-only live refund rollout — pending deployment
+
+The owner requested refund initiation from the website Admin interface. The independent `STRIPE_LIVE_REFUNDS_ENABLED` gate is implemented locally; enabling it does not enable website Checkout. The owner approved Charges and Refunds Write on the existing live restricted key, plus commit, push, and deployment. Saving the permission change is awaiting Stripe identity verification.
+
+- [x] Verify the independent gates and refund orchestration: 50 focused billing/Stripe tests passed; TypeScript and targeted ESLint passed.
+- [x] Inspect the isolated Admin refund panel in the in-app browser. Separately inspect the actual refund component with a local visual fixture: amount, reason, confirmation checkbox, and enabled `Refund $0.50` button. This fixture does not prove a live refund.
+- [x] Obtain approval for the live restricted-key permission change and deployment.
+- [ ] Complete Stripe identity verification and save the live permission change; leave Checkout Sessions None.
+- [ ] Commit/push and deploy the reviewed code with `STRIPE_LIVE_REFUNDS_ENABLED=true` and `STRIPE_LIVE_PAYMENTS_ENABLED=false`.
+- [x] Sign back into production Admin and locate Jason's original USD 0.50 Paid bill.
+- [ ] Review and submit the intended full refund from the website after deployment.
+- [ ] Verify the provider refund, signed webhook delivery, and final database/Admin/Account state. No live refund was submitted during preparation.
+
 ## Configure the live environment
 
 Use the merchant account that actually owns the payment. The integration uses that account's own API key and verifies `/v1/account` against `STRIPE_ACCOUNT_ID`. It does not impersonate Cal.com's Connect platform or guess a connected account. Verify access to the academy's actual payments before accepting the integration.
@@ -102,10 +115,11 @@ STRIPE_SECRET_KEY=rk_live_...
 STRIPE_ACCOUNT_ID=acct_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_LIVE_PAYMENTS_ENABLED=false
+STRIPE_LIVE_REFUNDS_ENABLED=false
 NEXT_PUBLIC_SITE_URL=https://www.annadanceacademy.com
 ```
 
-The live initiation flag can remain false while importing existing payments and reconciling status. Set it to true when actual website payment/refund initiation is intended and configuration has been verified. This is an operational switch, not a sandbox acceptance requirement. For local checkout return URLs use `http://localhost:3000` instead of the production origin.
+Both live initiation flags can remain false while importing existing payments and reconciling status. `STRIPE_LIVE_PAYMENTS_ENABLED` controls Checkout; `STRIPE_LIVE_REFUNDS_ENABLED` controls Admin full refunds. For the requested Admin-only rollout, set only `STRIPE_LIVE_REFUNDS_ENABLED=true` after the live key has Charges and Refunds Write. Keep Accounts and Payment Intents Read, Checkout Sessions None, and website Checkout disabled. Deploy the code that supports the independent flag before enabling it. This is an operational switch, not a sandbox acceptance requirement. For local checkout return URLs use `http://localhost:3000` instead of the production origin.
 
 Configure the live webhook endpoint at `https://www.annadanceacademy.com/api/integrations/stripe/webhook` after deploying this route. Subscribe to `payment_intent.succeeded`, `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`, `refund.created`, `refund.updated`, and `refund.failed`. Use that endpoint's own signing secret. A local forwarder has a separate signing secret. Restart the existing development server in VS Code after environment or server-route changes. Do not run a production build for local verification.
 
@@ -118,7 +132,7 @@ Stripe prohibits testing in live mode using real payment details. Do not create 
 1. Sign in to `/admin`; open **Student → Jason → Billing → Stripe payments & testing**. Locate the original reported USD 0.50 transaction in the merchant's live account. If it exists only in test mode, do not relabel or import it as real money.
 2. Use **Import an existing Stripe payment** with the verified PaymentIntent and charge description. Confirm the original amount, timestamp, payer ownership, and current refund state in both Admin and Student Account.
 3. Use **Refresh Stripe status** to confirm reconciliation is repeatable and does not duplicate the bill. This action neither charges a card nor requests a refund.
-4. For a paid bill that genuinely needs a full refund, enable live initiation, select **Refund payment**, enter the actual reason, review the full amount, and confirm once. This sends real money back; repeated submissions must reuse the original request.
+4. For a paid bill that genuinely needs a full refund, enable `STRIPE_LIVE_REFUNDS_ENABLED`, select **Refund payment**, enter the actual reason, review the full amount, and confirm once. This sends real money back; repeated submissions must reuse the original request.
 5. Check Stripe and the website. A requested/pending refund retains Paid with Refund processing. Provider-confirmed completion sets Fully refunded. A later provider failure for the same full refund must correct the website to Paid with Refund failed and preserve the earlier observation in the audit history.
 6. Verify signed delivery and the same final bill in Account and Admin. Refreshing or replaying an old payment event must not undo a refund; current provider evidence determines the state.
 7. Verify automatic payment ingestion when the next genuine booking or bill payment occurs. The checkout return page alone must not mark the bill Paid. Do not create a new artificial purchase for acceptance.

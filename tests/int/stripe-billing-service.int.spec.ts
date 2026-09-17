@@ -51,6 +51,7 @@ let row: Record<string, unknown>
 let refunds: unknown[]
 const ctx = {
   enabled: true,
+  refundEnabled: true,
   account: 'acct_123',
   livemode: false,
   stripe: { paymentIntents: { retrieve: m.retrieve }, refunds: { list: m.list, create: m.create } },
@@ -103,6 +104,20 @@ beforeEach(() => {
   })
 })
 describe('Stripe refund orchestration', () => {
+  it('rejects refunds when only Checkout is enabled, before reading or changing the bill', async () => {
+    m.ctx.mockResolvedValue({ ...ctx, enabled: true, refundEnabled: false })
+    await expect(requestFullRefund(owner, id, 'staff', 'Schedule change')).rejects.toThrow(
+      'Website refunds are not enabled.',
+    )
+    expect(m.db).not.toHaveBeenCalled()
+    expect(m.create).not.toHaveBeenCalled()
+  })
+  it('allows Admin refunds while website Checkout remains disabled', async () => {
+    m.ctx.mockResolvedValue({ ...ctx, enabled: false, refundEnabled: true })
+    const result = await requestFullRefund(owner, id, 'staff', 'Schedule change')
+    expect(result.message).toBe('Full refund confirmed by Stripe.')
+    expect(m.create).toHaveBeenCalledTimes(1)
+  })
   it('refunds the verified server amount and persists completion only after querying Stripe', async () => {
     const result = await requestFullRefund(owner, id, 'staff', 'Schedule change')
     expect(m.create).toHaveBeenCalledWith(

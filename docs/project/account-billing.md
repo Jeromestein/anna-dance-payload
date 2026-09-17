@@ -54,7 +54,7 @@ Solid paths show payment/refund result synchronization. Dashed paths initiate ne
 
 Synchronization does not require website refund permissions. Start with read-only synchronization if that is the chosen rollout scope. The approved key scope is read-only: Accounts, Payment Intents, and Charges and Refunds. As of September 17, identity verification is complete and the issued key is stored as a Vercel Production Secret; Checkout and refund write permissions are outside the current synchronization rollout. Exact restricted-key permissions must be verified against the actual endpoints; Stripe groups Charges and Refunds together.
 
-The current configuration requires both API and webhook secrets even for the existing import/refresh actions. `STRIPE_LIVE_PAYMENTS_ENABLED=false` allows reconciliation but blocks website Checkout/refund initiation. Keep secrets server-only. No code may mark Paid simply because a user returns from Checkout.
+The current configuration requires both API and webhook secrets even for the existing import/refresh actions. Live initiation uses two independent, default-off switches: `STRIPE_LIVE_PAYMENTS_ENABLED` controls website Checkout and `STRIPE_LIVE_REFUNDS_ENABLED` controls Admin refunds. Both can remain false for reconciliation. Enabling refunds alone does not enable Checkout. Keep secrets server-only. No code may mark Paid simply because a user returns from Checkout.
 
 ## Data model and identifiers
 
@@ -148,7 +148,9 @@ Once a bill is Stripe-managed or has an active provider request, manual status e
 - [x] Verify isolated sandbox Checkout, declined-card recovery, Admin and Dashboard full refunds, pending-to-success and success-to-failure notifications, concurrent-request deduplication, and student database isolation. Three USD 0.50 test payments were used; all genuine deliveries returned 200. See the operational guide for evidence and remaining limits.
 - [x] Fix the Account CSS Modules compilation error found during verification; preserve mobile behavior by moving page-wide rules to global CSS.
 - [ ] Verify automatic association for the next genuine Cal payment and recovery when payment arrives before the booking.
-- [ ] Verify actual intended full refunds, including Dashboard-initiated refunds; enable website initiation only if that capability is desired and configured.
+- [x] Separate the live Admin refund switch from website Checkout; preserve default-off behavior and account/mode checks.
+- [ ] Enable the requested production Admin refund flow: approve Charges and Refunds Write on the existing live key, deploy the separate switch, set `STRIPE_LIVE_REFUNDS_ENABLED=true`, and verify Jason's intended USD 0.50 refund from Admin. Keep `STRIPE_LIVE_PAYMENTS_ENABLED=false`.
+- [ ] Verify signed live refund delivery and final Account/Admin state.
 - [ ] Verify both authenticated UI views, wrong-user denial, error recovery and repeated notification handling with the deployed integration.
 
 Follow the detailed [operational checklist](../operations/stripe-payment-refund-testing.md) for sandbox setup and acceptance evidence. Complete payment/refund initiation tests in the isolated sandbox before deciding on live website initiation. Do not manufacture live purchases for testing. Do not run `pnpm build`. Passing local checks, a database migration or a visible refund button does not mean the live integration is complete.
