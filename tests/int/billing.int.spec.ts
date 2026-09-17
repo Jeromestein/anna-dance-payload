@@ -1,3 +1,10 @@
+vi.mock('@/actions/stripe-billing', () => ({
+  refundStripeBill: vi.fn(),
+  reconcileStripeBill: vi.fn(),
+  checkoutStripeBill: vi.fn(),
+  createStripeTestBill: vi.fn(),
+  importStripePayment: vi.fn(),
+}))
 import { describe, expect, it, vi } from 'vitest'
 import { createElement } from 'react'
 import { render, screen, cleanup } from '@testing-library/react'

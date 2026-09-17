@@ -1,110 +1,164 @@
-# Account Billing
+# Payment and Billing Design
 
-Decision date: September 9, 2026
-Status: Billing database migration applied; payment-provider synchronization and historical payment import remain required, unfinished work.
+Updated: September 17, 2026
 
-## Approved scope
+## Purpose and current status
 
-Current term is hidden. Account presents Billing, Schedule, and Profile. A booking does not prove payment. Show recorded billing activity, not a default amount due. Empty and unavailable are different states.
+Billing explains what a student owes and what each charge covers. Payments record money actually collected or returned. Stripe is the authority for Stripe transaction outcomes; the website database is the record used by Student Account and Admin Billing.
 
-Use two business tables: existing `app_payments` represents an issued bill plus its single successful payment; new `app_payment_items` contains immutable item descriptions, quantities, and unit prices. No separate invoice or refunds table. Keep UUID primary keys and account ownership; a unique readable bill number is a display identifier, not a user ID or authorization mechanism.
+The design uses `app_payments` and `app_payment_items`. It does not add invoice, refund, or webhook-event tables. The diagrams describe the implemented local design, not a completed live rollout.
 
-One bill accepts one full payment. No installments, combined tenders, partial refunds, tax calculation, or automated discount rules in this release. Staff enter final item prices with clear descriptions. Currency is USD for new bills; preserve historical currencies. Amounts use integer cents.
+| Capability | Current evidence | Still required |
+| --- | --- | --- |
+| Itemized bills and shared Account/Admin views | Implemented; base billing UI previously deployed | Verify populated live records in both views |
+| Stripe synchronization, import, Checkout and refund actions | Implemented locally; focused tests passed | Configure, deploy and verify live behavior |
+| Database migrations | Billing and Stripe migrations applied; refund reversal correction applied | Verify the actual imported record |
+| Jason's historical USD 0.50 | Imported from verified current live Dashboard charge; Paid, USD 0.50, no refund, original payment timestamp retained | Authenticated Account/Admin visual acceptance |
+| Stripe connection | Read-only key issued; API and webhook secrets saved in Vercel Production | Deploy and verify actual API access |
+| Hosted Stripe webhook | Destination registered and Disabled pending deployment; September 11 route check returned HTTP 404 | Deploy route, enable destination, and verify signed delivery |
 
-`refunded` means the full original payment has actually been returned. A refund request or pending provider refund does not qualify. To change a paid order, issue a replacement bill linked by `replaces_payment_id`, refund the original in full, and collect a new independent payment. A replacement never inherits Paid. Show the relationship and explain that refund arrival and the new charge can occur at different times. Preserve historical partially refunded records without enabling new partial refunds.
+The current operational checklist is [Stripe live payment and full-refund verification](../operations/stripe-payment-refund-testing.md). Earlier progress is preserved in [historical checkpoints](account-billing-20260909-checkpoint.md), whose unchecked items are not the current implementation status.
 
-## Workflows
+## System flow
 
-Administrators issue bills from the protected Student detail view, specifying itemized charges, optional deadline, and optional replacement reference. Issuing locks the charges; corrections require cancellation of an unpaid bill and a new bill. Record the administrator and timestamp for each operation inside a server-only audit column. Creation and status transitions must be atomic and reject duplicate submissions or stale status changes.
+```mermaid
+flowchart TD
+    Booking[Student pays during Cal.com booking] --> Stripe[Stripe payment or refund]
+    Dashboard[Admin refunds in Stripe Dashboard] --> Stripe
+    Cal[Signed Cal.com booking webhook] --> Schedule[Existing schedule and student association]
+    Stripe -->|Signed event| Hook[Website Stripe webhook]
+    Hook --> Check["Verify signature and account/mode<br/>Read current payment and refunds from Stripe"]
+    Check --> Match{Trusted bill or student association?}
+    Schedule --> Match
+    Match -->|Yes| Sync["Atomic import or update<br/>Deduplicate by transaction reference"]
+    Match -->|No or conflicting| Review["Delivery failure and server log<br/>Resolve association, then replay or import"]
+    Sync --> DB[(app_payments + app_payment_items)]
+    DB --> Account[Student Account: own billing records]
+    DB --> Admin[Admin Billing: student billing records]
+    Issue[Admin issues an itemized unpaid bill] --> DB
+    Issue -.->|Website checkout when enabled| Stripe
+    Admin -.->|Website refund when enabled| Stripe
+```
 
-Staff may record a verified full payment with channel and unique transaction/reference number, or record a completed full refund with a distinct refund reference and reason. These controls record externally completed activity; they never charge a card or execute a refund. A browser return URL never confirms payment. Cancel only unpaid bills. Do not revive cancelled/refunded bills.
+Solid paths show payment/refund result synchronization. Dashed paths initiate new Stripe operations and need additional write permissions. Refunds initiated in Stripe Dashboard still use the same synchronization path. A Cal booking notification establishes schedule identity; it does not establish payment success.
 
-Students see only their own bills and itemized charges, totals, confirmed paid/refunded amounts, balance due, dates, and reference numbers. Do not sum different currencies. Pending verification is not confirmed debt; legacy partial refunds require reconciliation. Refunded bills have zero balance due and no new payable amount.
+## Separate synchronization from initiating money movement
 
-## Payment integration boundary
+| Operation | What changes | Stripe access |
+| --- | --- | --- |
+| Webhook reconciliation or Refresh Stripe status | Update the website from current provider evidence | Webhook signing secret for incoming notifications; API read access to account, payment and refunds |
+| Historical import | Add the original verified payment and its itemized description without collecting again | Current importer uses API read access |
+| Website Checkout | Create a payment session for a stored unpaid bill | Checkout write access and live initiation enabled |
+| Website full refund | Request the return of the original full payment | Refund write access and live initiation enabled |
+| Manual recording | Record externally verified money movement in the website only | No Stripe API required; unavailable for provider-managed records |
 
-The current Cal.com webhook persists schedule records, not verified financial transactions. Do not automatically generate Paid bills from those events. Provider-confirmed payment ingestion and secure amount-bound checkout remain follow-up work. Until checkout is implemented, display a contact-the-academy message for an unpaid bill instead of reusing the unrelated test Payment Link. Existing paid booking transactions can be recorded manually after Staff verification; this does not collect payment again.
+Synchronization does not require website refund permissions. Start with read-only synchronization if that is the chosen rollout scope. The approved key scope is read-only: Accounts, Payment Intents, and Charges and Refunds. As of September 17, identity verification is complete and the issued key is stored as a Vercel Production Secret; Checkout and refund write permissions are outside the current synchronization rollout. Exact restricted-key permissions must be verified against the actual endpoints; Stripe groups Charges and Refunds together.
 
-## Required payment synchronization checklist
+The current configuration requires both API and webhook secrets even for the existing import/refresh actions. `STRIPE_LIVE_PAYMENTS_ENABLED=false` allows reconciliation but blocks website Checkout/refund initiation. Keep secrets server-only. No code may mark Paid simply because a user returns from Checkout.
 
-This is the current checklist for the next billing implementation phase. The user explicitly deferred implementation for later; these items are required, not optional enhancements. Database availability and manual billing controls do not mean payment integration is complete.
+## Data model and identifiers
 
-### Historical payments
+```mermaid
+erDiagram
+    app_user_profiles ||--o{ app_payments : owns
+    app_payments ||--|{ app_payment_items : contains
+    app_payments o|--o{ app_payments : replaces
+    app_user_profiles {
+        uuid id PK
+    }
+    app_payments {
+        uuid id PK
+        uuid user_profile_id FK
+        string bill_number
+        int amount_cents
+        string currency
+        string status
+        string transaction_reference
+        string stripe_account_id
+        boolean stripe_livemode
+        string refund_state
+        uuid replaces_payment_id FK
+    }
+    app_payment_items {
+        uuid payment_id FK
+        string description
+        int quantity
+        int unit_amount_cents
+    }
+```
 
-- [ ] Verify Jason's reported USD 0.50 payment against the actual payment provider: confirm the account, test/live mode, successful transaction, currency, original payment timestamp, and associated booking. The amount is user-reported until verified.
-- [ ] Import that verified transaction into `app_payments` and `app_payment_items` as Paid, linked to the correct user and booking. Preserve the original provider reference and payment date; do not create a new amount due or request payment again. If the provider shows a completed refund, preserve that actual state instead.
-- [ ] Find and reconcile other historical booking payments missing from the website database, with a review step for ambiguous ownership and a repeatable import that cannot duplicate transactions.
+- `app_payments` is one issued bill and its single full successful payment, including provider references, payment/refund dates, synchronization state and private audit history.
+- `app_payment_items` stores descriptions, quantities and unit prices. Issued items are immutable. Amounts are integer cents and totals must equal their items. Import cannot invent a detailed service breakdown missing from the source; use a verified description and total.
+- UUID is the internal bill identity. `bill_number` is a readable display identifier. User ID plus timestamp is not a reliable unique bill identity or an authorization mechanism.
+- Store gross customer payment amounts, not Stripe's net payout after processing fees. Different currencies are never summed together.
+- No separate invoice document/table is generated. The itemized bill view provides the requested charge explanation; PDF invoicing, taxes, installments and split tenders are outside this release.
 
-### Future payments and refunds
+## Payment and refund states
 
-- [ ] Confirm which provider/account receives Cal.com booking payments and which verified payment events and booking references are available.
-- [ ] Implement and configure signed payment notifications at the deployed endpoint so successful booking payments automatically create or update the correct user's bill and itemized charges.
-- [ ] Associate transactions with a trusted user/booking or existing bill reference; route missing or conflicting associations for review rather than guessing from a name or amount.
-- [ ] Validate amount, currency, payment success, and test/live mode before recording Paid. Booking creation and browser redirects alone must never confirm payment.
-- [ ] Enforce transaction-level deduplication and safe handling of repeated, delayed, and out-of-order notifications. Historical imports and live notifications must use the same deduplication rules.
-- [ ] Automatically record a full refund only after the provider confirms completion. Pending or failed refunds must not mark the bill Refunded. Amount changes follow the approved full-refund-plus-replacement-payment workflow; do not introduce partial-refund controls.
-- [ ] Add reconciliation/backfill for missed notifications, visible sync failures, and a safe retry path; unresolved payments must not silently disappear.
-- [ ] Connect manually issued bills to secure checkout with the correct bill reference and amount, then update the same bill from verified payment notifications.
+| Situation | Bill status | Refund state | Display and balance |
+| --- | --- | --- | --- |
+| Admin issues a bill | `payment_due` | `none` | Unpaid; included in amount due |
+| Payment evidence needs review | `pending_verification` | `none` | Pending verification; not asserted as confirmed debt |
+| Full payment verified | `paid` | `none` | Paid; nothing due |
+| Full refund requested or processing | `paid` | `requested` / `pending` | Paid with refund processing; not yet Fully refunded |
+| Full refund confirmed by Stripe | `refunded` | `succeeded` | Fully refunded; nothing due |
+| Refund fails | `paid` | `failed` | Paid with refund failed; requires review |
+| Unpaid bill canceled | `cancelled` | `none` | Canceled; nothing due |
+| Historical partial refund found | `partially_refunded` | `requires_review` or pending evidence | Preserve actual data and reconcile; no partial-refund initiation |
 
-### Admin refund interface and remaining TODOs
+A newer provider-confirmed failure of the same full refund can correct an earlier success. Preserve the earlier completion observation in audit history. An ordinary old payment-success event must not undo a refund. Request time and the time completion was observed are separate; neither promises a bank-settlement date.
 
-- [x] Show **Refund payment** and **Try refund demo** at the top of Admin Billing, including empty and unavailable billing states. Do not require a historical payment import just to find the controls or test the interface.
-- [x] Provide an isolated $10 demo with reason, confirmation, and a clearly labeled demo-complete result. It uses a sample customer, never calls a server action, never changes student records, and never presents itself as a completed real refund.
-- [x] Add a full-refund review interface to paid bills, showing Student, bill number, original transaction reference, itemized charges, and fixed full amount.
-- [x] Add reason entry, a separate confirmation step, back/cancel controls, and an explicit notice that the review is not saved and no refund has been requested.
-- [x] Keep the actual refund submission disabled until provider integration is ready; require a verified full Stripe payment to open the review flow.
-- [x] Separate the existing manual “Record completed refund” action from a future actual refund request. Recording must explicitly state that it does not send money.
-- [x] Add presentation components for pending, completed, and failed refunds. Pending and failed states are not yet backed by database/provider data; a click must never simulate success.
-- [x] Verify refund review in component previews and the empty-state demo through confirmation in the Codex in-app browser, with synthetic records and all provider calls disconnected. Seventeen focused tests, typecheck, and targeted ESLint checks pass. The actual local Admin route redirects to login in both browsers; authenticated refund-flow acceptance remains pending.
-- [ ] TODO: Confirm the Stripe account/Connect context and API permissions for Cal.com payments before enabling website refunds.
-- [ ] TODO: Add server-side refund initiation with administrator authorization, a fresh provider check of the original transaction, full-amount/currency verification, and an idempotency key. Do not accept client-supplied refund amounts as authoritative.
-- [ ] TODO: Persist refund request ID, pending/failed/completed state, failure information, initiator, and timestamps on `app_payments`; no separate refunds table is required. Separate request time from confirmed completion.
-- [ ] TODO: Connect the confirmation button to that endpoint only after the database and provider configuration are deployed. On ambiguous timeouts, reconcile the existing request before offering retry.
-- [ ] TODO: Connect signed refund events and reconciliation to the status components; keep manual recording from conflicting with an in-flight automatic refund. A pending or failed refund must not mark the bill Refunded.
-- [ ] TODO: Verify refunds initiated in Stripe also update website records, including duplicate notifications and out-of-order delivery.
-- [ ] TODO: Run authenticated Admin end-to-end tests in Stripe test mode, covering success, pending, failure, duplicate clicks, stale data, permissions, and replacement bills. No real refund is authorized by a UI test.
+To change the amount of a paid order: refund the original in full, create a separate replacement bill linked by `replaces_payment_id`, and collect a new payment. The replacement does not inherit Paid, and the system does not automatically charge it.
 
-#### How to test the frontend
+## Event handling, ownership and recovery
 
-1. Use the updated local site at `http://localhost:3000/admin`, sign in as staff, then open **Student → Jason → Billing**. These changes are local until committed and deployed; the production site will not show them yet.
-2. **Refund payment** stays visible even with no bills. With no paid records, it explains why a real payment cannot be selected.
-3. Click **Try refund demo → Review full refund**, enter a reason, then click **Review confirmation**.
-4. Select the confirmation checkbox and click **Finish demo — no money moves**. Expect **Demo complete — no refund sent**. The sample $10 payment does not belong to Jason and is never saved.
-5. Use **Restart demo** to repeat. For actual refunds, use Stripe until the server integration and signed reconciliation TODOs above are complete. **Record completed refund** only records money already returned externally.
+The signed endpoint is `/api/integrations/stripe/webhook`. Accepted event types are `payment_intent.succeeded`, `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`, `refund.created`, `refund.updated`, and `refund.failed`.
 
-### Acceptance
+1. Verify the raw-body signature, environment and account. Invalid signatures are rejected without updating billing.
+2. Read the current PaymentIntent, captured charge and refund history from Stripe. Validate amount, currency, mode, capture and dispute state. Event type alone is not the final state.
+3. Match an existing transaction, a server-reserved Checkout bill token, or exactly one signed Cal booking ID plus attendee email and linked student. Historical staff import additionally verifies the selected student against provider payer identity. Never match by name or amount alone.
+4. Import/update atomically through the service-only database function. Repeated deliveries/imports reuse the same transaction; row locks and persisted request keys protect concurrent actions.
+5. Revalidate Account and Admin views after a successful write. Users see database records on reload; real-time browser push is not implemented.
 
-- [ ] Verify Jason's reconciled record appears correctly in both Student Account and Admin Billing with its original amount, item description, payment date, reference, and actual payment/refund state.
-- [ ] Verify a new controlled booking payment appears automatically in both interfaces without manual confirmation.
-- [ ] Test duplicate delivery, delayed success, wrong-account association, failed payment, completed full refund, replacement payment, and recovery of a missed notification.
-- [ ] Verify student data isolation and test/live separation using provider-backed records.
-- [ ] Mark this phase complete only after the deployed event configuration and end-to-end database/UI results have been verified. Sending a receipt email alone is not proof of database synchronization.
+If a payment arrives before its signed booking or cannot be associated, return a retryable delivery failure and log its event ID. Resolve the association and replay the event or perform verified import. Old unlinked bookings may need their Cal webhook replayed. A successful email receipt is not proof that the website database was updated.
 
-## Release checks
+Refresh Stripe status is the current manual recovery action. An ambiguous Checkout/refund response must be reconciled before retrying; the same saved request key is reused. Requests older than the implemented 23-hour safeguard require provider review. A new refund attempt after a provider failure is not created automatically.
 
-- Apply the forward migration to the intended database after reviewing existing rows and making a backup.
-- Verify own-account read access and denial of writes by students and content editors.
-- Verify item totals, duplicate references, concurrent transitions, replacement ownership, and full-refund rules.
-- Verify signed-in Account and administrator billing screens on desktop/mobile.
-- Verify existing authentication, Profile, Schedule, and Cal.com tests remain green.
-- Do not run `pnpm build`.
-- Do not claim live rollout, payment collection, refunds, or automatic booking-payment sync based on local code checks.
+A website-wide unmatched-payment inbox, scheduled reconciliation worker, bulk historical backfill, and automated reconciliation for disputes/complex partial refunds remain TODO. These gaps mean webhook retries plus manual review are currently required; do not describe delivery as guaranteed.
 
-## Implementation checkpoint — September 9, 2026
+## Access and integrity
 
-Implemented locally:
+Students can read only their own billing records and cannot call billing mutation RPCs. Payload administrators initiate manual billing and website refunds through authenticated server actions. The server determines the original amount and account; browser-supplied refund amounts are not authoritative. Audit history and request keys are private.
 
-- Forward migration `20260909190000_add_itemized_billing.sql`; historical records and legacy partial-refund status are preserved. Existing provider transaction references are copied when available.
-- Account and Staff detail pages read real bills and items; removed the unused mock account module.
-- Staff itemized issuance, manual full-payment verification, full-refund verification, cancellation of unpaid bills, and replacement links.
-- Service-role-only atomic RPC, owner-scoped student reads, and audit history excluded from student column privileges.
-- Desktop/mobile component verification in the Codex in-app browser, using isolated synthetic fixtures. Item addition and total calculation checked visually.
-- 38 targeted tests pass; the migration and database assertions pass in disposable PostgreSQL 15. The fixture is `tests/fixtures/billing-database.sql` and must only run in an empty disposable database.
+Once a bill is Stripe-managed or has an active provider request, manual status edits are blocked. A refund button click is not completion. Empty billing activity and a database load failure remain separate UI states. Current term stays hidden.
 
-At this initial local checkpoint, database rollout and authenticated verification were pending; the rollout below records the subsequent migration and signed-in empty-state verification. Historical payment import, provider-confirmed booking-payment ingestion, populated Staff/Student end-to-end flows, and online checkout for manually issued bills remain incomplete. Manual verification timestamps indicate when Staff recorded confirmation, not necessarily the provider's original transaction date.
+## Rollout and acceptance
 
-## Database rollout — September 9, 2026
+- [x] Define the two-table model, full-refund policy, ownership checks and atomic updates.
+- [x] Implement local provider synchronization, historical import, reconciliation and optional initiation paths; validate focused tests and disposable database assertions.
+- [x] Apply forward database migrations and verify private RPC access boundaries.
+- [x] Locate Jason's original successful USD 0.50 payment in the live Dashboard.
+- [ ] Configure the chosen live API permission scope and the webhook signing secret.
+- [x] Import Jason's original transaction using current authenticated Dashboard evidence; preserve gross amount, original charge timestamp, booking reference and verification provenance. The existing transaction-deduplicating database function was used; no new Stripe charge was made.
+- [x] Read the saved record through the same database fields used by the billing UI: one bill, one item, USD 0.50 Paid, zero due, summary All paid.
+- [ ] Verify Jason's populated Account/Admin pages while signed in. The in-app Admin browser currently redirects to login.
+- [ ] Deploy the new route and verify signed Stripe delivery, including an existing transaction replay without duplicate billing.
+- [ ] Verify automatic association for the next genuine Cal payment and recovery when payment arrives before the booking.
+- [ ] Verify actual intended full refunds, including Dashboard-initiated refunds; enable website initiation only if that capability is desired and configured.
+- [ ] Verify both authenticated UI views, wrong-user denial, error recovery and repeated notification handling with the deployed integration.
 
-Applied `20260909190000_add_itemized_billing.sql` to the Supabase project configured by this checkout after verifying the API/database target match and taking a private local backup of the existing payment rows, schema, indexes, policies, and grants. The payment table was empty before migration; no customer charges were created. PostgREST schema reload was requested.
+Follow the detailed [operational checklist](../operations/stripe-payment-refund-testing.md) for evidence. Sandbox acceptance is not a prerequisite for this rollout. Do not manufacture live purchases for testing. Do not run `pnpm build`. Passing local checks, a database migration or a visible refund button does not mean the live integration is complete.
 
-Verified the actual signed-in Student Account at `http://localhost:3000/account#payments` in the user's existing Chrome session: both the overview and Billing panel show **No billing activity**, and the former load error is gone. This supersedes the earlier migration-pending and signed-in Account empty-state verification notes. Verified billing RLS is enabled, student access to the management RPC and staff audit column is denied, and service-role execution is allowed. Admin UI writes, populated bill flows, booking-payment ingestion, and checkout remain separate acceptance work.
+## Implementation map
+
+| Responsibility | Files |
+| --- | --- |
+| Bill model, totals and presentation states | `src/lib/billing/model.ts`, `src/lib/billing/load.ts` |
+| Provider environment and transaction evidence | `src/lib/stripe/config.ts`, `src/lib/stripe/snapshot.ts` |
+| Import, synchronization, Checkout and refund service | `src/lib/stripe/billing.ts` |
+| Authenticated Stripe actions | `src/actions/stripe-billing.ts` |
+| Signed Stripe notifications | `src/app/(frontend)/api/integrations/stripe/webhook/route.ts` |
+| Signed Cal booking identity | `src/lib/cal/booking-sync.ts`, `src/app/(frontend)/api/integrations/cal/webhook/route.ts` |
+| Account/Admin billing and refund controls | `src/components/billing-records.tsx`, `billing-admin.tsx`, `billing-refund.tsx`, `stripe-billing-controls.tsx` |
+| Database changes | `supabase/migrations/20260909190000_add_itemized_billing.sql`, `20260910180000_connect_stripe_billing.sql`, `20260910193000_handle_stripe_refund_reversals.sql` |
+| Verification | `tests/int/billing*.int.spec.ts`, `tests/int/stripe*.int.spec.ts`, `tests/fixtures/stripe-billing-database.sql` |

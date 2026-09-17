@@ -1,6 +1,14 @@
+const requestRefund = vi.hoisted(() => vi.fn())
+vi.mock('@/actions/stripe-billing', () => ({
+  refundStripeBill: requestRefund,
+  reconcileStripeBill: vi.fn(),
+  checkoutStripeBill: vi.fn(),
+  createStripeTestBill: vi.fn(),
+  importStripePayment: vi.fn(),
+}))
 import { createElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { BillingRefund, RefundLauncher, RefundProgress } from '@/components/billing-refund'
 import type { Bill } from '@/lib/billing/model'
 const action = vi.hoisted(() => vi.fn())
@@ -33,6 +41,33 @@ function show(value = bill) {
   )
 }
 describe('refund front end', () => {
+  it('submits a verified full refund only after confirmation and shows provider errors', async () => {
+    requestRefund.mockResolvedValue({ error: 'Stripe needs reconciliation.' })
+    show({
+      ...bill,
+      refund_available: true,
+      stripe_livemode: false,
+      stripe_synced_at: '2026-09-10T10:00:00Z',
+    })
+    expect(screen.queryByText('Already refunded outside this website?')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Review full refund' }))
+    fireEvent.change(screen.getByLabelText('Refund reason'), { target: { value: 'Test refund' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Review confirmation' }))
+    const submit = screen.getByRole('button', { name: 'Refund $50.00' }) as HTMLButtonElement
+    expect(submit.disabled).toBe(true)
+    fireEvent.click(screen.getByRole('checkbox', { name: /I confirm the full/ }))
+    fireEvent.click(submit)
+    await waitFor(() => expect(requestRefund).toHaveBeenCalledTimes(1))
+    const payload = requestRefund.mock.calls[0][1] as FormData
+    expect(payload.get('id')).toBe(bill.id)
+    expect(payload.get('reason')).toBe('Test refund')
+    expect(payload.has('amount')).toBe(false)
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toContain('Stripe needs reconciliation'),
+    )
+    expect(screen.queryByText('Full refund completed')).toBeNull()
+  })
+
   it('shows refund controls with no records and completes a demo without calling the server', () => {
     render(createElement(RefundLauncher, { owner: 'owner', ownerName: 'Jason', bills: [] }))
     fireEvent.click(screen.getByRole('button', { name: 'Refund payment' }))

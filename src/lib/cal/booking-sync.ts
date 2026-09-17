@@ -18,6 +18,7 @@ export type ScheduleEntryType = 'class' | 'consultation' | 'private_lesson' | 'm
 export type NormalizedCalBooking = {
   triggerEvent: CalBookingEvent
   uid: string
+  bookingId: number | null
   title: string | null
   startsAt: string | null
   endsAt: string | null
@@ -165,6 +166,7 @@ export function parseCalWebhook(rawBody: string): NormalizedCalBooking | null {
   const eventTypeId =
     readNumber(payload, 'eventTypeId') ?? (eventType && readNumber(eventType, 'id'))
   const startsAt = readString(payload, 'startTime', 'start')
+  const bookingId = readNumber(payload, 'bookingId')
   const seatCapacity =
     readNumber(payload, 'seatsPerTimeSlot', 'seatCapacity') ??
     (eventType && readNumber(eventType, 'seatsPerTimeSlot', 'seatCapacity'))
@@ -172,6 +174,7 @@ export function parseCalWebhook(rawBody: string): NormalizedCalBooking | null {
   return {
     triggerEvent: triggerEvent as CalBookingEvent,
     uid,
+    bookingId: bookingId && Number.isSafeInteger(bookingId) && bookingId > 0 ? bookingId : null,
     title: readString(payload, 'title'),
     startsAt,
     endsAt: readString(payload, 'endTime', 'end'),
@@ -198,7 +201,11 @@ export function parseCalWebhook(rawBody: string): NormalizedCalBooking | null {
 }
 
 export function isAllowedCalEventType(slug: string | null, configuredSlugs?: string) {
-  const allowed = [consultationBooking.slug, ...paidClassBookings.map((option) => option.slug), ...(configuredSlugs || '').split(',')]
+  const allowed = [
+    consultationBooking.slug,
+    ...paidClassBookings.map((option) => option.slug),
+    ...(configuredSlugs || '').split(','),
+  ]
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean)
 

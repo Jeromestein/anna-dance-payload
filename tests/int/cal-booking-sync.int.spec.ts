@@ -15,6 +15,7 @@ const payload = JSON.stringify({
   createdAt: '2026-09-04T18:00:00.000Z',
   payload: {
     uid: 'cal-booking-123',
+    bookingId: 123,
     title: 'Trial Class Consultation',
     type: 'trial-class-consultation',
     eventTypeId: 42,
@@ -48,6 +49,7 @@ describe('Cal.com booking synchronization', () => {
     expect(parseCalWebhook(payload)).toEqual({
       triggerEvent: 'BOOKING_CREATED',
       uid: 'cal-booking-123',
+      bookingId: 123,
       title: 'Trial Class Consultation',
       startsAt: '2026-09-10T17:00:00.000Z',
       endsAt: '2026-09-10T17:30:00.000Z',

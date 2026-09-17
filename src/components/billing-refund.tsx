@@ -1,13 +1,13 @@
 'use client'
 
-import { useActionState, useId, useRef, useState } from 'react'
+import { startTransition, useActionState, useId, useRef, useState } from 'react'
+import { refundStripeBill } from '@/actions/stripe-billing'
+import { StripeStatusRefresh } from './stripe-billing-controls'
 import { manageBill } from '@/actions/billing'
 import { money, type Bill } from '@/lib/billing/model'
 import styles from './billing.module.css'
 
-// TODO(billing-refunds): Populate this presentation state from verified provider
-// data after adding refund persistence and webhook reconciliation. Never simulate
-// a successful refund in response to a browser click.
+// Only verified provider data may present a completed real refund.
 export type RefundProgressState = 'pending' | 'succeeded' | 'failed'
 export function RefundProgress({ state }: { state: RefundProgressState }) {
   const copy = {
@@ -84,6 +84,7 @@ export function BillingRefund({
   progress?: RefundProgressState
   demo?: boolean
 }) {
+  const [refundResult, refundAction, refundPending] = useActionState(refundStripeBill, {})
   const [step, setStep] = useState<'closed' | 'details' | 'review'>('closed')
   const [reason, setReason] = useState('')
   const [demoComplete, setDemoComplete] = useState(false)
@@ -123,6 +124,19 @@ export function BillingRefund({
     )
   if (bill.status === 'refunded') return <RefundProgress state="succeeded" />
   if (progress) return <RefundProgress state={progress} />
+  if (
+    !demo &&
+    bill.refund_state &&
+    ['requested', 'pending', 'failed', 'requires_review'].includes(bill.refund_state)
+  )
+    return (
+      <section className={styles.refundSection}>
+        <RefundProgress
+          state={['requested', 'pending'].includes(bill.refund_state) ? 'pending' : 'failed'}
+        />
+        <StripeStatusRefresh owner={owner} id={bill.id} />
+      </section>
+    )
   if (bill.status !== 'paid') return null
 
   return (
@@ -136,12 +150,20 @@ export function BillingRefund({
       </div>
       <div className={styles.refundNotice}>
         <strong>
-          {demo ? 'DEMO — sample payment, no money moves' : 'Website refunds are not available yet'}
+          {demo
+            ? 'DEMO — sample payment, no money moves'
+            : bill.refund_available
+              ? bill.stripe_livemode === false
+                ? 'Stripe test refund — no real money moves'
+                : 'Refund to the original payment method'
+              : 'Website refunds are not available for this payment'}
         </strong>
         <p>
           {demo
             ? 'Try the full review and confirmation flow using a $10 sample payment. Nothing is saved or sent to Stripe.'
-            : 'Complete the refund in Stripe for now. You can review the details here, then record a completed refund below.'}
+            : bill.refund_available
+              ? 'Review the original payment and confirm the full refund below.'
+              : 'Connect Stripe and refresh this payment’s status before requesting a website refund.'}
         </p>
       </div>
       {!canReview && (
@@ -254,7 +276,9 @@ export function BillingRefund({
               <p id={`${panelId}-unavailable`}>
                 {demo
                   ? 'This demo does not contact Stripe or update any account. Confirm below to finish the preview.'
-                  : 'No refund request has been sent. Submission will be available after Stripe refunds are connected. This review is not saved.'}
+                  : bill.refund_available
+                    ? 'Confirming will request the full refund through Stripe. Completion is shown only after Stripe verifies it.'
+                    : 'No refund request has been sent. Connect Stripe and verify this payment before submitting.'}
               </p>
               <div className={styles.refundActions}>
                 <button type="button" onClick={() => moveTo('details')}>
@@ -264,25 +288,43 @@ export function BillingRefund({
                   Close
                 </button>
               </div>
-              {/* TODO(billing-refunds): Wire only to an administrator-authorized,
-            amount-verified, idempotent server refund endpoint. */}
               <button
                 type="button"
-                disabled={!demo || !confirmed}
+                disabled={
+                  !confirmed ||
+                  refundPending ||
+                  Boolean(refundResult.success) ||
+                  (!demo && !bill.refund_available)
+                }
                 aria-describedby={`${panelId}-unavailable`}
                 onClick={() => {
-                  if (demo && confirmed) setDemoComplete(true)
+                  if (!confirmed) return
+                  if (demo) setDemoComplete(true)
+                  else if (bill.refund_available) {
+                    const form = new FormData()
+                    form.set('owner', owner)
+                    form.set('id', bill.id)
+                    form.set('reason', reason.trim())
+                    form.set('confirmed', 'yes')
+                    startTransition(() => refundAction(form))
+                  }
                 }}
               >
                 {demo
                   ? 'Finish demo — no money moves'
-                  : `Refund ${money(bill.amount_cents, bill.currency)} — unavailable`}
+                  : refundPending
+                    ? 'Requesting refund…'
+                    : `Refund ${money(bill.amount_cents, bill.currency)}${bill.refund_available ? '' : ' — unavailable'}`}
               </button>
             </div>
           )}
         </div>
       )}
-      {!demo && <RecordExternalRefund owner={owner} bill={bill} />}
+      {refundResult.error && <p role="alert">{refundResult.error}</p>}
+      {refundResult.success && <p role="status">{refundResult.success}</p>}
+      {!demo && !bill.stripe_synced_at && !bill.refund_state?.match(/requested|pending/) && (
+        <RecordExternalRefund owner={owner} bill={bill} />
+      )}
     </section>
   )
 }

@@ -133,7 +133,7 @@ timing, no-show behavior, or external Google Calendar acceptance/synchronization
 Payment emails and database synchronization are separate acceptance checks. The required
 [payment synchronization checklist](../project/account-billing.md#required-payment-synchronization-checklist)
 tracks Jason's reported USD 0.50 historical payment, future automatic payment/refund updates,
-deduplication, reconciliation, and Student/Admin verification. These remain unfinished.
+deduplication, reconciliation, and Student/Admin verification. Stripe integration code and the database migration were added on September 10; provider-backed acceptance remains unfinished. Follow the [current Stripe live verification guide](stripe-payment-refund-testing.md).
 
 - [x] Stripe customer emails for successful payments are enabled.
 - [x] Stripe customer emails for refunds are enabled.

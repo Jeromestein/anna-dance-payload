@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { balanceDue, money, statusLabels, type Bill } from '@/lib/billing/model'
+import { StripeCheckout } from './stripe-billing-controls'
 import styles from './billing.module.css'
 
 function date(value: string) {
@@ -28,10 +29,18 @@ export function BillDetails({
         </span>
         <span>
           <strong>{money(bill.amount_cents, bill.currency)}</strong>
-          <small>{statusLabels[bill.status] ?? 'Verification needed'}</small>
+          <small>
+            {bill.stripe_livemode === false ? 'TEST · ' : ''}
+            {statusLabels[bill.status] ?? 'Verification needed'}
+          </small>
         </span>
       </summary>
       <div className={styles.body}>
+        {bill.stripe_livemode === false && (
+          <p>
+            <strong>Test transaction — no real money. Excluded from your balance.</strong>
+          </p>
+        )}
         <p className={styles.reference}>Bill {bill.bill_number}</p>
         {replaced && (
           <p>
@@ -132,7 +141,19 @@ export function BillDetails({
             </div>
           )}
         </dl>
-        {bill.status === 'payment_due' && (
+        {bill.refund_state && ['requested', 'pending'].includes(bill.refund_state) && (
+          <p role="status">
+            Refund processing. Your payment will be marked refunded after Stripe confirms
+            completion.
+          </p>
+        )}
+        {bill.refund_state === 'failed' && (
+          <p role="alert">Refund did not complete. Contact the academy.</p>
+        )}
+        {bill.checkout_available && !children && (
+          <StripeCheckout id={bill.id} test={bill.stripe_livemode === false} />
+        )}
+        {bill.status === 'payment_due' && !bill.checkout_available && (
           <p>
             Please contact the academy to arrange payment. Online payment for this bill is not
             available yet.

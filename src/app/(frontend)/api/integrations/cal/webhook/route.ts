@@ -10,6 +10,7 @@ export const runtime = 'nodejs'
 
 type ExistingScheduleEntry = {
   id: string
+  cal_booking_id: number | null
   user_profile_id: string | null
   match_status: 'linked' | 'unmatched' | 'needs_review'
   booking_intent_id: string | null
@@ -44,7 +45,7 @@ type ProfileIdentity = {
 }
 
 const scheduleEntrySelect =
-  'id, user_profile_id, match_status, booking_intent_id, attendee_name, attendee_email, cal_event_type_id, cal_event_type_slug, cal_session_key, seat_capacity, rescheduled_from_uid, matched_at, title, starts_at, ends_at, timezone, location'
+  'id, cal_booking_id, user_profile_id, match_status, booking_intent_id, attendee_name, attendee_email, cal_event_type_id, cal_event_type_slug, cal_session_key, seat_capacity, rescheduled_from_uid, matched_at, title, starts_at, ends_at, timezone, location'
 const bookingIntentSelect =
   'id, user_profile_id, expected_email, expires_at, consumed_at, cal_booking_uid, created_at'
 
@@ -261,6 +262,7 @@ export async function POST(request: Request) {
     location: booking.location ?? existingData?.location ?? null,
     status: booking.status,
     cal_booking_uid: booking.uid,
+    cal_booking_id: booking.bookingId ?? existingData?.cal_booking_id ?? null,
     source: 'cal_com',
     match_status: 'linked',
     attendee_name: booking.attendeeName ?? existingData?.attendee_name ?? null,

@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation'
 
 import { updateManagedStudentProfile } from '@/actions/student-profiles'
 import { isAdministratorUser } from '@/access/staff'
+import { stripeAvailability } from '@/lib/stripe/config'
 import { loadBills } from '@/lib/billing/load'
 import { billingSummary } from '@/lib/billing/model'
 import { BillingAdmin } from '@/components/billing-admin'
@@ -404,6 +405,8 @@ export async function StudentDetailView(props: AdminViewServerProps) {
                 </div>
               </header>
               <BillingAdmin
+                stripeConfig={stripeAvailability()}
+                testBillId={crypto.randomUUID()}
                 newBillId={crypto.randomUUID()}
                 ownerName={data.name}
                 owner={id}

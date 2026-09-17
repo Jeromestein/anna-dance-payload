@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react'
 import { manageBill } from '@/actions/billing'
 import { money, type Bill } from '@/lib/billing/model'
 import { BillDetails } from './billing-records'
+import { StripeAdminTools, StripeCheckout, StripeStatusRefresh } from './stripe-billing-controls'
 import { BillingRefund, RefundLauncher } from './billing-refund'
 import styles from './billing.module.css'
 
@@ -181,12 +182,16 @@ export function BillingAdmin({
   unavailable,
   newBillId,
   ownerName,
+  stripeConfig = { enabled: false, mode: null },
+  testBillId = newBillId,
 }: {
   owner: string
   bills: Bill[]
   unavailable: boolean
   newBillId: string
+  testBillId?: string
   ownerName: string
+  stripeConfig?: { enabled: boolean; mode: 'test' | 'live' | null }
 }) {
   if (unavailable)
     return (
@@ -200,14 +205,22 @@ export function BillingAdmin({
   return (
     <div className={styles.records}>
       <RefundLauncher owner={owner} ownerName={ownerName} bills={bills} />
+      <StripeAdminTools owner={owner} testId={testBillId} {...stripeConfig} />
       {bills.length === 0 && <p>No billing activity yet.</p>}
       {bills.map((bill) => (
         <BillDetails key={bill.id} bill={bill} bills={bills}>
-          {['payment_due', 'pending_verification'].includes(bill.status) && (
-            <BillAction owner={owner} bill={bill} operation="paid" />
-          )}
-          {bill.status === 'payment_due' && (
+          {['payment_due', 'pending_verification'].includes(bill.status) &&
+            bill.stripe_livemode == null && (
+              <BillAction owner={owner} bill={bill} operation="paid" />
+            )}
+          {bill.status === 'payment_due' && bill.stripe_livemode == null && (
             <BillAction owner={owner} bill={bill} operation="cancelled" />
+          )}
+          {bill.stripe_livemode === false && bill.checkout_available && (
+            <StripeCheckout id={bill.id} owner={owner} test staffTest />
+          )}
+          {(bill.payment_channel === 'stripe' || bill.stripe_livemode != null) && (
+            <StripeStatusRefresh owner={owner} id={bill.id} />
           )}
           <BillingRefund owner={owner} ownerName={ownerName} bill={bill} />
         </BillDetails>

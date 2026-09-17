@@ -26,10 +26,17 @@ export type Bill = {
   payment_channel: string | null
   transaction_reference: string | null
   replaces_payment_id: string | null
+  stripe_livemode?: boolean | null
+  refund_state?: 'none' | 'requested' | 'pending' | 'succeeded' | 'failed' | 'requires_review'
+  stripe_refunded_amount_cents?: number
+  refund_requested_at?: string | null
+  stripe_synced_at?: string | null
+  checkout_available?: boolean
+  refund_available?: boolean
   app_payment_items: BillItem[]
 }
 export const billSelect =
-  'id,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,app_payment_items(description,quantity,unit_amount_cents,position)'
+  'id,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(description,quantity,unit_amount_cents,position)'
 export const statusLabels: Record<Bill['status'], string> = {
   payment_due: 'Unpaid',
   pending_verification: 'Pending verification',
@@ -52,7 +59,9 @@ export function balanceDue(bill: Bill) {
 }
 export function billingSummary(bills: Bill[], unavailable = false) {
   if (unavailable) return 'Billing unavailable'
-  if (!bills.length) return 'No billing activity'
+  const hasTestPayments = bills.some((b) => b.stripe_livemode === false)
+  bills = bills.filter((b) => b.stripe_livemode !== false)
+  if (!bills.length) return hasTestPayments ? 'Test payments only' : 'No billing activity'
   const totals = new Map<string, number>()
   for (const bill of bills) {
     const due = balanceDue(bill)
