@@ -821,13 +821,3 @@
     justify-self: start;
   }
 }
-
-@media (max-width: 620px) {
-  :global(body:has(.account-page) .floating-booking-button) {
-    display: none;
-  }
-
-  :global(body:has(.account-page) .site-footer) {
-    padding-bottom: calc(82px + env(safe-area-inset-bottom));
-  }
-}

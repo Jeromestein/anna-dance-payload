@@ -4414,3 +4414,13 @@ body:has(.legal-page) .floating-booking-button {
   margin-bottom: 0;
   font-size: 0.85rem;
 }
+
+@media (max-width: 620px) {
+  body:has(.account-page) .floating-booking-button {
+    display: none;
+  }
+
+  body:has(.account-page) .site-footer {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+}

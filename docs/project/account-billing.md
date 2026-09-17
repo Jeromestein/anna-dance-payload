@@ -6,18 +6,18 @@ Updated: September 17, 2026
 
 Billing explains what a student owes and what each charge covers. Payments record money actually collected or returned. Stripe is the authority for Stripe transaction outcomes; the website database is the record used by Student Account and Admin Billing.
 
-The design uses `app_payments` and `app_payment_items`. It does not add invoice, refund, or webhook-event tables. The diagrams describe the implemented local design, not a completed live rollout.
+The design uses `app_payments` and `app_payment_items`. It does not add invoice, refund, or webhook-event tables. The diagrams describe the deployed integration. Signed live payment reconciliation and duplicate-event handling are verified; actual refunds, new-booking association, and Student Account acceptance remain pending; Admin display and status refresh passed.
 
 | Capability | Current evidence | Still required |
 | --- | --- | --- |
-| Itemized bills and shared Account/Admin views | Implemented; base billing UI previously deployed | Verify populated live records in both views |
-| Stripe synchronization, import, Checkout and refund actions | Implemented locally; focused tests passed | Configure, deploy and verify live behavior |
+| Itemized bills and shared Account/Admin views | Implemented; base billing UI previously deployed | Student Account acceptance; Admin populated live record passed |
+| Stripe synchronization, import, Checkout and refund actions | Deployed; focused tests and signed live payment replay passed | Verify new booking association and actual intended refunds |
 | Database migrations | Billing and Stripe migrations applied; refund reversal correction applied | Verify the actual imported record |
-| Jason's historical USD 0.50 | Imported from verified current live Dashboard charge; Paid, USD 0.50, no refund, original payment timestamp retained | Authenticated Account/Admin visual acceptance |
-| Stripe connection | Read-only key issued; API and webhook secrets saved in Vercel Production | Deploy and verify actual API access |
-| Hosted Stripe webhook | Destination registered and Disabled pending deployment; September 11 route check returned HTTP 404 | Deploy route, enable destination, and verify signed delivery |
+| Jason's historical USD 0.50 | Imported from verified current live Dashboard charge; Paid, USD 0.50, no refund, original payment timestamp retained | Student Account visual acceptance; Admin passed |
+| Stripe connection | Read-only key issued; API and webhook secrets saved in Vercel Production; API reads verified | Complete remaining operational cases |
+| Hosted Stripe webhook | Active; two genuine payment-event replays returned 200 synchronized with no duplicates | Verify intended refund events and future booking association |
 
-The current operational checklist is [Stripe live payment and full-refund verification](../operations/stripe-payment-refund-testing.md). Earlier progress is preserved in [historical checkpoints](account-billing-20260909-checkpoint.md), whose unchecked items are not the current implementation status.
+The current operational checklist is [Stripe payment and full-refund verification](../operations/stripe-payment-refund-testing.md). The owner chose sandbox testing on September 17 to verify payment/refund initiation without a personal credit card. Use the existing Stripe sandbox, an isolated test application and database, and separate webhook credentials. Production reconciliation remains read-only. Earlier progress is preserved in [historical checkpoints](account-billing-20260909-checkpoint.md), whose unchecked items are not the current implementation status.
 
 ## System flow
 
@@ -138,16 +138,20 @@ Once a bill is Stripe-managed or has an active provider request, manual status e
 - [x] Implement local provider synchronization, historical import, reconciliation and optional initiation paths; validate focused tests and disposable database assertions.
 - [x] Apply forward database migrations and verify private RPC access boundaries.
 - [x] Locate Jason's original successful USD 0.50 payment in the live Dashboard.
-- [ ] Configure the chosen live API permission scope and the webhook signing secret.
+- [x] Configure the read-only live API key and webhook signing secret; hosted reconciliation verified account and API access.
 - [x] Import Jason's original transaction using current authenticated Dashboard evidence; preserve gross amount, original charge timestamp, booking reference and verification provenance. The existing transaction-deduplicating database function was used; no new Stripe charge was made.
 - [x] Read the saved record through the same database fields used by the billing UI: one bill, one item, USD 0.50 Paid, zero due, summary All paid.
-- [ ] Verify Jason's populated Account/Admin pages while signed in. The in-app Admin browser currently redirects to login.
-- [ ] Deploy the new route and verify signed Stripe delivery, including an existing transaction replay without duplicate billing.
+- [x] Verify Jason's populated production Admin page while signed in: All paid, USD 0.50 Paid, USD 0.00 due, original payment date and reference; Refresh Stripe status succeeds.
+- [ ] Verify Jason's Student Account page while signed in as the student.
+- [x] Clarify and visually verify the refund-unavailable message when Stripe is connected and website initiation is disabled; administrators can refund in Stripe and refresh.
+- [x] Deploy the route and verify signed Stripe delivery: two replays of Jason's existing payment event returned 200, retaining one bill and one item. See the operational guide for IDs and timestamps.
+- [x] Verify isolated sandbox Checkout, declined-card recovery, Admin and Dashboard full refunds, pending-to-success and success-to-failure notifications, concurrent-request deduplication, and student database isolation. Three USD 0.50 test payments were used; all genuine deliveries returned 200. See the operational guide for evidence and remaining limits.
+- [x] Fix the Account CSS Modules compilation error found during verification; preserve mobile behavior by moving page-wide rules to global CSS.
 - [ ] Verify automatic association for the next genuine Cal payment and recovery when payment arrives before the booking.
 - [ ] Verify actual intended full refunds, including Dashboard-initiated refunds; enable website initiation only if that capability is desired and configured.
 - [ ] Verify both authenticated UI views, wrong-user denial, error recovery and repeated notification handling with the deployed integration.
 
-Follow the detailed [operational checklist](../operations/stripe-payment-refund-testing.md) for evidence. Sandbox acceptance is not a prerequisite for this rollout. Do not manufacture live purchases for testing. Do not run `pnpm build`. Passing local checks, a database migration or a visible refund button does not mean the live integration is complete.
+Follow the detailed [operational checklist](../operations/stripe-payment-refund-testing.md) for sandbox setup and acceptance evidence. Complete payment/refund initiation tests in the isolated sandbox before deciding on live website initiation. Do not manufacture live purchases for testing. Do not run `pnpm build`. Passing local checks, a database migration or a visible refund button does not mean the live integration is complete.
 
 ## Implementation map
 

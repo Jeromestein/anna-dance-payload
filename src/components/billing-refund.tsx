@@ -96,6 +96,9 @@ export function BillingRefund({
   const stripePayment =
     bill.payment_channel === 'stripe' && /^pi_[A-Za-z0-9_]+$/.test(bill.transaction_reference ?? '')
   const canReview = bill.status === 'paid' && fullPayment && stripePayment
+  const unavailableMessage = bill.website_refunds_disabled
+    ? 'Refunds from this website are currently disabled. An administrator can refund this payment in Stripe, then refresh its status here.'
+    : 'Connect Stripe and refresh this payment’s status before requesting a website refund.'
 
   function moveTo(next: 'closed' | 'details' | 'review') {
     setStep(next)
@@ -156,14 +159,16 @@ export function BillingRefund({
               ? bill.stripe_livemode === false
                 ? 'Stripe test refund — no real money moves'
                 : 'Refund to the original payment method'
-              : 'Website refunds are not available for this payment'}
+              : bill.website_refunds_disabled
+                ? 'Website refunds are currently disabled'
+                : 'Website refunds are not available for this payment'}
         </strong>
         <p>
           {demo
             ? 'Try the full review and confirmation flow using a $10 sample payment. Nothing is saved or sent to Stripe.'
             : bill.refund_available
               ? 'Review the original payment and confirm the full refund below.'
-              : 'Connect Stripe and refresh this payment’s status before requesting a website refund.'}
+              : unavailableMessage}
         </p>
       </div>
       {!canReview && (
@@ -278,7 +283,7 @@ export function BillingRefund({
                   ? 'This demo does not contact Stripe or update any account. Confirm below to finish the preview.'
                   : bill.refund_available
                     ? 'Confirming will request the full refund through Stripe. Completion is shown only after Stripe verifies it.'
-                    : 'No refund request has been sent. Connect Stripe and verify this payment before submitting.'}
+                    : `No refund request has been sent. ${unavailableMessage}`}
               </p>
               <div className={styles.refundActions}>
                 <button type="button" onClick={() => moveTo('details')}>

@@ -25,6 +25,8 @@ export async function loadBills(client: SupabaseClient, owner: string) {
       availability.enabled &&
       Boolean(bill.stripe_synced_at) &&
       bill.stripe_livemode === (availability.mode === 'live'),
+    website_refunds_disabled:
+      bill.payment_channel === 'stripe' && availability.mode === 'live' && !availability.enabled,
   }))
   return { bills: unavailable ? [] : bills, unavailable }
 }

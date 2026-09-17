@@ -33,6 +33,7 @@ export type Bill = {
   stripe_synced_at?: string | null
   checkout_available?: boolean
   refund_available?: boolean
+  website_refunds_disabled?: boolean
   app_payment_items: BillItem[]
 }
 export const billSelect =
