@@ -6,18 +6,35 @@ Updated: September 17, 2026
 
 Billing explains what a student owes and what each charge covers. Payments record money actually collected or returned. Stripe is the authority for Stripe transaction outcomes; the website database is the record used by Student Account and Admin Billing.
 
-The design uses `app_payments` and `app_payment_items`. It does not add invoice, refund, or webhook-event tables. The diagrams describe the deployed integration. Signed live payment reconciliation and duplicate-event handling are verified; actual refunds, new-booking association, and Student Account acceptance remain pending; Admin display and status refresh passed.
+The design uses `app_payments` and `app_payment_items`. It does not add invoice, refund, or webhook-event tables. The diagrams describe the deployed integration. Signed live payment reconciliation and duplicate-event handling are verified. Jason's intended full live refund was submitted from Admin and its provider status refreshed successfully on September 17. Independent verification of that refund's webhook delivery, new-booking association, and Student Account acceptance remains pending.
 
 | Capability | Current evidence | Still required |
 | --- | --- | --- |
 | Itemized bills and shared Account/Admin views | Implemented; base billing UI previously deployed | Student Account acceptance; Admin populated live record passed |
-| Stripe synchronization, import, Checkout and refund actions | Deployed; focused tests and signed live payment replay passed | Verify new booking association and actual intended refunds |
-| Database migrations | Billing and Stripe migrations applied; refund reversal correction applied | Verify the actual imported record |
-| Jason's historical USD 0.50 | Imported from verified current live Dashboard charge; Paid, USD 0.50, no refund, original payment timestamp retained | Student Account visual acceptance; Admin passed |
-| Stripe connection | API and webhook secrets active in Production; Charges and Refunds Write saved; Admin refund initiation enabled | Submit and verify the intended live refund |
+| Stripe synchronization, import, Checkout and refund actions | Deployed; sandbox acceptance and signed live payment replay passed; intended live Admin refund reconciled | Verify new booking association and this live refund's webhook delivery; live Checkout remains disabled |
+| Database migrations | Billing and Stripe migrations applied; refund reversal correction applied; imported record reconciled and displayed in Admin | Student Account acceptance |
+| Jason's historical USD 0.50 | Original charge retained; full refund `re_3UCoX3DRBUG2kOng0TiLJ5sx` recorded September 17; Admin Stripe refresh retained Fully refunded | Student Account visual acceptance; bank settlement not verified |
+| Stripe connection | API and webhook secrets active in Production; Charges and Refunds Write saved; Admin refund initiation enabled | Checkout Sessions permission and live payment enablement remain separate rollout work |
 | Hosted Stripe webhook | Active; two genuine payment-event replays returned 200 synchronized with no duplicates | Verify intended refund events and future booking association |
+| Lesson-package bills and shareable payment links | Design only; existing itemized-bill and Checkout code can be reused | Implement package review, owner-protected bill page, copy-link controls, and sandbox acceptance |
 
 The current operational checklist is [Stripe payment and full-refund verification](../operations/stripe-payment-refund-testing.md). The owner chose sandbox testing on September 17 to verify payment/refund initiation without a personal credit card. Use the existing Stripe sandbox, an isolated test application and database, and separate webhook credentials. Production reconciliation is active; the owner approved enabling Admin-initiated live full refunds after sandbox acceptance. Earlier progress is preserved in [historical checkpoints](account-billing-20260909-checkpoint.md), whose unchecked items are not the current implementation status.
+
+## Planned lesson-package payment links
+
+The owner requested a design-only extension for collecting several lessons in one payment. See [Lesson Package Bills and Payment Links](lesson-package-payment-links.md) for the interface, flow diagram, data mapping, limits, and implementation checklist. No code or configuration changes are authorized by this design task.
+
+The proposed flow is Admin creates an itemized bill → copies its stable website URL → the owner signs in and reviews course/lesson count/price → Stripe collects the full amount → the signed webhook updates that bill. Lesson count uses the existing item quantity, with an explicit lesson description. No new table is planned. Purchasing lessons does not automatically schedule or track them. Separate guardian access and guest checkout are deferred.
+
+- [x] Document the package flow, lesson-count presentation, existing data mapping, and full-refund boundary.
+- [x] Audit existing refund demo/test surfaces before implementation; see the [visibility audit and cleanup checklist](../operations/stripe-payment-refund-testing.md#demo-and-test-surface-audit--before-package-implementation).
+- [ ] Complete production demo/test visibility cleanup before the package UI; preserve historical real payments and operational tools.
+- [ ] Add package-specific Admin entry/review and Copy payment link / Preview bill controls.
+- [ ] Add the owner-protected individual bill page and safe login/Checkout return navigation.
+- [ ] Verify one full payment, immutable lesson details, session reuse, wrong-user denial, and full-refund/replacement behavior in sandbox.
+- [ ] Review and separately approve any live Checkout permission change and payment-switch enablement; verify the next genuine package payment.
+
+Detailed acceptance cases are maintained in the [package design checklist](lesson-package-payment-links.md#implementation-and-acceptance-checklist).
 
 ## System flow
 
@@ -150,8 +167,8 @@ Once a bill is Stripe-managed or has an active provider request, manual status e
 - [ ] Verify automatic association for the next genuine Cal payment and recovery when payment arrives before the booking.
 - [x] Separate the live Admin refund switch from website Checkout; preserve default-off behavior and account/mode checks.
 - [x] Enable the requested production Admin refund flow: save approved Charges and Refunds Write, deploy the independent refund gate, and set `STRIPE_LIVE_REFUNDS_ENABLED=true` while retaining `STRIPE_LIVE_PAYMENTS_ENABLED=false`. Production Admin refund review passed.
-- [ ] Complete Jason's intended USD 0.50 refund from the prepared Admin confirmation page; final submission is awaiting the administrator.
-- [ ] Verify signed live refund delivery and final Account/Admin state.
+- [x] Complete Jason's intended USD 0.50 full refund from Admin; verify Fully refunded and the refund reference after a successful Refresh Stripe status action. See the operational evidence.
+- [ ] Independently verify this live refund's signed delivery and final Student Account state; Admin/provider reconciliation passed.
 - [ ] Verify both authenticated UI views, wrong-user denial, error recovery and repeated notification handling with the deployed integration.
 
 Follow the detailed [operational checklist](../operations/stripe-payment-refund-testing.md) for sandbox setup and acceptance evidence. Complete payment/refund initiation tests in the isolated sandbox before deciding on live website initiation. Do not manufacture live purchases for testing. Do not run `pnpm build`. Passing local checks, a database migration or a visible refund button does not mean the live integration is complete.

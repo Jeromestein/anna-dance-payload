@@ -4,6 +4,8 @@ Updated: September 17, 2026
 
 Design and diagrams: [Payment and Billing Design](../project/account-billing.md).
 
+Planned package collection: [Lesson Package Bills and Payment Links](../project/lesson-package-payment-links.md). This is a design-only extension; its copy-link and dedicated bill-page features are not implemented.
+
 ## Current implementation
 
 The website now has server-side Stripe Checkout, signed payment/refund notifications, verified historical import, and administrator-only full refunds. State lives in `app_payments`; itemized charges remain in `app_payment_items`. No invoice, refunds, or event tables were added.
@@ -105,14 +107,60 @@ The owner requested refund initiation from the website Admin interface. The inde
 - [x] Verify the final Admin record and provider reconciliation: original PaymentIntent `pi_3UCoX3DRBUG2kOng0aJ1GrLV`, refund `re_3UCoX3DRBUG2kOng0TiLJ5sx`, Fully refunded USD 0.50, amount due USD 0.00, recorded September 17. Refresh Stripe status returned “Payment and refund status refreshed from Stripe.” and retained Fully refunded.
 - [ ] Independently inspect this refund's signed webhook delivery and the final Student Account display. The observed Admin result and manual provider refresh alone do not prove automatic webhook delivery or bank settlement.
 
-## Refund interface refinement — local verification, pending release
+## Refund interface refinement — pushed, production UI verification pending
 
 - [x] Replace inline confirmation with a native modal dialog and dimmed backdrop. Render it at the document root so mobile tabs cannot hide it or cover its controls.
 - [x] Emphasize the recipient and full amount, use amber warning/consent panels and a burgundy live-refund button, and distinguish test/demo flows with blue labels.
 - [x] Keep the mandatory reason and explicit confirmation; clear consent on back navigation; disable close/back/consent controls during submission. Payment references remain available in an expandable section.
 - [x] Verify the local Admin demo flow, modal cancellation, native modal state, and desktop/mobile rendering in the in-app browser. A local visual fixture also verified the live-refund color treatment without submitting a payment action.
 - [x] Pass 21 focused UI/billing/action tests, including pending submission and reset-on-back coverage; TypeScript and targeted lint pass.
-- [ ] Verify the redesigned refund modal on production after this changeset is published. The completed live refund above used the earlier interface; the new modal has local verification only.
+- [x] Commit and push the redesigned refund interface in `936cf7f`.
+- [ ] Verify the redesigned refund modal on production after deployment. The completed live refund above used the earlier interface; the new modal has local verification only.
+
+## Planned lesson-package collection acceptance
+
+Design only, requested September 17. The detailed [implementation and acceptance checklist](../project/lesson-package-payment-links.md#implementation-and-acceptance-checklist) owns this future work. These entries do not authorize changes to the live key, collection flags, or application.
+
+- [x] Define staff-issued package bills, exact lesson-count display, owner-authenticated stable payment links, and reuse of the existing two-table model.
+- [ ] Implement Admin package review, copy-link controls, and the individual bill page before attempting package-flow acceptance.
+- [ ] In the isolated sandbox, verify an illustrative 10-lesson × $30 bill shows 10 lessons and $300 consistently in Admin, the customer page, and Checkout; pay once and retain those details after signed synchronization.
+- [ ] Verify login return, wrong-account denial, repeated clicks, session expiration, pending/failed payment, duplicate events, and prevention of payment through old paid/refunded/cancelled links.
+- [ ] Verify package full refund and a separately payable replacement; do not add attendance or remaining-credit behavior.
+- [ ] Review Checkout permissions and live payment enablement separately after sandbox acceptance; production refunds alone do not enable collection.
+- [ ] Verify the next genuine package payment, its webhook delivery, Account/Admin states, and receipt. Do not manufacture a live purchase for this checklist.
+
+## Demo and test surface audit — before package implementation
+
+Reviewed September 17 against the source and the authenticated production Student → Jason → Billing page. This is an audit and cleanup proposal, not an implemented visibility change. There are **three types of demo/test action entry**, plus one mixed-purpose section title. Steps inside the refund demo are one flow, not separate features. Automated tests and SQL fixtures are not customer-facing controls.
+
+| Surface | Current behavior | Proposed production treatment |
+| --- | --- | --- |
+| **Try refund demo** | Rendered unconditionally by `RefundLauncher`, including on production; uses one synthetic USD 10 sample and never sends a refund or saves a bill | Hide in live/unconfigured environments. Retain only for an explicitly enabled, isolated sandbox Admin workflow |
+| **Create $0.50 test bill** | Rendered only with Stripe `mode === 'test'`; the server also rejects live credentials. Production inspection confirmed this button is absent | Retain the sandbox restriction and backend guard; no production entry |
+| **Pay test bill** | Admin action requires a test bill and checkout availability; server-side staff checkout rejects live mode. Customer test-bill Checkout also depends on test-mode availability | Retain sandbox-only initiation and mode checks; verify no test payment action appears on live Admin or Account |
+| **Stripe payments & testing** | Title remains visible in production even though the section contains only live environment information and verified historical import there | Rename the live section to **Stripe payment tools**; keep test wording inside the sandbox-only area |
+
+Additional findings:
+
+- The refund demo contains **Restart demo** and **Finish demo — no money moves**, plus empty/error-state text that invites users to try the demo. Hide these with the same demo gate; hiding only the launch button is incomplete.
+- The synthetic demo bill is an in-memory object, not a database record. It does not need a financial-data deletion.
+- Stored test bills are excluded from real balance totals but are still rendered by the shared bill component if supplied in its input. A **TEST** label is valuable evidence, not a demo action. Keep test records in the isolated sandbox; verify production account views do not mix them with real activity. Do not silently delete or relabel any existing records as part of a UI cleanup.
+- Jason's `Group Class Sync Test` description refers to the original **real** USD 0.50 charge and completed full refund. Its name is not evidence of sandbox mode. Preserve the bill, amount, provider references, and refund history.
+- **Refund payment**, **Refresh Stripe status**, and **Import an existing Stripe payment** are operational tools. Keep them available subject to their existing authorization and availability checks.
+- With all bills refunded, the current empty refund selector incorrectly says no paid bills have ever been recorded. Replace this with a state-specific **No payments available for refund** message; keep missing history and load failures distinct.
+
+Recommended order: finish this visibility cleanup before implementing the package-payment UI. No code changes were made during this audit.
+
+- [x] Inventory the three demo/test action types and the mixed-purpose title; inspect their frontend conditions and backend guards.
+- [x] Confirm production shows the demo and testing title, while test-bill creation is absent and verified import remains available.
+- [ ] Pass explicit server-derived sandbox/demo visibility into the refund launcher, default off in live/unconfigured contexts; cover both normal and unavailable-billing render paths.
+- [ ] Hide the entire demo flow and related helper text in production; keep demo access in the isolated sandbox.
+- [ ] Rename the production Stripe tools section and correct the no-refundable-payments wording without removing operational controls.
+- [ ] Verify live Admin/Account have no demo, test creation, or test payment actions; retain meaningful TEST labels when examining sandbox records.
+- [ ] Add focused live/test/unconfigured visibility assertions and retain server-side live rejection tests; verify both environments in the in-app browser.
+- [ ] Verify the deployed cleanup before beginning the package collection UI. This audit alone does not establish that the controls have been hidden.
+
+Source: `src/components/billing-refund.tsx`, `billing-admin.tsx`, `billing-records.tsx`, `stripe-billing-controls.tsx`; `src/actions/stripe-billing.ts`; `src/lib/billing/load.ts`, `model.ts`; `src/lib/stripe/config.ts`.
 
 ## Configure the live environment
 

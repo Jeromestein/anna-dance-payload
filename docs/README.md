@@ -10,6 +10,11 @@ README remain authoritative for the Payload implementation.
 
 ## Project planning and design
 
+- [Payment and Billing Design](project/account-billing.md) — current two-table billing model,
+  Stripe synchronization, full-refund policy, and rollout status.
+- [Lesson Package Bills and Payment Links](project/lesson-package-payment-links.md) — design-only
+  proposal for collecting multiple lessons in one payment, staff copy-link controls, customer flow,
+  lesson-count presentation, and implementation/acceptance checklist.
 - [Business content and website update plan](project/business-content-and-website-update-plan.md)
   — page-by-page content, media, and business update planning.
 - [Lightweight CMS design](project/lightweight-cms-design.md) — the original CMS requirements,
@@ -17,8 +22,8 @@ README remain authoritative for the Payload implementation.
 - [Legacy project status and roadmap](project/legacy-project-status-and-roadmap.md) — the
   pre-Payload implementation audit and longer-term product roadmap.
 - [Student My Account, payments, and schedule design](project/student-my-account-payments-schedule-design.md)
-  — the approved `/account` dashboard direction, interim Stripe Payment Link workflow, Cal.com
-  boundary, data ownership, and implementation checklist.
+  — historical dashboard and interim Payment Link plan; current billing decisions are in the two
+  documents above. Schedule and authentication boundaries remain relevant.
 - [Legacy design notes](project/legacy-design-notes.md) — the original visual and page-design
   direction.
 - [Original project README](project/original-project-readme.md) — setup and architecture notes from
@@ -26,6 +31,8 @@ README remain authoritative for the Payload implementation.
 
 ## Operations
 
+- [Stripe payment and full-refund verification](operations/stripe-payment-refund-testing.md) —
+  current sandbox/live evidence and remaining payment, refund, and package-collection acceptance.
 - [Authentication testing](operations/auth-testing.md) — manual Supabase authentication and
   account-flow test procedures.
 - [Authentication acceptance checklist](operations/auth-acceptance-checklist.md) — implementation,
