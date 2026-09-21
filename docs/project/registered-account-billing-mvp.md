@@ -31,16 +31,22 @@ production rollout and provider delivery acceptance are still pending.
 
 ## Notification integrity and recovery
 
+Track actual delivery acceptance and remaining refund-failure/booking/offline notices in the existing
+[central email checklist](../operations/production-email-notification-acceptance-checklist.md#current-coverage-and-next-checks--september-21-2026).
+
 - `app_billing_notifications` is a service-only outbox. The verified transition to Paid enqueues
   both confirmations in the same database transaction. It excludes historical imports without a
   website Checkout reservation. Existing payments are not backfilled or emailed by this migration.
-- Each bill has one request, one account-holder confirmation, and one Academy confirmation.
+- Each bill has at most one request, one payment confirmation per recipient, and one full-refund
+  confirmation per recipient. Verified full Stripe refunds of existing paid records queue customer
+  and Academy notices, including previously imported paid bookings. Already-refunded first imports
+  and historical records are not backfilled; manual offline refunds are outside this flow.
   Atomic claims, a two-minute lease, stored message/recipient snapshots, and Resend idempotency keys
   protect duplicate clicks, concurrent webhooks, timeouts, and retries.
 - Provider acceptance is shown in Admin; it is not a claim of inbox delivery. Repeated clicks do
   not send another copy of an already accepted notice. The buttons retry unsent notices rather
   than acting as repeated reminders.
-- Payment stays Paid if email fails. The webhook returns 503 to request a retry. Admin can also
+- Financial status stays Paid or Refunded if email fails. The webhook returns 503 to request a retry. Admin can also
   use **Retry pending confirmation emails**. There is no scheduled background worker.
 - After 23 hours from an ambiguous first send attempt, the notice becomes `review`. Check Resend
   delivery history using the saved provider ID/idempotency key before operator recovery; do not
@@ -55,6 +61,7 @@ Apply migrations before deploying this code; bill queries now include the acknow
 
 1. `20260917200000_issue_package_bills.sql` (existing pending package-billing migration).
 2. `20260921200000_billing_notifications.sql` (new outbox, acknowledgement, permissions, and functions).
+3. `20260921210000_refund_notifications.sql` (full-refund outbox trigger and claim guards).
 
 Configuration:
 
@@ -62,14 +69,16 @@ Configuration:
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_SITE_URL`                                 | Trusted website origin used in email links                                                                  |
 | `RESEND_API_KEY`, `RESEND_FROM_EMAIL`                  | Existing email transport and verified sender                                                                |
-| `BILLING_NOTIFICATION_TO`                              | Optional Academy payment confirmation recipient; falls back to signup/contact recipient, then Academy email |
-| `BILLING_EMAIL_TEST_TO`                                | Required recipient override for every sandbox billing notice, including school notices                      |
+| `BILLING_NOTIFICATION_TO`                              | Optional Academy payment/refund confirmation recipient; falls back to signup/contact recipient, then Academy email |
+| `BILLING_EMAIL_TEST_TO`                                | Required sandbox customer recipient; also the default sandbox Academy recipient                             |
+| `BILLING_EMAIL_TEST_ADMIN_TO`                          | Optional explicitly authorized sandbox Academy recipient; falls back to `BILLING_EMAIL_TEST_TO`, never the live recipient |
 | Existing Stripe mode, account, API key, webhook secret | Must belong to the same environment                                                                         |
 | `STRIPE_LIVE_PAYMENTS_ENABLED`                         | Existing explicit live-Checkout switch; not changed in this task                                            |
 
 Confirm Checkout write permissions and webhook configuration separately before enabling live
 collection. Environment/server-route changes require restarting the user's local dev server.
-No production database, Stripe settings, deployment, or real emails were changed during this work.
+The original implementation did not change production databases, Stripe settings or deployment.
+The subsequent authorized sandbox email test below sent three real emails to the designated test inbox.
 
 ## Verification
 
@@ -86,7 +95,24 @@ No production database, Stripe settings, deployment, or real emails were changed
   mobile layout. Synthetic actions did not call Stripe, send mail, or write to the shared database.
   The existing local Next.js server also preserved the individual bill destination when redirecting
   an unauthenticated visitor to login.
-- Still pending: deployed migrations, authenticated full-stack acceptance, real Stripe sandbox
-  Checkout plus signed webhook, and actual delivery to the intended customer and Academy inboxes.
+- September 21 authorized delivery acceptance: Admin issued a USD 2.50 / two-lesson sandbox bill,
+  sent its request, and completed **Pay test bill** with a Stripe test card. Signed events saved Paid;
+  the request plus customer and Academy confirmations all arrived at `errplusone@gmail.com` via
+  the sandbox override. Admin retry preserved the three existing provider IDs without duplicates.
+  See the [inbox evidence and concurrent-webhook caveat](../operations/production-email-notification-acceptance-checklist.md#authorized-sandbox-inbox-acceptance--september-21-2026).
+- A subsequent authorized sandbox payment delivered the Academy confirmation to
+  `annadanceacademy@gmail.com`, with customer notices separately routed to `errplusone@gmail.com`.
+  The new optional sandbox Admin override and its isolation checks passed 16 tests, typecheck and
+  scoped ESLint. [Separate inbox evidence](../operations/production-email-notification-acceptance-checklist.md#separate-academy-inbox-acceptance--september-21-2026).
+- Still pending: deployed migrations, customer acknowledgement/terms flow, live-deployment email
+  acceptance, and signed event redelivery after concurrent notice-claim 503 responses.
 
 The earlier lesson-package core has separate [sandbox acceptance evidence](../operations/package-payment-acceptance.md): September 17 Checkout and Admin full refund completed with signed HTTP 200 deliveries and preserved 10-lesson detail. September 21 current-source checks verified the refunded bill layout and wrong-owner denial. These checks do not complete the new acknowledgement and notification end-to-end flow above.
+
+### Full-refund mail acceptance — September 21, 2026
+
+Customer and Academy refund notices were verified in separate Gmail inboxes after Admin refunded
+a USD 2.50 sandbox bill. The refunded Admin UI and duplicate-safe retry were verified in-app.
+The new migration is applied only locally; production rollout remains pending. See the
+[refund acceptance record](../operations/production-email-notification-acceptance-checklist.md#full-refund-inbox-acceptance--september-21-2026)
+for recipients, provider references, tests and the concurrent-webhook retry caveat.

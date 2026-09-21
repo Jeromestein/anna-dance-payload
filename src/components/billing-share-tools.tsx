@@ -6,6 +6,14 @@ import { billPath, type Bill } from '@/lib/billing/model'
 import { BillDetails } from './billing-records'
 import styles from './billing.module.css'
 
+const noticeLabels: Record<string, string> = {
+  request: 'Payment request',
+  paid_customer: 'Account holder payment confirmation',
+  paid_admin: 'Academy payment confirmation',
+  refunded_customer: 'Account holder refund confirmation',
+  refunded_admin: 'Academy refund confirmation',
+}
+
 export function BillShareTools({
   bill,
   ownerName,
@@ -24,19 +32,14 @@ export function BillShareTools({
   const canShare = Boolean(bill.checkout_available && url)
   return (
     <section className={styles.shareTools} aria-label="Bill preview and payment link">
-      {owner && ['payment_due', 'paid'].includes(bill.status) && (
+      {owner && ['payment_due', 'paid', 'refunded'].includes(bill.status) && (
         <div>
           {bill.email_notices ? (
             bill.email_notices.length ? (
               <ul>
                 {bill.email_notices.map((notice) => (
                   <li key={notice.kind}>
-                    {notice.kind === 'request'
-                      ? 'Payment request'
-                      : notice.kind === 'paid_admin'
-                        ? 'Academy confirmation'
-                        : 'Account holder confirmation'}
-                    :{' '}
+                    {noticeLabels[notice.kind] ?? notice.kind}:{' '}
                     {notice.status === 'sent'
                       ? 'Accepted by email provider'
                       : notice.status === 'review'
@@ -48,7 +51,7 @@ export function BillShareTools({
                 ))}
               </ul>
             ) : (
-              <p>No payment emails have been sent for this bill.</p>
+              <p>No billing emails have been sent for this bill.</p>
             )
           ) : (
             <p>Email delivery history is unavailable until notification setup is complete.</p>
@@ -65,7 +68,7 @@ export function BillShareTools({
           >
             {sending
               ? 'Sending…'
-              : bill.status === 'paid'
+              : bill.status !== 'payment_due'
                 ? 'Retry pending confirmation emails'
                 : 'Send payment email'}
           </button>

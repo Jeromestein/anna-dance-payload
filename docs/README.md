@@ -38,8 +38,8 @@ README remain authoritative for the Payload implementation.
 - [Authentication acceptance checklist](operations/auth-acceptance-checklist.md) — implementation,
   access-control, and production acceptance status for Payload Staff and Supabase Students.
 - [Production email and notification acceptance checklist](operations/production-email-notification-acceptance-checklist.md)
-  — verified delivery state and remaining checks across Supabase, Cal.com, Stripe, and Academy
-  notifications.
+  — central implementation, historical delivery evidence, and missing-mail checklist across
+  Supabase, Cal.com, Stripe, Academy notifications, and website billing mail.
 
 ## Content and media references
 

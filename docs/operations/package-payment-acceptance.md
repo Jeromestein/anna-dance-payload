@@ -44,11 +44,14 @@ The existing isolated local Supabase instance was used. Package issuance migrati
 needs `20260921200000_billing_notifications.sql`; it was applied to this local sandbox September 21
 so its bill queries could be exercised. No production migration was applied by this verification.
 
-The temporary app used port 3005 and local Supabase only. Its outbound email API key was removed
+During that earlier read-only check, the temporary app used port 3005 and local Supabase only. Its outbound email API key was removed
 before startup; no request/confirmation email was sent. The user's existing port-3000 process was
 not restarted. No live Stripe key, permission, webhook configuration, or payment switch was changed.
 
 ## Remaining acceptance
+
+Mail-specific implementation gaps and delivery checks are maintained in the
+[central email checklist](production-email-notification-acceptance-checklist.md#current-coverage-and-next-checks--september-21-2026).
 
 - [ ] Verify deployed migrations and current production UI, including live demo/test hiding.
 - [x] Verify a signed-out bill visit redirects to login with the original bill URL preserved.
@@ -57,9 +60,11 @@ not restarted. No live Stripe key, permission, webhook configuration, or payment
 - [ ] Complete package-specific replacement payment, multi-course browser flow, decline/close,
       and concurrent-tab acceptance. Service/database tests cover several of these invariants but
       are not evidence that every provider/browser scenario has run.
-- [ ] Run the September 21 acknowledgement plus notification flow through sandbox Checkout and
-      signed webhook, and verify delivery to explicitly configured test recipients. The September 17
-      payment predates these additions and does not prove email delivery or acknowledgement behavior.
+- [x] September 21 separate authorized email test: issue an Admin sandbox bill, send its request,
+      pay through **Pay test bill**, and observe customer plus Academy confirmations at the
+      designated test inbox. [Actual inbox evidence and webhook caveat](production-email-notification-acceptance-checklist.md#authorized-sandbox-inbox-acceptance--september-21-2026).
+- [ ] Complete the customer acknowledgement/terms route separately and verify signed webhook
+      redelivery after concurrent notification claims. The Admin test does not prove these steps.
 - [ ] Review/approve live Checkout permission and payment enablement separately; then observe a
       genuine package payment. Sandbox success does not prove live collection readiness.
 

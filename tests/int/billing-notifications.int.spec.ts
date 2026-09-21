@@ -38,6 +38,7 @@ beforeEach(() => {
   vi.stubEnv('RESEND_FROM_EMAIL', 'Academy <billing@example.com>')
   vi.stubEnv('BILLING_NOTIFICATION_TO', 'staff@example.com')
   vi.stubEnv('BILLING_EMAIL_TEST_TO', '')
+  vi.stubEnv('BILLING_EMAIL_TEST_ADMIN_TO', '')
   vi.stubGlobal('fetch', m.fetch)
   m.fetch.mockResolvedValue(new Response(JSON.stringify({ id: 'email_1' })))
   bill = {
@@ -172,5 +173,70 @@ describe('billing email delivery', () => {
     await billingNotices('owner', 'bill', true)
     expect(m.rpc).toHaveBeenCalledWith('app_queue_bill_request', { p_owner: 'owner', p_id: 'bill' })
     expect(JSON.parse(m.fetch.mock.calls[0][1].body).subject).toContain('Payment requested')
+  })
+  it('isolates sandbox school notices from the live recipient by default', async () => {
+    bill.stripe_livemode = false
+    notices[0].kind = 'paid_admin'
+    vi.stubEnv('BILLING_EMAIL_TEST_TO', 'sandbox@example.com')
+    await billingNotices('owner', 'bill')
+    expect(JSON.parse(m.fetch.mock.calls[0][1].body).to).toEqual(['sandbox@example.com'])
+  })
+  it.each(['request', 'paid_customer', 'paid_admin', 'refunded_customer', 'refunded_admin'])(
+    'routes sandbox %s to its explicitly authorized recipient',
+    async (kind) => {
+      bill.stripe_livemode = false
+      bill.status =
+        kind === 'request' ? 'payment_due' : kind.startsWith('refunded_') ? 'refunded' : 'paid'
+      notices[0].kind = kind
+      vi.stubEnv('BILLING_EMAIL_TEST_TO', 'sandbox@example.com')
+      vi.stubEnv('BILLING_EMAIL_TEST_ADMIN_TO', 'school-test@example.com')
+      await billingNotices('owner', 'bill', kind === 'request')
+      const payload = JSON.parse(m.fetch.mock.calls[0][1].body)
+      expect(payload.to).toEqual([
+        kind.endsWith('_admin') ? 'school-test@example.com' : 'sandbox@example.com',
+      ])
+      expect(payload.subject).toContain('[SANDBOX]')
+    },
+  )
+  it('does not let sandbox overrides change the live school recipient', async () => {
+    notices[0].kind = 'paid_admin'
+    vi.stubEnv('BILLING_EMAIL_TEST_TO', 'sandbox@example.com')
+    vi.stubEnv('BILLING_EMAIL_TEST_ADMIN_TO', 'school-test@example.com')
+    await billingNotices('owner', 'bill')
+    expect(JSON.parse(m.fetch.mock.calls[0][1].body).to).toEqual(['staff@example.com'])
+  })
+  it.each(['refunded_customer', 'refunded_admin'])(
+    'sends itemized full refund evidence for %s',
+    async (kind) => {
+      Object.assign(bill, {
+        status: 'refunded',
+        refund_state: 'succeeded',
+        refunded_at: '2026-09-21T13:00:00Z',
+        refund_reference: 're_full',
+        refund_reason: 'Private staff note',
+      })
+      notices[0].kind = kind
+      await billingNotices('owner', 'bill')
+      const payload = JSON.parse(m.fetch.mock.calls[0][1].body)
+      expect(payload.to).toEqual([
+        kind === 'refunded_admin' ? 'staff@example.com' : 'parent@example.com',
+      ])
+      expect(payload.subject).toBe('Full refund confirmed · ADA-123')
+      expect(payload.text).toContain('Refund amount: $100.01')
+      expect(payload.text).toContain('3 lessons')
+      expect(payload.text).toContain('Refund reference: re_full')
+      expect(payload.text).toContain('Refund confirmed: 2026-09-21T13:00:00Z')
+      expect(payload.text).toContain('Original payment method')
+      expect(payload.text).toContain('pi_test')
+      expect(payload.text).not.toContain('Private staff note')
+      expect(payload.text).not.toContain('Saturday please')
+      if (kind === 'refunded_admin') expect(payload.text).toContain('/admin/students/owner')
+    },
+  )
+  it('does not deliver a refund notice cancelled by current financial evidence', async () => {
+    notices[0].kind = 'refunded_customer'
+    claimStatus = 'cancelled'
+    await billingNotices('owner', 'bill')
+    expect(m.fetch).not.toHaveBeenCalled()
   })
 })

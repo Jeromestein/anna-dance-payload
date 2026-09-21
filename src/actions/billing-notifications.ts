@@ -28,7 +28,7 @@ export async function sendBillingEmail(
     return {
       success: result.sent
         ? 'Email accepted by the provider. Previously sent notices were not duplicated.'
-        : 'No pending payment emails for this bill.',
+        : 'No pending billing emails for this bill.',
     }
   } catch (error) {
     revalidatePath(`/admin/students/${owner}`)

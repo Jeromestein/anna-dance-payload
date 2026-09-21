@@ -6,7 +6,7 @@ import { siteOrigin } from '@/lib/stripe/config'
 
 type Notice = {
   id: string
-  kind: 'request' | 'paid_customer' | 'paid_admin'
+  kind: 'request' | 'paid_customer' | 'paid_admin' | 'refunded_customer' | 'refunded_admin'
   status: string
   claim_token?: string
   payload?: Record<string, unknown>
@@ -54,6 +54,7 @@ export async function billingNotices(owner: string, id: string, requestPayment =
   const test = bill.stripe_livemode === false
   const testTo = process.env.BILLING_EMAIL_TEST_TO?.trim()
   if (test && !testTo) throw new Error('Set a sandbox email recipient before sending test notices.')
+  const testAdminTo = process.env.BILLING_EMAIL_TEST_ADMIN_TO?.trim() || testTo
   const adminTo =
     process.env.BILLING_NOTIFICATION_TO?.trim() ||
     process.env.STUDENT_REGISTRATION_NOTIFICATION_TO?.trim() ||
@@ -71,28 +72,40 @@ export async function billingNotices(owner: string, id: string, requestPayment =
   let sent = rows.filter((notice) => notice.status === 'sent').length
   for (const notice of pending) {
     const request = notice.kind === 'request'
-    const admin = notice.kind === 'paid_admin'
+    const refund = notice.kind === 'refunded_customer' || notice.kind === 'refunded_admin'
+    const admin = notice.kind === 'paid_admin' || notice.kind === 'refunded_admin'
     const payload = {
       from,
-      to: [test ? testTo! : admin ? adminTo : user.email],
-      subject: `${request ? 'Payment requested' : 'Payment confirmed'} · ${label}`,
+      to: [test ? (admin ? testAdminTo! : testTo!) : admin ? adminTo : user.email],
+      subject: `${request ? 'Payment requested' : refund ? 'Full refund confirmed' : 'Payment confirmed'} · ${label}`,
       text: [
         'Anna Dance Academy',
         test ? 'SANDBOX — no real money. This notice is routed to the test inbox.' : '',
         request
           ? 'Your course bill is ready. Sign in with your registered account to review and pay.'
-          : admin
-            ? 'A student payment has been confirmed.'
-            : 'Your payment has been confirmed.',
+          : refund
+            ? admin
+              ? 'A student’s full refund has been confirmed by Stripe.'
+              : 'Your full refund has been confirmed by Stripe.'
+            : admin
+              ? 'A student payment has been confirmed.'
+              : 'Your payment has been confirmed.',
         `Student: ${profile.data?.name ?? ''}`,
         admin ? `Account email: ${user.email}` : '',
         `Bill: ${bill.bill_number}`,
         summary,
         `Total: ${money(bill.amount_cents, bill.currency)}`,
+        refund ? `Refund amount: ${money(bill.amount_cents, bill.currency)}` : '',
+        refund && bill.refunded_at ? `Refund confirmed: ${bill.refunded_at}` : '',
+        refund && bill.refund_reference ? `Refund reference: ${bill.refund_reference}` : '',
+        refund ? 'Destination: Original payment method.' : '',
+        refund
+          ? 'Your bank or payment provider may need additional time to show the refund. This confirmation does not mean it has already appeared on your statement.'
+          : '',
         request && bill.due_date ? `Due date: ${bill.due_date}` : '',
         !request && bill.paid_at ? `Payment recorded: ${bill.paid_at}` : '',
         !request && bill.transaction_reference ? `Transaction: ${bill.transaction_reference}` : '',
-        admin && acknowledgement.data?.note
+        admin && !refund && acknowledgement.data?.note
           ? `Message for the teacher: ${acknowledgement.data.note}`
           : '',
         `${request ? 'Review and pay' : 'View payment record'}: ${origin}${billPath(id)}`,
