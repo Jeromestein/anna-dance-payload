@@ -2,9 +2,9 @@
 
 September 21 implementation update: see [Registered-account billing MVP](registered-account-billing-mvp.md)
 for custom-total bills, notification delivery, local verification, and rollout prerequisites.
-The older status tables below describe the September 17 checkpoint.
+The live integration rows below retain their September 17 evidence boundary; package implementation and acceptance were updated September 21.
 
-Updated: September 17, 2026
+Updated: September 21, 2026
 
 ## Purpose and current status
 
@@ -20,25 +20,23 @@ The design uses `app_payments` and `app_payment_items`. It does not add invoice,
 | Jason's historical USD 0.50 | Original charge retained; full refund `re_3UCoX3DRBUG2kOng0TiLJ5sx` recorded September 17; Admin Stripe refresh retained Fully refunded | Student Account visual acceptance; bank settlement not verified |
 | Stripe connection | API and webhook secrets active in Production; Charges and Refunds Write saved; Admin refund initiation enabled | Checkout Sessions permission and live payment enablement remain separate rollout work |
 | Hosted Stripe webhook | Active; two genuine payment-event replays returned 200 synchronized with no duplicates | Verify intended refund events and future booking association |
-| Lesson-package bills and shareable payment links | Design only; existing itemized-bill and Checkout code can be reused | Implement package review, owner-protected bill page, copy-link controls, and sandbox acceptance |
+| Lesson-package bills and shareable payment links | Implemented in `06b6cd5`; $300 sandbox payment and full refund verified with preserved 10-lesson detail | Combined notification-flow acceptance, remaining edge cases, migrations/deployment and live enablement |
 
 The current operational checklist is [Stripe payment and full-refund verification](../operations/stripe-payment-refund-testing.md). The owner chose sandbox testing on September 17 to verify payment/refund initiation without a personal credit card. Use the existing Stripe sandbox, an isolated test application and database, and separate webhook credentials. Production reconciliation is active; the owner approved enabling Admin-initiated live full refunds after sandbox acceptance. Earlier progress is preserved in [historical checkpoints](account-billing-20260909-checkpoint.md), whose unchecked items are not the current implementation status.
 
-## Planned lesson-package payment links
+## Lesson-package payment links
 
-The owner requested a design-only extension for collecting several lessons in one payment. See [Lesson Package Bills and Payment Links](lesson-package-payment-links.md) for the interface, flow diagram, data mapping, limits, and implementation checklist. No code or configuration changes are authorized by this design task.
+Implemented after the owner's approval: Admin creates/reviews an itemized package bill → copies its stable website URL → the owner signs in and reviews course/lesson count/price → Stripe collects the full amount → signed events update the same bill. Quantities and amounts remain immutable. The September 21 MVP also adds exact custom totals and email notifications; see its separate rollout prerequisites above.
 
-The proposed flow is Admin creates an itemized bill → copies its stable website URL → the owner signs in and reviews course/lesson count/price → Stripe collects the full amount → the signed webhook updates that bill. Lesson count uses the existing item quantity, with an explicit lesson description. No new table is planned. Purchasing lessons does not automatically schedule or track them. Separate guardian access and guest checkout are deferred.
+- [x] Add package-specific entry/review, Copy payment link, and readonly Preview bill.
+- [x] Add the owner-protected bill page and safe per-bill login/Checkout destinations.
+- [x] Gate demos/test actions by Stripe test mode; preserve real history and operational controls.
+- [x] Verify a $300 sandbox payment and full refund, signed event delivery, retained 10 × $30 detail, and an old refunded link without a Pay action.
+- [x] Verify cross-account denial and customer bill desktop/mobile layout; pass 64 focused billing/Stripe tests and typecheck on September 21.
+- [ ] Finish the remaining browser edge cases and combined notification delivery acceptance.
+- [ ] Deploy required migrations/code, verify production demo visibility, then separately approve live Checkout permissions/enablement and observe a genuine payment.
 
-- [x] Document the package flow, lesson-count presentation, existing data mapping, and full-refund boundary.
-- [x] Audit existing refund demo/test surfaces before implementation; see the [visibility audit and cleanup checklist](../operations/stripe-payment-refund-testing.md#demo-and-test-surface-audit--before-package-implementation).
-- [ ] Complete production demo/test visibility cleanup before the package UI; preserve historical real payments and operational tools.
-- [ ] Add package-specific Admin entry/review and Copy payment link / Preview bill controls.
-- [ ] Add the owner-protected individual bill page and safe login/Checkout return navigation.
-- [ ] Verify one full payment, immutable lesson details, session reuse, wrong-user denial, and full-refund/replacement behavior in sandbox.
-- [ ] Review and separately approve any live Checkout permission change and payment-switch enablement; verify the next genuine package payment.
-
-Detailed acceptance cases are maintained in the [package design checklist](lesson-package-payment-links.md#implementation-and-acceptance-checklist).
+See the [detailed checklist](lesson-package-payment-links.md#implementation-and-acceptance-checklist) and [provider-backed acceptance evidence](../operations/package-payment-acceptance.md). No live settings or production migration were changed in this verification.
 
 ## System flow
 

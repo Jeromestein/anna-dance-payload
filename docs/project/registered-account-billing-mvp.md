@@ -88,3 +88,5 @@ No production database, Stripe settings, deployment, or real emails were changed
   an unauthenticated visitor to login.
 - Still pending: deployed migrations, authenticated full-stack acceptance, real Stripe sandbox
   Checkout plus signed webhook, and actual delivery to the intended customer and Academy inboxes.
+
+The earlier lesson-package core has separate [sandbox acceptance evidence](../operations/package-payment-acceptance.md): September 17 Checkout and Admin full refund completed with signed HTTP 200 deliveries and preserved 10-lesson detail. September 21 current-source checks verified the refunded bill layout and wrong-owner denial. These checks do not complete the new acknowledgement and notification end-to-end flow above.

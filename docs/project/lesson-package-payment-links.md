@@ -1,8 +1,8 @@
 # Lesson Package Bills and Payment Links
 
-Updated: September 17, 2026
+Updated: September 21, 2026
 
-Status: Design only. The owner requested documentation and checklist updates, with no application code, database, permission, or deployment changes. The proposed controls and routes below are not implemented. This is the current proposal for student-specific package collection; the older generic full-term Payment Link plan is historical.
+Status: Implemented locally and included in commit `06b6cd5`. The owner authorized implementation after the original design. A 10 × $30 package completed sandbox Checkout, signed webhook synchronization, and Admin full refund. Production migration/deployment and live Checkout enablement are not confirmed by this checkpoint. See [package acceptance evidence](../operations/package-payment-acceptance.md). The September 21 [registered-account billing MVP](registered-account-billing-mvp.md) extends this flow with custom totals, acknowledgement, and email notifications; its separate end-to-end acceptance remains pending.
 
 Related: [Payment and Billing Design](account-billing.md) · [Stripe operations and acceptance](../operations/stripe-payment-refund-testing.md)
 
@@ -18,9 +18,9 @@ This purchases a stated number of lessons. It does not create bookings, assign a
 - One bill belongs to one existing student account and accepts one full payment in USD. A bill can contain multiple itemized course lines.
 - Copy a stable website bill URL, not a reusable generic Stripe product link. A temporary Stripe Checkout Session is obtained when the authenticated owner clicks Pay.
 - Require the bill owner's existing login. This release does not introduce guest checkout or new parent/guardian access. A parent can use an already established account that owns the bill; a separate guardian login requires its own access design.
-- First release uses lesson count × price per lesson. It does not add a separately editable package total, coupons, installments, subscriptions, or automatic future charges.
+- The Lesson package option uses lesson count × price per lesson. The September 21 Custom total option stores one exact charge with lesson/day count and coverage in its description; see the registered-account MVP. Coupons, installments, subscriptions, and automatic future charges remain deferred.
 - Keep issued descriptions, quantities, and amounts immutable. Full refunds follow the existing policy; a replacement bill requires a separate payment.
-- Sharing means **Copy payment link**. Staff send it manually. Automatic email/SMS delivery and tracking are outside this release.
+- **Copy payment link** remains available. The September 21 MVP also adds **Send payment email** and payment confirmations; provider delivery acceptance is still pending. SMS and recurring reminders remain deferred.
 
 ## Administrator flow
 
@@ -61,7 +61,7 @@ For multiple courses, show the lesson count on each course line. Do not combine 
 
 ## Customer flow and link behavior
 
-Proposed path: `/account/billing/[billId]` on the configured website origin.
+Implemented path: `/account/billing/[billId]` on the configured website origin.
 
 1. The recipient opens the website link. An unauthenticated visitor signs in and returns to that bill, using a validated same-site return path.
 2. The server loads the bill only for the authenticated owner. The UUID locates the bill; it does not grant access. Unknown and wrong-owner references receive a generic unavailable result without student or payment details.
@@ -103,9 +103,9 @@ flowchart TD
 
 For lesson-package lines, construct an explicit description such as `Ballet — Fall 2026 (10 lessons)`, with quantity `10` and unit amount `3000`. The reviewed name and lesson count must agree; do not silently truncate the final description beyond the existing 200-character limit. The website can render the stored item generically as description plus quantity × unit price, while still clearly exposing the number of lessons. Historical non-lesson items retain generic quantity labels; do not parse their descriptions into new lesson entitlements.
 
-The server recalculates the total from stored integer-cent values and requires it to match the bill. Ten lessons at $30.00 produces $300.00. A three-lesson package advertised as exactly $100.00 cannot be represented by rounding a per-lesson price: that would change the charge. Such fixed-total pricing needs a later explicit design; do not silently round or use a negative adjustment. Existing validation and line-count limits still apply.
+The server recalculates the total from stored integer-cent values and requires it to match the bill. Ten lessons at $30.00 produces $300.00. A three-lesson package advertised as exactly $100.00 cannot be represented by rounding a per-lesson price: that would change the charge. Use the separately implemented Custom total option for that case: it stores one charge and puts the lesson count in the description, without inventing a rounded per-lesson rate. Existing validation and line-count limits still apply.
 
-No schema migration is planned for this scope. Implementation must verify the current RPC and ownership constraints; any necessary constraint/function change should be separately documented rather than introducing new tables by default.
+Package issuance requires `20260917200000_issue_package_bills.sql`: a service-only, retry-safe `app_issue_bill` function, using a transaction lock and immutable payload comparison. It adds no financial tables. The September 21 notification/acknowledgement extension additionally requires `20260921200000_billing_notifications.sql`; deploy both before the combined code. Both are applied only to the isolated local sandbox in this verification, not production.
 
 ## Status, retry, and refund behavior
 
@@ -128,22 +128,13 @@ Before issuance, staff may edit freely. An issued bill with an error must be can
 
 After a completed payment, retain the agreed policy: refund the full original amount, then issue a separate replacement bill for revised content. Link it using the existing replacement mechanism; it starts unpaid. This bill is a charge record, not a remaining-lessons balance, and refunding does not automatically change the schedule.
 
-## Current foundation versus missing work
+## Implementation and rollout boundary
 
-Verified against repository code on September 17:
+Admin package review, copy/preview controls, the owner-protected bill page, per-bill return paths, and immutable stored-item Checkout are implemented. Open-session reuse, verified expiration, stale-request blocking, and completed-before-webhook handling are covered by service tests. Sandbox payment/refund delivery and preserved quantities are recorded in the acceptance evidence.
 
-| Foundation already present | Required work for this design |
-| --- | --- |
-| Admin itemized bill creation, descriptions, quantity, unit price, due date | Lesson-package form wording, preview, and explicit lesson-count review |
-| Account displays own bills | Dedicated owner-protected bill URL and login return handling |
-| Checkout sends stored descriptions, quantity, and price to Stripe | Copy-link control, bill-specific return routes, and all page states |
-| Checkout reservation, idempotency and expiration checks | End-to-end link reuse, repeated-click, and concurrency acceptance |
-| Signed payment/refund reconciliation into the existing bill | Package-specific tests proving lesson details survive payment and refund |
-| Sandbox payment/refund acceptance | Package flow desktop/mobile and authenticated access verification |
+Admin opens Checkout only for staff sandbox testing; customer Checkout uses the authenticated owner. Copying a link does not authorize staff to pay on a customer's behalf.
 
-The Admin action currently opens Checkout only for staff sandbox testing; customer Checkout uses the authenticated owner. The proposed Admin copy-link action does not require allowing staff to initiate a live customer Checkout.
-
-At the last verified live setup, Accounts and Payment Intents had Read access, Charges and Refunds had Write, Checkout Sessions had None, and `STRIPE_LIVE_PAYMENTS_ENABLED=false`. The refund switch was enabled independently. Before live package collection, verify the actual restricted key supports the required Checkout Session operations and inline pricing in the sandbox; propose only demonstrated necessary permission changes. Apply any live access changes and enablement through a separate explicit rollout, not as part of this design-only task. See the [operational checklist](../operations/stripe-payment-refund-testing.md).
+The last verified live setup had Checkout Sessions permission set to None and `STRIPE_LIVE_PAYMENTS_ENABLED=false`, with refunds enabled independently. Recheck the actual live configuration before rollout. The successful package test used the sandbox's existing Checkout permission; no live key or switch was changed.
 
 ## Implementation and acceptance checklist
 
@@ -156,38 +147,42 @@ At the last verified live setup, Accounts and Payment Intents had Read access, C
 
 ### Phase 1 — Admin and customer interface
 
-Prerequisite: complete the [production demo/test visibility cleanup](../operations/stripe-payment-refund-testing.md#demo-and-test-surface-audit--before-package-implementation). The owner requested this audit before package implementation; the audit is complete, while hiding the controls remains TODO.
+The demo/test visibility cleanup is implemented and covered locally. Production deployment verification remains a release task. Checked items below describe code/local verification, not production availability.
 
-- [ ] Hide production refund demos and remove testing wording from live payment tools; preserve sandbox coverage, real transaction records, and operational import/refresh/refund controls.
+- [x] Hide production refund demos and remove testing wording from live payment tools; preserve sandbox coverage, real transaction records, and operational import/refresh/refund controls.
 
-- [ ] Add the lesson-package option without changing generic item quantity semantics.
-- [ ] Add review-before-issue with student, course, lesson count, unit price, total, due date, and immutable-charge notice.
-- [ ] Return the confirmed saved bill identity and expose Preview bill / Copy payment link with clipboard fallback.
-- [ ] Add the owner-protected individual bill page and safe login return path; deny other users without disclosure.
-- [ ] Clearly display course and lesson count on every payment and historical bill view; lock quantities and prices at payment time.
-- [ ] Add disabled-collection, unpaid, pending confirmation, paid, refunded, cancelled, missing, and error states.
+- [x] Add the lesson-package option without changing generic item quantity semantics.
+- [x] Add review-before-issue with student, course, lesson count, unit price, total, due date, and immutable-charge notice.
+- [x] Return the confirmed saved bill identity and expose Preview bill / Copy payment link with clipboard fallback.
+- [x] Add the owner-protected individual bill page and safe login return path; deny other users without disclosure.
+- [x] Clearly display course and lesson count on every payment and historical bill view; lock quantities and prices at payment time.
+- [x] Add disabled-collection, unpaid, pending confirmation, paid, refunded, cancelled, missing, and error states.
 
 ### Phase 2 — Payment integration
 
-- [ ] Reuse the existing stored-bill Checkout path and trusted metadata; update success/cancel navigation to the individual bill.
-- [ ] Confirm session reuse/expiration behavior and prevent duplicate issuance or collection on repeated clicks, retries, or tabs.
-- [ ] Revalidate the new bill route after payment/refund reconciliation as well as Account and Admin.
-- [ ] Preserve purchased lesson descriptions and quantities through webhook updates and full refunds.
-- [ ] Verify paid, refunded, cancelled, completed-but-unverified, and wrong-owner bills cannot obtain a fresh payable session.
+- [x] Reuse the existing stored-bill Checkout path and trusted metadata; update success/cancel navigation to the individual bill.
+- [x] Confirm session reuse/expiration behavior and prevent duplicate issuance or collection on repeated clicks, retries, or tabs.
+- [x] Revalidate the new bill route after payment/refund reconciliation as well as Account and Admin.
+- [x] Preserve purchased lesson descriptions and quantities through webhook updates and full refunds.
+- [x] Verify paid, refunded, cancelled, completed-but-unverified, and wrong-owner bills cannot obtain a fresh payable session.
 
 ### Phase 3 — Sandbox acceptance
 
-- [ ] Create a synthetic 10 × $30 bill; verify course, 10 lessons, $30 unit price, and $300 total in Admin, website bill, and Stripe Checkout.
+- [x] Create a synthetic 10 × $30 bill; verify course, 10 lessons, $30 unit price, and $300 total in Admin, website bill, and Stripe Checkout.
 - [ ] Verify multi-course lines, lesson-count validation, integer-cent totals, and rejection of an unsupported fixed-total rounding shortcut.
-- [ ] Verify copied links, login return, wrong-account denial, mobile layout, keyboard access, and copy failure fallback.
-- [ ] Pay once in sandbox and prove webhook-driven update of the same bill without manual Paid or Refresh Stripe status actions; capture delivery evidence and item preservation.
+- [x] Verify copied links and clipboard failure fallback; owner filtering and cross-account 404; customer bill at 390px and 1280px.
+- [x] Verify signed-out bill navigation preserves the bill URL in the login destination.
+- [ ] Complete login return after user acceptance of the mandatory Terms checkbox, and full keyboard-only package issuance review.
+- [x] Pay once in sandbox and prove webhook-driven update of the same bill without manual Paid or Refresh Stripe status actions; capture delivery evidence and item preservation.
 - [ ] Exercise declined payment, closing Checkout, delayed webhook, duplicate/out-of-order event, open/expired session, stale request, and concurrent pay attempts.
-- [ ] Perform a sandbox full refund; verify the old link remains historical and a replacement bill requires a separate payment.
-- [ ] Run focused tests, type checks, and in-app desktop/mobile verification; do not run `pnpm build`.
+- [x] Perform a sandbox full refund; verify the old link remains historical with no Pay action and intact lesson details.
+- [ ] Complete package-specific replacement-bill browser acceptance through its separate payment.
+- [x] Run focused tests, type checks, and in-app desktop/mobile verification; do not run `pnpm build`.
 
 ### Phase 4 — Controlled release
 
-- [ ] Obtain implementation/release authorization; this document alone does not authorize code or configuration changes.
+- [x] Obtain implementation authorization (owner request following the design).
+- [ ] Apply both required migrations and release the combined implementation through the approved deployment process.
 - [ ] Verify the intended merchant/mode and minimum required Checkout permissions in sandbox, then obtain the required live permission approval.
 - [ ] Enable the independent live payment switch only for the approved rollout; retain existing refund behavior.
 - [ ] Verify the deployed page and payment-link controls using non-financial viewing/copy actions.
@@ -195,10 +190,10 @@ Prerequisite: complete the [production demo/test visibility cleanup](../operatio
 
 ## Deferred work
 
-Guest payment links; separate parent/guardian permissions; registration before account creation; class capacity and enrollment; scheduling; attendance and remaining credits; fixed-total packages that cannot be divided into cents per lesson; coupons; subscriptions/installments; automatic reminders or link delivery; downloadable invoice PDFs; reusable package catalogs. These require their own scope rather than being implied by a paid bill.
+Guest payment links; separate parent/guardian permissions; registration before account creation; class capacity and enrollment; scheduling; attendance and remaining credits; coupons; subscriptions/installments; automatic reminders; SMS delivery; downloadable invoice PDFs; reusable package catalogs. These require their own scope rather than being implied by a paid bill.
 
 ## Source map
 
 - Existing behavior: `src/components/billing-admin.tsx`, `src/components/billing-records.tsx`, `src/components/stripe-billing-controls.tsx`, `src/actions/billing.ts`, `src/actions/stripe-billing.ts`, `src/lib/billing/model.ts`, `src/lib/billing/load.ts`, `src/lib/stripe/billing.ts`.
 - Data integrity: existing billing and Stripe migrations under `supabase/migrations/`.
-- Stripe fields and session expiration: [Create a Checkout Session](https://docs.stripe.com/api/checkout/sessions/create), checked September 17, 2026. Provider capabilities do not imply that these proposed website features are implemented.
+- Stripe fields and session expiration: [Create a Checkout Session](https://docs.stripe.com/api/checkout/sessions/create), checked September 17, 2026. Provider capabilities do not establish production rollout or acceptance.

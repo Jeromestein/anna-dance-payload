@@ -1,0 +1,68 @@
+# Lesson-package payment acceptance
+
+Updated September 21, 2026. This records isolated sandbox evidence, not production acceptance.
+
+## Provider-backed package flow — September 17
+
+Admin issued a bill for synthetic Sandbox Student A through Create bill → Lesson package:
+
+- Bill: `e396fc7a-ed77-46a7-a45e-66605dca7f88` / `ADA-20260917-66605DCA7F88`.
+- Item: `Ballet — Fall 2026 (10 lessons)`, quantity 10, USD 30.00 each, USD 300.00 total.
+- Preview and Copy payment link worked; the owner bill page and Stripe Checkout displayed matching details.
+- Checkout: `cs_test_a1XHucaUofKATkBnltgkI0UpmMhHBmoVueqL8Xr48hhhbLCAesL5rvuv8z`.
+- PaymentIntent: `pi_3UGpbvDKpszykgKY19k8WDse`, `livemode=false`.
+- Signed `payment_intent.succeeded` event `evt_3UGpbvDKpszykgKY1ajgm9pZ` and
+  `checkout.session.completed` event `evt_1UGpbxDKpszykgKYH1YqT66T` both returned HTTP 200.
+- The return page first showed payment confirmation pending with no Pay action. After delivery,
+  a page status refresh showed Paid. No manual Paid action or Admin Stripe reconciliation was used.
+- Admin's two-step Refund payment dialog requested the full sandbox amount. Refund
+  `re_3UGpbvDKpszykgKY1P3Kt5jl` succeeded. The `refund.created`, `charge.refunded`, and
+  `refund.updated` deliveries all returned HTTP 200.
+
+## Latest-code checks — September 21
+
+- Read the persisted record: Refunded, amount 30000 cents, `refund_state=succeeded`, test mode;
+  original description, quantity 10 and unit amount 3000 cents remain unchanged.
+- Loaded the same owner bill on the current source from `06b6cd5`: Fully refunded, amount due
+  zero, original item and refund references visible, no Pay action.
+- Inspected the actual bill page in the Codex in-app browser at 390 × 844 and 1280 × 900.
+  Amounts, descriptions, and long references fit and remain readable while scrolling.
+- Signed-in Student A visiting a real synthetic Student B bill received the generic 404 page
+  without the other student's details.
+- 64 tests passed across nine focused suites: billing package, package Checkout, billing refund,
+  billing actions, Stripe actions, billing presentation, Stripe webhook, Stripe service, and
+  auth redirects. TypeScript check passed. No production build was run.
+- Sandbox test-bill amount is editable. Tests cover arbitrary valid amounts and rejection of
+  values below USD 0.50, above USD 100,000, negative amounts, and fractional cents.
+- Live/unconfigured visibility tests cover absence of demo and test-creation actions, including
+  failed bill loading; server-side live rejection remains in place.
+
+## Database and environment boundary
+
+The existing isolated local Supabase instance was used. Package issuance migration
+`20260917200000_issue_package_bills.sql` was applied September 17. The current combined source also
+needs `20260921200000_billing_notifications.sql`; it was applied to this local sandbox September 21
+so its bill queries could be exercised. No production migration was applied by this verification.
+
+The temporary app used port 3005 and local Supabase only. Its outbound email API key was removed
+before startup; no request/confirmation email was sent. The user's existing port-3000 process was
+not restarted. No live Stripe key, permission, webhook configuration, or payment switch was changed.
+
+## Remaining acceptance
+
+- [ ] Verify deployed migrations and current production UI, including live demo/test hiding.
+- [x] Verify a signed-out bill visit redirects to login with the original bill URL preserved.
+- [ ] Complete sign-in and return after the new mandatory Terms checkbox is accepted by the user;
+      automated verification stopped at that consent gate. Complete keyboard-only package issuance.
+- [ ] Complete package-specific replacement payment, multi-course browser flow, decline/close,
+      and concurrent-tab acceptance. Service/database tests cover several of these invariants but
+      are not evidence that every provider/browser scenario has run.
+- [ ] Run the September 21 acknowledgement plus notification flow through sandbox Checkout and
+      signed webhook, and verify delivery to explicitly configured test recipients. The September 17
+      payment predates these additions and does not prove email delivery or acknowledgement behavior.
+- [ ] Review/approve live Checkout permission and payment enablement separately; then observe a
+      genuine package payment. Sandbox success does not prove live collection readiness.
+
+Related: [Package design and checklist](../project/lesson-package-payment-links.md),
+[registered-account MVP](../project/registered-account-billing-mvp.md),
+[Stripe operations](stripe-payment-refund-testing.md).

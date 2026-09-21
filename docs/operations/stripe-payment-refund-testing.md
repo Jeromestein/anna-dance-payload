@@ -131,7 +131,7 @@ Design only, requested September 17. The detailed [implementation and acceptance
 
 ## Demo and test surface audit — before package implementation
 
-Reviewed September 17 against the source and the authenticated production Student → Jason → Billing page. This is an audit and cleanup proposal, not an implemented visibility change. There are **three types of demo/test action entry**, plus one mixed-purpose section title. Steps inside the refund demo are one flow, not separate features. Automated tests and SQL fixtures are not customer-facing controls.
+Reviewed September 17 against the source and the authenticated production Student → Jason → Billing page. This paragraph records the pre-change audit. The cleanup is now implemented in `06b6cd5`, with local mode-gating assertions; deployed acceptance remains pending. There are **three types of demo/test action entry**, plus one mixed-purpose section title. Steps inside the refund demo are one flow, not separate features. Automated tests and SQL fixtures are not customer-facing controls.
 
 | Surface | Current behavior | Proposed production treatment |
 | --- | --- | --- |
@@ -149,16 +149,17 @@ Additional findings:
 - **Refund payment**, **Refresh Stripe status**, and **Import an existing Stripe payment** are operational tools. Keep them available subject to their existing authorization and availability checks.
 - With all bills refunded, the current empty refund selector incorrectly says no paid bills have ever been recorded. Replace this with a state-specific **No payments available for refund** message; keep missing history and load failures distinct.
 
-Recommended order: finish this visibility cleanup before implementing the package-payment UI. No code changes were made during this audit.
+The original audit made no changes. Subsequent implementation gates the entire refund demo on server-derived test mode, renames the live tools section, corrects empty-state wording, and makes the sandbox test amount adjustable ($0.50 default/minimum, $100,000 maximum). These controls are mode-gated, not hostname-gated: an isolated test deployment may use them as well as localhost. See [package acceptance](package-payment-acceptance.md).
 
 - [x] Inventory the three demo/test action types and the mixed-purpose title; inspect their frontend conditions and backend guards.
 - [x] Confirm production shows the demo and testing title, while test-bill creation is absent and verified import remains available.
-- [ ] Pass explicit server-derived sandbox/demo visibility into the refund launcher, default off in live/unconfigured contexts; cover both normal and unavailable-billing render paths.
-- [ ] Hide the entire demo flow and related helper text in production; keep demo access in the isolated sandbox.
-- [ ] Rename the production Stripe tools section and correct the no-refundable-payments wording without removing operational controls.
+- [x] Pass explicit server-derived sandbox/demo visibility into the refund launcher, default off in live/unconfigured contexts; cover both normal and unavailable-billing render paths.
+- [x] Hide the entire demo flow and related helper text in production; keep demo access in the isolated sandbox.
+- [x] Rename the production Stripe tools section and correct the no-refundable-payments wording without removing operational controls.
 - [ ] Verify live Admin/Account have no demo, test creation, or test payment actions; retain meaningful TEST labels when examining sandbox records.
-- [ ] Add focused live/test/unconfigured visibility assertions and retain server-side live rejection tests; verify both environments in the in-app browser.
-- [ ] Verify the deployed cleanup before beginning the package collection UI. This audit alone does not establish that the controls have been hidden.
+- [x] Add focused live/test/unconfigured visibility assertions and retain server-side live rejection tests.
+- [ ] Verify deployed live mode in the browser; sandbox browser checks passed locally.
+- [ ] Verify the deployed cleanup before enabling live package collection. Local implementation does not establish production visibility.
 
 Source: `src/components/billing-refund.tsx`, `billing-admin.tsx`, `billing-records.tsx`, `stripe-billing-controls.tsx`; `src/actions/stripe-billing.ts`; `src/lib/billing/load.ts`, `model.ts`; `src/lib/stripe/config.ts`.
 
