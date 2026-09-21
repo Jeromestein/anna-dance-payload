@@ -1,5 +1,9 @@
 # Anna Dance Academy Design System
 
+The current email design specification is in [Section 16](#16-email-design-system).
+That section applies to the active Payload repository and takes precedence over the historical
+website typography and uppercase-label guidance when designing email.
+
 ## 1. Purpose
 
 This document defines the visual and responsive design direction for the Anna Dance Academy website. The experience should feel alive, caring, polished, and trustworthy while remaining clearly rooted in dance education rather than healthcare or corporate branding.
@@ -381,3 +385,74 @@ Within the same Section, sibling cards must become a horizontal swipe rail on mo
 - [ ] Add hover, press, focus, and reduced-motion states.
 - [ ] Verify WCAG 2.2 AA contrast for every card variant.
 - [ ] Test desktop, tablet, and mobile layouts at 200% text zoom.
+
+## 16. Email Design System
+
+Updated: September 21, 2026. Applies to the seven custom React Email notification variants.
+
+### Shared brand module
+
+- Reuse `src/lib/email/email-brand-logo.tsx` in every email. Do not duplicate the logo markup.
+- Center the entire horizontal logo group within the email header, on desktop and mobile.
+  The circular dancer mark stays to the left of the two-line wordmark; do not stack them.
+- Use the existing public PNG, a white circular background, and a subtle `#8199A0` border.
+- Match the website footer: `#052F3D` background and white wordmark. Keep `Anna Dance`
+  in bold Georgia and distribute the letters of `ACADEMY` across the line below.
+- Desktop: 88px mark, 24px gap, 34px wordmark, 36px vertical / 40px horizontal header padding.
+- At 600px and below: 68px mark, 16px gap, 27px wordmark, 28px vertical / 22px horizontal padding.
+- Use a centered email-compatible presentation table, with `align="center"` and auto margins.
+
+### Palette, typography, and layout
+
+| Element | Specification |
+| --- | --- |
+| Outer background | `#FAF5F7` |
+| Content card | White, maximum width 600px |
+| Main text | `#302630` |
+| Supporting text | `#756775` |
+| Buttons and section headings | `#A8326A`; white button text |
+| Detail panels / amount panels | `#FAF5F7` / `#F8EDF3`, 8px radius |
+| Dividers | `#EEE3E9` |
+| Main heading | Georgia, 34px / 40px; mobile 29px / 35px |
+| Body | Arial / Helvetica, 15px / 25px |
+| Button | 14px bold, 16px / 24px padding, 6px radius |
+| Content padding | Desktop 36px / 40px; mobile 28px / 22px |
+
+Logo alignment is centered; email content and action buttons remain left-aligned.
+Use system fonts, inline styles, and table layouts suitable for email clients.
+
+### Capitalization and copy
+
+- Use editorial **Title Case** for subjects, main headings, section headings, category labels,
+  and action buttons. Capitalize the first and last words and all major words; keep short
+  connecting words such as `a`, `an`, `the`, `and`, `for`, `from`, `of`, and `to` lowercase
+  within a title. Example: `Thank You for Your Payment` and `Review and Pay`.
+- Author the actual text in Title Case; do not rely on CSS `capitalize` or `uppercase`.
+  Subjects must follow the same rule because they are rendered outside the HTML email.
+- Headings and buttons have no trailing period. Body paragraphs remain in sentence case.
+- Preserve the spelling and capitalization of names, course names, messages, email addresses,
+  bill numbers, and provider references; never run a blanket title-case transform on user data.
+- The brand word `ACADEMY` and the environment marker `[SANDBOX]` remain uppercase.
+- The preview text should match the corresponding subject's fixed wording and capitalization.
+
+| Variant | Subject | Main Heading | Primary Button |
+| --- | --- | --- | --- |
+| Website inquiry | `New {Interest} Inquiry from {Name}` | A New Conversation | Reply to Inquiry |
+| Student registration | `New Student Registration: {Student Name}` | A New Dancer Joins Us | View Student Account |
+| Payment request | `Payment Requested · {Bill Number}` | Your Next Step to Dance | Review and Pay |
+| Customer payment | `Payment Confirmed · {Bill Number}` | Thank You for Your Payment | View Payment Record |
+| School payment | `Payment Confirmed · {Bill Number}` | A Payment Has Arrived | View Student Record |
+| Customer refund | `Full Refund Confirmed · {Bill Number}` | Full Refund Confirmed | View Payment Record |
+| School refund | `Full Refund Confirmed · {Bill Number}` | Full Refund Confirmed | View Student Record |
+
+The registration button appears only when a valid account link is available. Sandbox subjects
+retain the `[SANDBOX]` marker. Previously attempted billing emails retain their immutable stored
+subject and body during retries; design changes apply when a new payload is created.
+
+### Verification
+
+- Preview all variants at `/api/dev/email-preview` with fictional data only.
+- Check the centered logo, title and button capitalization, wrapping, logo loading, and no
+  horizontal overflow at desktop and 320px mobile widths.
+- Preserve the plain-text alternative, recipient routing, safe escaping, and billing retry behavior.
+- Browser previews verify layout; real Gmail/Outlook delivery is a separate acceptance check.

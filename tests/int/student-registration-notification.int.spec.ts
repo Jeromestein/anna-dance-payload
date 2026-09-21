@@ -43,6 +43,7 @@ describe('Student registration notification', () => {
     const body = JSON.parse(String(init.body)) as {
       from: string
       subject: string
+      html: string
       text: string
       to: string[]
     }
@@ -51,9 +52,10 @@ describe('Student registration notification', () => {
     expect(body).toEqual({
       from: 'Anna Dance Academy <no-reply@example.com>',
       to: ['academy@example.com'],
-      subject: 'New Student registration: Test Student',
+      subject: 'New Student Registration: Test Student',
+      html: expect.stringContaining('Anna Dance Academy dancer logo'),
       text: [
-        'New Student registration',
+        'New Student Registration',
         '',
         'Student name: Test Student',
         'Registration email: test-student@example.com',
@@ -64,6 +66,8 @@ describe('Student registration notification', () => {
       ].join('\n'),
     })
     expect(body.text).not.toMatch(/password|token|secret/i)
+    expect(body.html).toContain('test-student@example.com')
+    expect(body.html).toContain('Test Guardian')
   })
 
   it('skips delivery when the Resend API key is missing', async () => {

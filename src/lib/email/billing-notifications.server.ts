@@ -3,6 +3,7 @@ import 'server-only'
 import { billPath, billSelect, money, type Bill } from '@/lib/billing/model'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { siteOrigin } from '@/lib/stripe/config'
+import { renderBillingEmail } from './templates'
 
 type Notice = {
   id: string
@@ -77,7 +78,16 @@ export async function billingNotices(owner: string, id: string, requestPayment =
     const payload = {
       from,
       to: [test ? (admin ? testAdminTo! : testTo!) : admin ? adminTo : user.email],
-      subject: `${request ? 'Payment requested' : refund ? 'Full refund confirmed' : 'Payment confirmed'} · ${label}`,
+      subject: `${request ? 'Payment Requested' : refund ? 'Full Refund Confirmed' : 'Payment Confirmed'} · ${label}`,
+      html: await renderBillingEmail({
+        kind: notice.kind,
+        bill,
+        studentName: profile.data?.name ?? '',
+        accountEmail: user.email,
+        origin,
+        owner,
+        teacherNote: acknowledgement.data?.note,
+      }),
       text: [
         'Anna Dance Academy',
         test ? 'SANDBOX — no real money. This notice is routed to the test inbox.' : '',
@@ -108,7 +118,7 @@ export async function billingNotices(owner: string, id: string, requestPayment =
         admin && !refund && acknowledgement.data?.note
           ? `Message for the teacher: ${acknowledgement.data.note}`
           : '',
-        `${request ? 'Review and pay' : 'View payment record'}: ${origin}${billPath(id)}`,
+        `${request ? 'Review and Pay' : 'View Payment Record'}: ${origin}${billPath(id)}`,
         admin ? `Admin record: ${origin}/admin/students/${owner}` : '',
         'For questions, contact annadanceacademy@gmail.com.',
       ]

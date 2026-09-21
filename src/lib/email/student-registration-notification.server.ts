@@ -1,5 +1,6 @@
 import 'server-only'
 import { siteOrigin } from '@/lib/stripe/config'
+import { renderRegistrationEmail } from './templates'
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 const DEFAULT_NOTIFICATION_TO = 'annadanceacademy@gmail.com'
@@ -78,6 +79,15 @@ export async function sendStudentRegistrationNotification(
   }
 
   try {
+    const html = await renderRegistrationEmail({
+      studentName,
+      email,
+      studentPhone,
+      guardianName,
+      guardianPhone,
+      registeredAt,
+      adminLink,
+    })
     const response = await fetch(RESEND_ENDPOINT, {
       method: 'POST',
       signal: AbortSignal.timeout(5_000),
@@ -88,9 +98,10 @@ export async function sendStudentRegistrationNotification(
       body: JSON.stringify({
         from,
         to: [to],
-        subject: `New Student registration: ${studentName}`,
+        subject: `New Student Registration: ${studentName}`,
+        html,
         text: [
-          'New Student registration',
+          'New Student Registration',
           '',
           `Student name: ${studentName}`,
           `Registration email: ${email}`,
@@ -98,7 +109,7 @@ export async function sendStudentRegistrationNotification(
           `Parent/guardian name: ${guardianName}`,
           `Parent/guardian phone: ${guardianPhone}`,
           `Registered at: ${registeredAt}`,
-          ...(adminLink ? ['', `View account and create a bill: ${adminLink}`] : []),
+          ...(adminLink ? ['', `View Account and Create a Bill: ${adminLink}`] : []),
         ].join('\n'),
       }),
     })

@@ -100,6 +100,10 @@ describe('billing email delivery', () => {
     expect(payload.text).toContain('https://academy.example/account/billing/bill')
     expect(payload.text).toContain('$100.01')
     expect(payload.text).toContain('3 lessons')
+    expect(payload.html).toContain('Anna Dance Academy dancer logo')
+    expect(payload.html).toContain('https://academy.example/account/billing/bill')
+    expect(payload.html).not.toContain('/admin/students/')
+    expect(payload.html).not.toContain('Saturday please')
     expect(options.headers['Idempotency-Key']).toBe('billing-notice')
     expect(writes[0]).toMatchObject({ status: 'sent', provider_id: 'email_1' })
   })
@@ -111,6 +115,8 @@ describe('billing email delivery', () => {
     expect(payload.text).toContain('Student A')
     expect(payload.text).toContain('Saturday please')
     expect(payload.text).toContain('/admin/students/owner')
+    expect(payload.html).toContain('Saturday please')
+    expect(payload.html).toContain('https://academy.example/admin/students/owner')
   })
   it('does not resend already accepted notices, including concurrent claim results', async () => {
     notices[0].status = 'sent'
@@ -132,6 +138,7 @@ describe('billing email delivery', () => {
       to: ['original-parent@example.com'],
       subject: 'Original',
       text: 'Original',
+      html: '<p>Original HTML must remain unchanged on retry.</p>',
     }
     await billingNotices('owner', 'bill')
     expect(JSON.parse(m.fetch.mock.calls[0][1].body)).toEqual(storedPayload)
@@ -172,7 +179,7 @@ describe('billing email delivery', () => {
     notices[0].kind = 'request'
     await billingNotices('owner', 'bill', true)
     expect(m.rpc).toHaveBeenCalledWith('app_queue_bill_request', { p_owner: 'owner', p_id: 'bill' })
-    expect(JSON.parse(m.fetch.mock.calls[0][1].body).subject).toContain('Payment requested')
+    expect(JSON.parse(m.fetch.mock.calls[0][1].body).subject).toContain('Payment Requested')
   })
   it('isolates sandbox school notices from the live recipient by default', async () => {
     bill.stripe_livemode = false
@@ -196,6 +203,7 @@ describe('billing email delivery', () => {
         kind.endsWith('_admin') ? 'school-test@example.com' : 'sandbox@example.com',
       ])
       expect(payload.subject).toContain('[SANDBOX]')
+      expect(payload.html).toContain('SANDBOX')
     },
   )
   it('does not let sandbox overrides change the live school recipient', async () => {
@@ -221,7 +229,7 @@ describe('billing email delivery', () => {
       expect(payload.to).toEqual([
         kind === 'refunded_admin' ? 'staff@example.com' : 'parent@example.com',
       ])
-      expect(payload.subject).toBe('Full refund confirmed · ADA-123')
+      expect(payload.subject).toBe('Full Refund Confirmed · ADA-123')
       expect(payload.text).toContain('Refund amount: $100.01')
       expect(payload.text).toContain('3 lessons')
       expect(payload.text).toContain('Refund reference: re_full')
@@ -230,6 +238,11 @@ describe('billing email delivery', () => {
       expect(payload.text).toContain('pi_test')
       expect(payload.text).not.toContain('Private staff note')
       expect(payload.text).not.toContain('Saturday please')
+      expect(payload.html).toContain('Original payment method')
+      expect(payload.html).toContain('re_full')
+      expect(payload.html).toContain('pi_test')
+      expect(payload.html).not.toContain('Private staff note')
+      expect(payload.html).not.toContain('Saturday please')
       if (kind === 'refunded_admin') expect(payload.text).toContain('/admin/students/owner')
     },
   )

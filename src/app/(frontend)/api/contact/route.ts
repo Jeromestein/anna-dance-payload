@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { renderContactEmail } from "@/lib/email/templates";
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
@@ -110,9 +111,10 @@ export async function POST(request: NextRequest) {
       from,
       to: [to],
       reply_to: email,
-      subject: `New ${interest} inquiry from ${name}`,
+      subject: `New ${interest} Inquiry from ${name}`,
+      html: await renderContactEmail({ name, email, age, interest, message }),
       text: [
-        "New website inquiry",
+        "New Website Inquiry",
         "",
         `Parent or guardian: ${name}`,
         `Email: ${email}`,

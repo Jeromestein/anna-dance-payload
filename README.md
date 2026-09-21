@@ -162,6 +162,22 @@ admin and Faculty preview require a working PostgreSQL connection.
 
 ## Email delivery
 
+The seven custom notification variants use React Email in `src/lib/email/templates.tsx`:
+website inquiry, Student registration (email and Google share one template), payment request,
+customer/school payment confirmation, and customer/school full-refund confirmation. Each sends
+branded HTML with the public Academy logo alongside the existing plain-text body. Supabase Auth,
+Payload Staff recovery, and Cal.com templates are managed separately.
+The shared `src/lib/email/email-brand-logo.tsx` component matches the site's horizontal wordmark:
+a circular dancer mark beside the two-line Academy name on the footer's deep teal background.
+The complete email layout and Title Case rules are in the
+[email design specification](docs/project/legacy-design-notes.md#16-email-design-system).
+
+With the existing local development server running, open `/api/dev/email-preview` to inspect all
+seven variants using fictional sample data. This preview sends no email, reads no accounts, and
+returns 404 outside development. Check desktop and mobile widths after changing the shared layout.
+Billing retries reuse the immutable stored payload, including its original HTML when present;
+previously attempted plain-text emails keep their original body.
+
 The public contact form and Payload Staff password recovery share the same Resend account and
 server-only `RESEND_API_KEY`. Payload's `/admin/forgot` flow uses the official
 `@payloadcms/email-resend` adapter and sends from the address extracted from `RESEND_FROM_EMAIL`.

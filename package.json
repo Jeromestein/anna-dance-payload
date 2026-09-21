@@ -35,6 +35,7 @@
     "payload": "3.88.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
+    "react-email": "6.9.5",
     "sharp": "0.34.2",
     "stripe": "22.6.2"
   },
