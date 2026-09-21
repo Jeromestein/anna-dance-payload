@@ -93,6 +93,21 @@ export function parseCents(value: string) {
   return Number(whole) * 100 + Number(fraction.padEnd(2, '0'))
 }
 export function readItems(form: FormData): BillItem[] {
+  if (form.get('bill_kind') === 'other') {
+    const name = String(form.get('fee_name') ?? '').trim()
+    const note = String(form.get('fee_note') ?? '').trim()
+    if (!name || name.length > 100 || note.length > 90)
+      throw new Error(
+        'Enter a fee name up to 100 characters and an optional note up to 90 characters.',
+      )
+    return [
+      {
+        description: note ? `${name} — ${note}` : name,
+        quantity: 1,
+        unit_amount_cents: readAgreedTotal(form),
+      },
+    ]
+  }
   if (form.get('bill_kind') === 'courses') {
     const keys = form.getAll('course_key').map(String)
     const counts = form.getAll('credit_count').map(String)
@@ -104,20 +119,30 @@ export function readItems(form: FormData): BillItem[] {
       new Set(keys).size !== keys.length
     )
       throw new Error('Choose each included course once, with its number of lessons.')
-    return keys.map((key, index) => {
-      const course = courseOption(key)
-      const count = Number(counts[index])
-      if (!course || !Number.isInteger(count) || count < 1 || count > 100)
-        throw new Error('Choose a course and enter 1–100 lessons.')
-      return {
-        course_key: key,
-        description: `${course.name} · ${course.minutes} minutes`,
-        credit_count: count,
-        lesson_duration_minutes: course.minutes,
-        quantity: 1,
-        unit_amount_cents: null,
-      }
-    })
+    const items = keys
+      .map((key, index) => {
+        const course = courseOption(key)
+        const count = Number(counts[index])
+        if (
+          !course ||
+          !/^\d+$/.test(counts[index]) ||
+          !Number.isInteger(count) ||
+          count < 0 ||
+          count > 100
+        )
+          throw new Error('Enter a whole number from 0 to 100 for each course.')
+        return {
+          course_key: key,
+          description: `${course.name} · ${course.minutes} minutes`,
+          credit_count: count,
+          lesson_duration_minutes: course.minutes,
+          quantity: 1,
+          unit_amount_cents: null,
+        }
+      })
+      .filter((item) => item.credit_count > 0)
+    if (!items.length) throw new Error('Enter at least one lesson before continuing.')
+    return items
   }
   if (form.get('bill_kind') === 'fixed') {
     const name = String(form.get('package_name') ?? '').trim()

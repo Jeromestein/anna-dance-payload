@@ -2,6 +2,8 @@
 
 Date: September 21, 2026
 
+Update: The course-credit migration was subsequently applied to production at 21:47:40 UTC to restore Billing. See [production migration and recovery evidence](course-credits-production-migration-20260921.md).
+
 ## Implemented locally
 
 - New course-payment mode: one administrator-entered total, up to four distinct course/count rows, and no per-course price allocation.
@@ -26,7 +28,7 @@ Date: September 21, 2026
 
 ## Deployment prerequisites
 
-1. Review and apply `supabase/migrations/20260922010000_course_credits.sql` to the intended database using the established migration workflow. This migration has only been executed on a disposable local database in this task.
+1. Review and apply `supabase/migrations/20260922010000_course_credits.sql` to the intended database using the established migration workflow. Completed for project `hsitmgmcekzobksgtjoj` at 21:47:40 UTC; see the production recovery evidence above. Do not reapply it.
 2. Deploy all new readers, email renderers, server actions, Checkout branching, and schedule/refund guards together before issuing any agreed-total bills. Old application instances do not understand nullable course-item amounts. Do not enable issuance during a mixed old/new deployment.
 3. Configure the four `STRIPE_TEST_PRODUCT_*` and, separately, `STRIPE_LIVE_PRODUCT_*` IDs listed in `.env.example`, using products in the configured merchant account. No fixed Price IDs are needed. Product lookup requires the appropriate read capability; verify actual restricted-key permissions.
 4. Preserve existing live payment/refund switches. Configuring a course catalog does not itself enable live collection. Restart the user's development server after environment/backend setup changes.

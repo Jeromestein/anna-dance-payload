@@ -7,7 +7,6 @@ import {
   readItems,
   readAgreedTotal,
   itemDetail,
-  itemAmount,
   type Bill,
   type BillItem,
 } from '@/lib/billing/model'
@@ -33,10 +32,11 @@ export function IssueBill({
   const [state, action, pending] = useActionState(manageBill, {})
   const [requestId, setRequestId] = useState(id)
   const [kind, setKind] = useState('courses')
-  const [items, setItems] = useState([{ key: 0, description: '', quantity: '1', price: '' }])
   const [review, setReview] = useState<BillItem[] | null>(null)
   const [validation, setValidation] = useState('')
-  const [courses, setCourses] = useState([{ key: 'solo30', count: '1' }])
+  const [courses, setCourses] = useState(() =>
+    courseOptions.map((course) => ({ key: course.key, count: '0' })),
+  )
   const [agreedTotal, setAgreedTotal] = useState(0)
   const [reviewDue, setReviewDue] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
@@ -91,9 +91,8 @@ export function IssueBill({
           <label>
             Payment type
             <select name="bill_kind" value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="courses">Course lessons · agreed total</option>
-              <option value="fixed">Other payment / camp · custom total</option>
-              <option value="general">Other itemized payment</option>
+              <option value="courses">Course purchase</option>
+              <option value="other">Other fees</option>
             </select>
           </label>
           {kind === 'courses' && (
@@ -110,105 +109,47 @@ export function IssueBill({
                   required
                 />
               </label>
-              <p>
-                Enter the agreed total for this entire request. List the included lessons below.
-              </p>
-              {courses.map((row, index) => (
-                <div className={styles.row} key={index}>
-                  <label>
-                    Course {index + 1}
-                    <select
-                      name="course_key"
-                      value={row.key}
-                      onChange={(e) =>
-                        setCourses(
-                          courses.map((c, i) => (i === index ? { ...c, key: e.target.value } : c)),
-                        )
-                      }
-                    >
-                      {courseOptions.map((course) => (
-                        <option key={course.key} value={course.key}>
-                          {course.name} · {course.minutes} minutes
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Number of lessons
-                    <input
-                      name="credit_count"
-                      type="number"
-                      min="1"
-                      max="100"
-                      step="1"
-                      required
-                      value={row.count}
-                      onChange={(e) =>
-                        setCourses(
-                          courses.map((c, i) =>
-                            i === index ? { ...c, count: e.target.value } : c,
-                          ),
-                        )
-                      }
-                    />
-                  </label>
-                  {courses.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setCourses(courses.filter((_, i) => i !== index))}
-                    >
-                      Remove course {index + 1}
-                    </button>
-                  )}
-                </div>
+              <p>Enter the total and lesson counts. Leave unused courses at 0.</p>
+              {courseOptions.map((course) => (
+                <input key={course.key} type="hidden" name="course_key" value={course.key} />
               ))}
-              <button
-                type="button"
-                disabled={courses.length >= 4}
-                onClick={() =>
-                  setCourses([
-                    ...courses,
-                    {
-                      key:
-                        courseOptions.find((c) => !courses.some((r) => r.key === c.key))?.key ??
-                        'group',
-                      count: '1',
-                    },
-                  ])
-                }
-              >
-                Add course
-              </button>
-            </fieldset>
-          )}
-          {kind === 'fixed' && (
-            <fieldset>
-              <legend>Course and agreed fee</legend>
-              <label>
-                Course / camp name
-                <input name="package_name" required maxLength={60} />
-              </label>
-              <div className={styles.row}>
-                <label>
-                  Number of lessons / days
+              {courseOptions.map((course, index) => (
+                <label
+                  className={styles.courseCount}
+                  key={course.key}
+                  htmlFor={`${requestId}-${course.key}-count`}
+                >
+                  <span>
+                    {course.name} · {course.minutes} minutes
+                  </span>
                   <input
-                    name="course_count"
+                    id={`${requestId}-${course.key}-count`}
+                    name="credit_count"
                     type="number"
-                    min="1"
+                    min="0"
                     max="100"
                     step="1"
-                    defaultValue="1"
                     required
+                    value={courses[index].count}
+                    onChange={(e) =>
+                      setCourses(
+                        courses.map((row, i) =>
+                          i === index ? { ...row, count: e.target.value } : row,
+                        ),
+                      )
+                    }
                   />
                 </label>
-                <label>
-                  Unit
-                  <select name="course_unit">
-                    <option value="lessons">Lessons</option>
-                    <option value="days">Days</option>
-                  </select>
-                </label>
-              </div>
+              ))}
+            </fieldset>
+          )}
+          {kind === 'other' && (
+            <fieldset>
+              <legend>Fee details</legend>
+              <label>
+                Fee name
+                <input name="fee_name" required maxLength={100} />
+              </label>
               <label>
                 Total to collect (USD)
                 <input
@@ -221,128 +162,34 @@ export function IssueBill({
                 />
               </label>
               <label>
-                Dates and fee explanation
+                Note (optional)
                 <textarea
-                  name="coverage"
-                  required
-                  maxLength={100}
-                  placeholder="e.g. December 5–19; includes 3 classes, after prior credit"
+                  name="fee_note"
+                  maxLength={90}
+                  placeholder="e.g. Winter camp, December 21–23"
                 />
               </label>
-              <p>
-                Enter the final agreed total. This option records a charge without creating course
-                credits. The account holder will see these details.
-              </p>
+              <p>For camp, events, or other fees. This payment does not include lesson credits.</p>
             </fieldset>
           )}
-          {!['fixed', 'courses'].includes(kind) &&
-            items.map((item, index) => (
-              <fieldset key={item.key}>
-                <legend>
-                  {kind === 'lessons' ? 'Course' : 'Item'} {index + 1}
-                </legend>
-                <label>
-                  {kind === 'lessons' ? 'Course / package name' : 'Description'}
-                  <input
-                    name="description"
-                    required
-                    maxLength={kind === 'lessons' ? 185 : 200}
-                    value={item.description}
-                    onChange={(e) =>
-                      setItems(
-                        items.map((i) =>
-                          i.key === item.key ? { ...i, description: e.target.value } : i,
-                        ),
-                      )
-                    }
-                  />
-                </label>
-                <div className={styles.row}>
-                  <label>
-                    {kind === 'lessons' ? 'Number of lessons' : 'Quantity'}
-                    <input
-                      name="quantity"
-                      type="number"
-                      min="1"
-                      max="100"
-                      step="1"
-                      required
-                      value={item.quantity}
-                      onChange={(e) =>
-                        setItems(
-                          items.map((i) =>
-                            i.key === item.key ? { ...i, quantity: e.target.value } : i,
-                          ),
-                        )
-                      }
-                    />
-                  </label>
-                  <label>
-                    {kind === 'lessons' ? 'Price per lesson (USD)' : 'Unit price (USD)'}
-                    <input
-                      name="price"
-                      type="number"
-                      min={kind === 'lessons' ? '0.01' : '0'}
-                      max="100000"
-                      step="0.01"
-                      required
-                      value={item.price}
-                      onChange={(e) =>
-                        setItems(
-                          items.map((i) =>
-                            i.key === item.key ? { ...i, price: e.target.value } : i,
-                          ),
-                        )
-                      }
-                    />
-                  </label>
-                </div>
-                {items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setItems(items.filter((i) => i.key !== item.key))}
-                  >
-                    Remove item {index + 1}
-                  </button>
-                )}
-              </fieldset>
-            ))}
-          {!['fixed', 'courses'].includes(kind) && (
-            <button
-              type="button"
-              disabled={items.length >= 20}
-              onClick={() =>
-                setItems([
-                  ...items,
-                  {
-                    key: Math.max(...items.map((i) => i.key)) + 1,
-                    description: '',
-                    quantity: '1',
-                    price: '',
-                  },
-                ])
-              }
-            >
-              Add item
-            </button>
-          )}
-        </div>
-        <div hidden={Boolean(review)}>
-          <label>
-            Due date (optional)
-            <input type="date" name="due" />
-          </label>
-          <label>
-            Replaces an earlier payment request (optional)
-            <select name="replaces">
-              <option value="">None</option>
-              {bills.map((bill) => (
-                <option key={bill.id} value={bill.id}>
-                  {bill.bill_number} · {money(bill.amount_cents, bill.currency)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <details className={styles.issueOptions}>
+            <summary>More options</summary>
+            <label>
+              Due date (optional)
+              <input type="date" name="due" />
+            </label>
+            <label>
+              Replaces an earlier payment request (optional)
+              <select name="replaces">
+                <option value="">None</option>
+                {bills.map((bill) => (
+                  <option key={bill.id} value={bill.id}>
+                    {bill.bill_number} · {money(bill.amount_cents, bill.currency)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </details>
         </div>
         {review && (
           <div className={styles.issueReview}>
@@ -351,20 +198,21 @@ export function IssueBill({
                 <li key={i}>
                   <span>
                     {item.description}
-                    <small>{itemDetail(item, 'usd')}</small>
+                    {kind === 'courses' && <small>{itemDetail(item, 'usd')}</small>}
                   </span>
-                  <strong>{itemAmount(item, 'usd')}</strong>
                 </li>
               ))}
             </ul>
             <p className={styles.issueTotal}>
               Total <strong>{money(total ?? 0, 'usd')} USD</strong>
             </p>
-            <p>Due date: {reviewDue}</p>
+            {reviewDue !== 'Not set' && <p>Due date: {reviewDue}</p>}
             <p>
-              {['lessons', 'courses'].includes(kind) && 'Lesson dates are arranged separately. '}The
-              course details and total cannot be changed after creation. Creating a request does not
-              charge the student.
+              {kind === 'courses'
+                ? 'Lesson dates are arranged separately. '
+                : 'This payment does not include lesson credits. '}
+              The payment details and total cannot be changed after creation. Creating a request
+              does not charge the student.
             </p>
             {!saved && (
               <label className={styles.confirm}>
@@ -380,7 +228,12 @@ export function IssueBill({
           </div>
         )}
         {!saved && (
-          <button className={styles.primaryAction} disabled={pending}>
+          <button
+            className={styles.primaryAction}
+            disabled={
+              pending || (kind === 'courses' && !courses.some((course) => Number(course.count) > 0))
+            }
+          >
             {pending ? 'Creating…' : review ? 'Create payment link' : 'Review payment details'}
           </button>
         )}
@@ -405,8 +258,7 @@ export function IssueBill({
             type="button"
             onClick={() => {
               setRequestId(crypto.randomUUID())
-              setCourses([{ key: 'solo30', count: '1' }])
-              setItems([{ key: 0, description: '', quantity: '1', price: '' }])
+              setCourses(courseOptions.map((course) => ({ key: course.key, count: '0' })))
               formRef.current?.reset()
               edit()
             }}

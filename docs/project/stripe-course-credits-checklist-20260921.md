@@ -2,7 +2,7 @@
 
 Date: September 21, 2026
 
-Status: Core implementation completed locally; production migration, Stripe product configuration, and hosted acceptance remain pending. See [local implementation and acceptance](../operations/course-credits-local-acceptance-20260921.md).
+Status: Core implementation is committed and the production database migration is applied. Stripe product configuration and hosted purchase acceptance remain pending. See [production Billing recovery](../operations/course-credits-production-migration-20260921.md). See [local implementation and acceptance](../operations/course-credits-local-acceptance-20260921.md).
 
 ## Outcome
 
@@ -96,20 +96,20 @@ An item is allocatable only when its bill is verified paid, belongs to the selec
 
 ## Intended interface
 
-Admin flow: **Student → Billing → Create payment request → Course lessons**.
+Admin flow: **Student → Billing → Create payment request → Course purchase**.
 
 1. Show the selected student.
 2. Enter **Total to collect (USD)** once for the whole request. This is a freely entered negotiated amount, not a product-price calculation.
-3. Add one or more **Course + Number of lessons** rows, choosing from the four courses. Staff do not type Product IDs or per-course prices. Include optional coverage notes and due date.
+3. Show all four courses with lesson counts defaulting to **0**. Require at least one positive whole-number count; omit zero-count courses from the bill. Do not show course selectors or add/remove buttons. Staff do not type Product IDs or per-course prices. Due date and replacement-bill selection are under the collapsed **More options** section.
 4. Review the one total followed by the included courses and their individual counts. Do not show a price beside each course, a per-lesson rate, or an allocated subtotal.
 5. Create the bill; retain Preview, Copy payment link, and Send payment email.
 6. After verified payment, show “3 purchased · 0 scheduled · 0 completed · 3 available to schedule,” with **Schedule lessons**.
 
 The customer reviews the same overall total and course/count breakdown on the bill page. Keep terms acknowledgement, teacher note, login return, pending payment handling, and existing email delivery behavior.
 
-Academy billing emails show **Total: [the saved negotiated total]**, followed by each included course's name, duration, and purchased count. For example, the course list can read “Solo Class · 30 minutes — 3 lessons” and “Group Class · 60 minutes — 6 lessons,” without an amount beside either course. Do not hard-code amounts, show course subtotals, or derive a per-lesson rate. Payment-request emails show Unpaid; verified confirmations to the customer and Academy show Paid. Refund emails retain the original overall total and course/count breakdown, clearly distinguishing the refunded amount and status. Apply this to both HTML and plain text. These requirements concern website billing notifications; Stripe or Cal.com receipts require separate verification.
+Academy billing emails show **Total: [the saved negotiated total]**, followed by each included course's name, duration, and purchased count. For example, the course list can read “Solo Class · 30 minutes — 3 lessons” and “Group Class · 60 minutes — 6 lessons,” without an amount beside either course. Do not hard-code amounts, show course subtotals, or derive a per-lesson rate. Payment-request emails show Unpaid; verified confirmations to the customer and Academy show Paid. Refund emails show the refund amount and status without the course/count breakdown. Apply this to both HTML and plain text. These requirements concern website billing notifications; Stripe or Cal.com receipts require separate verification.
 
-The new mode replaces the overlapping custom-total/per-lesson entry choices for these four courses. Preserve a clearly named **Other payment / camp** path for non-credit charges and days. Historical formats continue to render correctly.
+The creation form has only **Course purchase** (default) and **Other fees**. Other fees require a fee name and one total, with an optional note; they do not request lesson/day counts or grant lesson credits. Itemized and legacy package entry forms are removed from this UI while historical records and server parsing remain compatible. Due date and replacement-bill selection are collapsed under **More options**.
 
 Scheduling flow: select a paid course item, choose a date/start time in `America/New_York`, derive the end time from its stored duration, and enter a location. Support one lesson or a reviewed weekly batch with explicit skipped dates. Show purchased, already allocated, and remaining counts before saving.
 

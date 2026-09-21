@@ -98,15 +98,40 @@ describe('negotiated total and included course credits', () => {
     fireEvent.change(screen.getByLabelText('Total to collect (USD)'), {
       target: { value: '173.29' },
     })
-    fireEvent.change(screen.getByLabelText('Number of lessons'), { target: { value: '3' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Add course' }))
-    fireEvent.change(screen.getAllByLabelText('Number of lessons')[1], { target: { value: '6' } })
+    expect(
+      (screen.getByRole('button', { name: 'Review payment details' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true)
+    expect(screen.queryByRole('button', { name: 'Add course' })).toBeNull()
+    for (const label of [
+      'Group Class · 60 minutes',
+      'Duet Class · 60 minutes',
+      'Solo Class · 30 minutes',
+      'Solo Class · 60 minutes',
+    ]) {
+      expect((screen.getByLabelText(label) as HTMLInputElement).value).toBe('0')
+    }
+    fireEvent.change(screen.getByLabelText('Solo Class · 30 minutes'), { target: { value: '3' } })
+    fireEvent.change(screen.getByLabelText('Group Class · 60 minutes'), { target: { value: '6' } })
     fireEvent.click(screen.getByRole('button', { name: 'Review payment details' }))
     expect(screen.getByText('$173.29 USD')).toBeDefined()
     expect(screen.getByText('3 lessons included')).toBeDefined()
     expect(screen.getByText('6 lessons included')).toBeDefined()
     expect(screen.queryByLabelText('Unit price (USD)')).toBeNull()
     expect(screen.queryByText('$0.00')).toBeNull()
+  })
+  it('omits zero-count courses and rejects empty or invalid credit requests', () => {
+    const form = courseForm()
+    form.append('course_key', 'duet')
+    form.append('credit_count', '0')
+    form.append('course_key', 'solo60')
+    form.append('credit_count', '0')
+    expect(readItems(form).map((item) => item.course_key)).toEqual(['solo30', 'group'])
+    for (const invalid of ['0', '-1', '1.5', '', '101']) {
+      form.delete('credit_count')
+      for (const count of [invalid, '0', '0', '0']) form.append('credit_count', count)
+      expect(() => readItems(form)).toThrow()
+    }
   })
   it.each([
     'request',

@@ -101,7 +101,7 @@ export async function manageBill(
       error:
         error instanceof Error &&
         operation === 'issue' &&
-        /^(The bill total|Enter a course name|Enter a valid price|Check the item|Use a shorter|Add between|Choose |Course products|The selected course|Each course)/.test(
+        /^(The bill total|Enter a whole number|Enter at least one lesson|Enter a fee name|Enter a course name|Enter a valid price|Check the item|Use a shorter|Add between|Choose |Course products|The selected course|Each course)/.test(
           error.message,
         )
           ? error.message

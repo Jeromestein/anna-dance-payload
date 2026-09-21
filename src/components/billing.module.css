@@ -800,3 +800,30 @@
     flex: 1 1 200px;
   }
 }
+
+.issueOptions {
+  margin-top: 20px;
+  border-top: 1px solid var(--theme-elevation-150, #eadfe5);
+  padding-top: 16px;
+}
+.issueOptions > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.issueOptions[open] > summary {
+  margin-bottom: 16px;
+}
+.issueOptions > summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+.issueOptions > label + label {
+  margin-top: 14px;
+}
+
+.form .courseCount {
+  grid-template-columns: minmax(0, 1fr) 88px;
+  align-items: center;
+  gap: 16px;
+}

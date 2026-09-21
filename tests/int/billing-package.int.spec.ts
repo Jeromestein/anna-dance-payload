@@ -74,31 +74,40 @@ describe('lesson package and test visibility', () => {
     form.set('total_price', '0.49')
     expect(() => readItems(form)).toThrow()
   })
-  it('reviews the custom amount and coverage before creating a bill', async () => {
-    render(
-      createElement(IssueBill, { owner: 'owner', ownerName: 'Jason', bills: [], id, test: true }),
-    )
-    fireEvent.change(screen.getByLabelText('Payment type'), { target: { value: 'fixed' } })
-    fireEvent.change(screen.getByLabelText('Course / camp name'), {
-      target: { value: 'Winter Camp' },
-    })
-    fireEvent.change(screen.getByLabelText('Number of lessons / days'), { target: { value: '3' } })
-    fireEvent.change(screen.getByLabelText('Unit'), { target: { value: 'days' } })
-    fireEvent.change(screen.getByLabelText('Total to collect (USD)'), {
-      target: { value: '100.01' },
-    })
-    fireEvent.change(screen.getByLabelText('Dates and fee explanation'), {
-      target: { value: 'Dec 21–23, after credit' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Review payment details' }))
-    expect(screen.getByText('Winter Camp (3 days) — Dec 21–23, after credit')).toBeDefined()
-    expect(screen.getByText('$100.01 USD')).toBeDefined()
-    expect(m.issue).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('checkbox'))
-    fireEvent.click(screen.getByRole('button', { name: 'Create payment link' }))
-    await waitFor(() => expect(m.issue).toHaveBeenCalledTimes(1))
-    expect(readItems(m.issue.mock.calls[0][1])[0].unit_amount_cents).toBe(10001)
-  })
+  it.each(['', 'Dec 21–23, after credit'])(
+    'reviews other fees with optional note %s without granting credits',
+    async (note) => {
+      render(
+        createElement(IssueBill, { owner: 'owner', ownerName: 'Jason', bills: [], id, test: true }),
+      )
+      fireEvent.change(screen.getByLabelText('Payment type'), { target: { value: 'other' } })
+      fireEvent.change(screen.getByLabelText('Fee name'), {
+        target: { value: 'Winter Camp' },
+      })
+      expect(screen.queryByLabelText('Number of lessons / days')).toBeNull()
+      expect(screen.queryByLabelText('Unit price (USD)')).toBeNull()
+      fireEvent.change(screen.getByLabelText('Total to collect (USD)'), {
+        target: { value: '100.01' },
+      })
+      fireEvent.change(screen.getByLabelText('Note (optional)'), {
+        target: { value: note },
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Review payment details' }))
+      expect(screen.getByText(note ? `Winter Camp — ${note}` : 'Winter Camp')).toBeDefined()
+      expect(screen.getByText('$100.01 USD')).toBeDefined()
+      expect(m.issue).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole('checkbox'))
+      fireEvent.click(screen.getByRole('button', { name: 'Create payment link' }))
+      await waitFor(() => expect(m.issue).toHaveBeenCalledTimes(1))
+      expect(readItems(m.issue.mock.calls[0][1])).toEqual([
+        {
+          description: note ? `Winter Camp — ${note}` : 'Winter Camp',
+          quantity: 1,
+          unit_amount_cents: 10001,
+        },
+      ])
+    },
+  )
   it.each(['live', null])(
     'hides demos/test actions in %s, including failed billing loads',
     (mode) => {
@@ -140,8 +149,7 @@ describe('lesson package and test visibility', () => {
     render(
       createElement(IssueBill, { owner: 'owner', ownerName: 'Jason', bills: [], id, test: true }),
     )
-    fireEvent.change(screen.getByLabelText('Course 1'), { target: { value: 'group' } })
-    fireEvent.change(screen.getByLabelText('Number of lessons'), { target: { value: '10' } })
+    fireEvent.change(screen.getByLabelText('Group Class · 60 minutes'), { target: { value: '10' } })
     fireEvent.change(screen.getByLabelText('Total to collect (USD)'), { target: { value: '300' } })
     fireEvent.click(screen.getByRole('button', { name: 'Review payment details' }))
     expect(screen.getByText('10 lessons included')).toBeDefined()
