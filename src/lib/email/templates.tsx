@@ -435,14 +435,6 @@ export function BillingEmail({
           </Text>
         )}
       </Section>
-      {refund && (bill.refunded_at || bill.refund_reference) && (
-        <Details
-          rows={[
-            ['Refund confirmed', bill.refunded_at],
-            ['Refund reference', bill.refund_reference],
-          ]}
-        />
-      )}
       {refund && (
         <Text style={paragraph}>
           Your bank or payment provider may need additional time to show the refund. This

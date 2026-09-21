@@ -106,8 +106,6 @@ export async function billingNotices(owner: string, id: string, requestPayment =
         summary,
         `Total: ${money(bill.amount_cents, bill.currency)}`,
         refund ? `Refund amount: ${money(bill.amount_cents, bill.currency)}` : '',
-        refund && bill.refunded_at ? `Refund confirmed: ${bill.refunded_at}` : '',
-        refund && bill.refund_reference ? `Refund reference: ${bill.refund_reference}` : '',
         refund ? 'Destination: Original payment method.' : '',
         refund
           ? 'Your bank or payment provider may need additional time to show the refund. This confirmation does not mean it has already appeared on your statement.'
