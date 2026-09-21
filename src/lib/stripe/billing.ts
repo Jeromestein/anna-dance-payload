@@ -1,5 +1,6 @@
 import 'server-only'
 import { randomUUID } from 'node:crypto'
+import { billPath } from '@/lib/billing/model'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { stripeContext, siteOrigin } from './config'
 import { paymentSnapshot } from './snapshot'
@@ -193,6 +194,36 @@ function assertEnvironmentForSync(bill: StoredBill, ctx: Context) {
   if (bill.stripe_account_id) assertEnvironment(bill, ctx)
 }
 
+// Read-only readiness check after owner authorization. A completed but unsynced
+// session must not look like a fresh payment request on the bill page.
+export async function checkoutReadiness(
+  owner: string,
+  id: string,
+): Promise<'ready' | 'pending' | 'unavailable'> {
+  try {
+    const bill = await getBill(owner, id)
+    if (bill.status !== 'payment_due') return 'unavailable'
+    if (!bill.stripe_checkout_session_id) {
+      return bill.stripe_checkout_key &&
+        (!bill.stripe_checkout_started_at ||
+          Date.now() - Date.parse(bill.stripe_checkout_started_at) > 23 * 3600000)
+        ? 'unavailable'
+        : 'ready'
+    }
+    const ctx = await stripeContext()
+    assertEnvironment(bill, ctx)
+    const session = await ctx.stripe.checkout.sessions.retrieve(bill.stripe_checkout_session_id)
+    if (session.livemode !== ctx.livemode) return 'unavailable'
+    return session.status === 'complete'
+      ? 'pending'
+      : session.status === 'open' || session.status === 'expired'
+        ? 'ready'
+        : 'unavailable'
+  } catch {
+    return 'unavailable'
+  }
+}
+
 export async function startCheckout(owner: string, id: string) {
   const ctx = await stripeContext()
   if (!ctx.enabled) throw new Error('Online payments are not enabled.')
@@ -249,8 +280,8 @@ export async function startCheckout(owner: string, id: string) {
           product_data: { name: i.description },
         },
       })),
-      success_url: `${origin}/account?message=Payment+submitted.+Your+bill+updates+after+verification.`,
-      cancel_url: `${origin}/account?message=Checkout+closed.+Check+your+bill+before+trying+again.`,
+      success_url: `${origin}${billPath(id)}?checkout=submitted`,
+      cancel_url: `${origin}${billPath(id)}?checkout=closed`,
     },
     { idempotencyKey: `ada-checkout-${bill.stripe_checkout_key}` },
   )

@@ -15,6 +15,7 @@ export async function notifyGoogleRegistration(userId: string) {
     if (!event) return
 
     const result = await sendStudentRegistrationNotification({
+      userId,
       studentName: event.student_name,
       email: event.email,
       registeredAt: event.registered_at,

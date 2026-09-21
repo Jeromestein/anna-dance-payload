@@ -12,6 +12,8 @@ import {
   uuidPattern,
 } from '@/lib/stripe/billing'
 import { randomUUID } from 'node:crypto'
+import { parseCents } from '@/lib/billing/model'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 export type StripeActionState = { error?: string; success?: string; url?: string }
 function values(form: FormData) {
@@ -23,6 +25,7 @@ function values(form: FormData) {
 }
 function refresh(owner: string) {
   revalidatePath('/account')
+  revalidatePath('/account/billing/[billId]', 'page')
   revalidatePath(`/admin/students/${owner}`)
 }
 function safeError(error: unknown) {
@@ -106,13 +109,26 @@ export async function createStripeTestBill(
     // idempotent. It has no authority over owner, amount or environment.
     const supplied = String(form.get('id') ?? '')
     const id = uuidPattern.test(supplied) ? supplied : randomUUID()
-    await stripeBillRPC('create_test', owner, id, {
-      account: ctx.account,
-      livemode: false,
-      actor: String(staff.id),
+    const amount = parseCents(String(form.get('price') ?? '0.50'))
+    if (amount < 50 || amount > 10000000)
+      return { error: 'Enter a test amount between $0.50 and $100,000.' }
+    const { data, error } = await createSupabaseAdminClient().rpc('app_issue_bill', {
+      p_owner: owner,
+      p_id: id,
+      p_actor: String(staff.id),
+      p_items: [
+        {
+          description: 'Stripe test payment — no real charge',
+          quantity: 1,
+          unit_amount_cents: amount,
+        },
+      ],
+      p_test_account: ctx.account,
     })
+    if (error || data !== id)
+      return { error: 'Could not create the test bill. Refresh before trying again.' }
     refresh(owner)
-    return { success: '$0.50 test bill created. Open it and choose Pay test bill.' }
+    return { success: 'Test bill created. Open it and choose Pay test bill.' }
   } catch (error) {
     return { error: safeError(error) }
   }
@@ -138,6 +154,18 @@ export async function checkoutStripeBill(
       const auth = await client.auth.getClaims()
       if (auth.error || !auth.data?.claims.sub) return { error: 'Sign in to pay your bill.' }
       owner = auth.data.claims.sub
+      if (form.get('termsAccepted') !== 'yes')
+        return { error: 'Review your bill and agree to the website terms before paying.' }
+      const note = String(form.get('note') ?? '').trim()
+      if (note.length > 500) return { error: 'Keep your message within 500 characters.' }
+      const acknowledgement = await createSupabaseAdminClient().rpc('app_accept_bill', {
+        p_owner: owner,
+        p_id: id,
+        p_terms: 'website-terms-2026-09-10',
+        p_note: note,
+      })
+      if (acknowledgement.error)
+        return { error: 'Could not save your confirmation. Refresh the bill before paying.' }
     }
     const url = await startCheckout(owner, id)
     refresh(owner)

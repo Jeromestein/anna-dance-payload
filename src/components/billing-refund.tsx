@@ -448,11 +448,13 @@ export function RefundLauncher({
   ownerName,
   bills,
   unavailable = false,
+  allowDemo = false,
 }: {
   owner: string
   ownerName: string
   bills: Bill[]
   unavailable?: boolean
+  allowDemo?: boolean
 }) {
   const [mode, setMode] = useState<'closed' | 'real' | 'demo'>('closed')
   const [selectedId, setSelectedId] = useState('')
@@ -477,22 +479,23 @@ export function RefundLauncher({
         >
           Refund payment
         </button>
-        <button
-          type="button"
-          className={styles.refundButton}
-          aria-expanded={mode === 'demo'}
-          aria-controls={panelId}
-          onClick={() => setMode(mode === 'demo' ? 'closed' : 'demo')}
-        >
-          Try refund demo
-        </button>
+        {allowDemo && (
+          <button
+            type="button"
+            className={styles.refundButton}
+            aria-expanded={mode === 'demo'}
+            aria-controls={panelId}
+            onClick={() => setMode(mode === 'demo' ? 'closed' : 'demo')}
+          >
+            Try refund demo
+          </button>
+        )}
       </div>
       <div id={panelId} hidden={mode === 'closed'}>
         {mode === 'real' &&
           (unavailable ? (
             <p role="alert">
-              Payment records could not be loaded. Try the demo, or reload before reviewing a real
-              payment.
+              Payment records could not be loaded. Reload before reviewing a payment.
             </p>
           ) : selectedBill ? (
             <>
@@ -518,11 +521,11 @@ export function RefundLauncher({
             </>
           ) : (
             <p role="status">
-              No paid bills are recorded for this student yet. Historical payments must be imported
-              before they can be refunded here. You can still try the refund demo.
+              No payments available for refund. Review the billing history below. Import a
+              historical payment only if it is missing from that history.
             </p>
           ))}
-        {mode === 'demo' && (
+        {allowDemo && mode === 'demo' && (
           <BillingRefund
             key="demo"
             owner="demo"

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { balanceDue, money, statusLabels, type Bill } from '@/lib/billing/model'
+import { balanceDue, billPath, money, statusLabels, type Bill } from '@/lib/billing/model'
 import { StripeCheckout } from './stripe-billing-controls'
 import styles from './billing.module.css'
 
@@ -13,15 +13,17 @@ export function BillDetails({
   bill,
   bills,
   children,
+  expanded = false,
 }: {
   bill: Bill
   bills: Bill[]
   children?: ReactNode
+  expanded?: boolean
 }) {
   const replaced = bills.find((b) => b.id === bill.replaces_payment_id)
   const replacements = bills.filter((b) => b.replaces_payment_id === bill.id)
   return (
-    <details className={styles.bill} id={`bill-${bill.id}`}>
+    <details open={expanded} className={styles.bill} id={`bill-${bill.id}`}>
       <summary>
         <span>
           <strong>{bill.app_payment_items[0]?.description || 'Billing record'}</strong>
@@ -151,7 +153,15 @@ export function BillDetails({
           <p role="alert">Refund did not complete. Contact the academy.</p>
         )}
         {bill.checkout_available && !children && (
-          <StripeCheckout id={bill.id} test={bill.stripe_livemode === false} />
+          <StripeCheckout
+            acknowledgement={bill.app_bill_acknowledgements}
+            id={bill.id}
+            test={bill.stripe_livemode === false}
+            amountLabel={money(bill.amount_cents, bill.currency)}
+          />
+        )}
+        {bill.app_bill_acknowledgements?.note && (
+          <p>Your message: {bill.app_bill_acknowledgements.note}</p>
         )}
         {bill.status === 'payment_due' && !bill.checkout_available && (
           <p>
@@ -170,6 +180,11 @@ export function BillDetails({
             only.
           </p>
         )}
+        {!children && (
+          <p>
+            <a href={billPath(bill.id)}>View this bill</a>
+          </p>
+        )}
         {children}
       </div>
     </details>
@@ -179,7 +194,12 @@ export function BillingRecords({ bills, unavailable }: { bills: Bill[]; unavaila
   if (unavailable)
     return <p role="alert">Billing records could not be loaded. Please try again later.</p>
   if (!bills.length)
-    return <p>No billing activity yet. Verified charges and payments will appear here.</p>
+    return (
+      <p>
+        No payment is due yet. The academy will email you when your bill is ready. Your bills and
+        payment history will appear here.
+      </p>
+    )
   return (
     <div className={styles.records}>
       {bills.map((bill) => (

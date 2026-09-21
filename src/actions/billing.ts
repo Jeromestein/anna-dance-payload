@@ -3,9 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { requirePayloadAdministrator } from '@/lib/staff/auth'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
-import { readItems } from '@/lib/billing/model'
+import { billPath, readItems } from '@/lib/billing/model'
+import { stripeSettings } from '@/lib/stripe/config'
 
-export type BillingActionState = { error?: string; success?: string }
+export type BillingActionState = { error?: string; success?: string; billId?: string }
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function manageBill(
@@ -40,7 +41,7 @@ export async function manageBill(
       return { error: 'Enter the verified transaction reference.' }
     if (operation === 'refunded' && (!reason || reason.length > 500))
       return { error: 'Enter the refund reason.' }
-    const { error } = await createSupabaseAdminClient().rpc('app_manage_bill', {
+    const args = {
       p_owner: owner,
       p_id: id,
       p_actor: String(staff.id),
@@ -51,15 +52,29 @@ export async function manageBill(
       p_channel: String(form.get('channel') ?? '') || null,
       p_reference: reference || null,
       p_reason: reason || null,
-    })
-    if (error)
+    }
+    const { error, data } =
+      operation === 'issue'
+        ? await createSupabaseAdminClient().rpc('app_issue_bill', {
+            p_owner: owner,
+            p_id: id,
+            p_actor: String(staff.id),
+            p_items: items,
+            p_due: due || null,
+            p_replaces: replaces || null,
+            p_test_account: process.env.STRIPE_MODE === 'test' ? stripeSettings().account : null,
+          })
+        : await createSupabaseAdminClient().rpc('app_manage_bill', args)
+    if (error || (operation === 'issue' && data !== id))
       return {
         error:
           'Could not save. Refresh to check whether this bill changed or the transaction was already recorded. Billing setup may be incomplete.',
       }
     revalidatePath('/account')
+    revalidatePath(billPath(id))
     revalidatePath(`/admin/students/${owner}`)
     return {
+      billId: operation === 'issue' ? id : undefined,
       success:
         operation === 'issue'
           ? 'Bill issued. Its charges are now locked.'
@@ -70,7 +85,9 @@ export async function manageBill(
       error:
         error instanceof Error &&
         operation === 'issue' &&
-        error.message.startsWith('The bill total')
+        /^(The bill total|Enter a course name|Enter a valid price|Check the item|Use a shorter|Add between)/.test(
+          error.message,
+        )
           ? error.message
           : 'Check your entries and try again. Billing may be unavailable.',
     }

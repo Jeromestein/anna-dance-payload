@@ -6,7 +6,7 @@ import { notFound, redirect } from 'next/navigation'
 
 import { updateManagedStudentProfile } from '@/actions/student-profiles'
 import { isAdministratorUser } from '@/access/staff'
-import { stripeAvailability } from '@/lib/stripe/config'
+import { siteOrigin, stripeAvailability } from '@/lib/stripe/config'
 import { loadBills } from '@/lib/billing/load'
 import { billingSummary } from '@/lib/billing/model'
 import { BillingAdmin } from '@/components/billing-admin'
@@ -335,6 +335,32 @@ export async function StudentDetailView(props: AdminViewServerProps) {
   const routeError = getSearchParam(props.searchParams?.error)
   const message = getSearchParam(props.searchParams?.message)
   const billing = await loadBills(supabase, id)
+  if (billing.bills.length) {
+    const ids = billing.bills.map((bill) => bill.id)
+    const [notices, notes] = await Promise.all([
+      supabase
+        .from('app_billing_notifications')
+        .select('payment_id,kind,status,sent_at')
+        .in('payment_id', ids),
+      supabase
+        .from('app_bill_acknowledgements')
+        .select('payment_id,note')
+        .eq('user_profile_id', id)
+        .in('payment_id', ids),
+    ])
+    for (const bill of billing.bills) {
+      if (!notices.error)
+        bill.email_notices = (notices.data ?? []).filter((notice) => notice.payment_id === bill.id)
+      if (!notes.error)
+        bill.teacher_note = notes.data?.find((note) => note.payment_id === bill.id)?.note
+    }
+  }
+  let paymentOrigin: string | undefined
+  try {
+    paymentOrigin = siteOrigin()
+  } catch {
+    /* Copy links stay unavailable until configured. */
+  }
   const scheduleEntries = ((scheduleResult.data ?? []) as StoredScheduleEntry[]).map(
     mapStoredScheduleEntry,
   )
@@ -405,6 +431,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
                 </div>
               </header>
               <BillingAdmin
+                paymentOrigin={paymentOrigin}
                 stripeConfig={stripeAvailability()}
                 testBillId={crypto.randomUUID()}
                 newBillId={crypto.randomUUID()}

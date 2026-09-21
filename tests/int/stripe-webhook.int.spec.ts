@@ -1,7 +1,13 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Stripe from 'stripe'
-const mocks = vi.hoisted(() => ({ sync: vi.fn(), ctx: vi.fn(), settings: vi.fn() }))
+const mocks = vi.hoisted(() => ({
+  sync: vi.fn(),
+  ctx: vi.fn(),
+  settings: vi.fn(),
+  notices: vi.fn(),
+}))
+vi.mock('@/lib/email/billing-notifications.server', () => ({ billingNotices: mocks.notices }))
 vi.mock('@/lib/stripe/config', () => ({ stripeContext: mocks.ctx, stripeSettings: mocks.settings }))
 vi.mock('@/lib/stripe/billing', () => ({ synchronizePayment: mocks.sync }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
@@ -29,6 +35,7 @@ beforeEach(() => {
   mocks.settings.mockReturnValue({ secret, livemode: false, account: 'acct_123' })
   mocks.ctx.mockResolvedValue({})
   mocks.sync.mockResolvedValue({ bill: { user_profile_id: 'owner' } })
+  mocks.notices.mockResolvedValue({ sent: 2 })
 })
 describe('Stripe webhook verification', () => {
   it('verifies a signed raw payload before synchronization', async () => {
@@ -38,6 +45,15 @@ describe('Stripe webhook verification', () => {
   it('rejects invalid and old signatures without touching the provider or database', async () => {
     expect((await POST(request({}, 'bad'))).status).toBe(400)
     expect(mocks.ctx).not.toHaveBeenCalled()
+  })
+  it('keeps a saved payment and requests a webhook retry when email fails', async () => {
+    mocks.notices.mockRejectedValue(new Error('provider unavailable'))
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect((await POST(request())).status).toBe(503)
+    expect(mocks.sync).toHaveBeenCalledTimes(1)
+    mocks.notices.mockResolvedValue({ sent: 2 })
+    expect((await POST(request())).status).toBe(200)
+    log.mockRestore()
   })
   it('rejects wrong live mode and connected account', async () => {
     expect((await POST(request({ livemode: true }))).status).toBe(400)

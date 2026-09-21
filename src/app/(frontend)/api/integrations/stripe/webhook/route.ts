@@ -2,6 +2,7 @@ import Stripe from 'stripe'
 import { stripeContext, stripeSettings } from '@/lib/stripe/config'
 import { synchronizePayment } from '@/lib/stripe/billing'
 import { revalidatePath } from 'next/cache'
+import { billingNotices } from '@/lib/email/billing-notifications.server'
 
 export const runtime = 'nodejs'
 const accepted = new Set([
@@ -52,7 +53,20 @@ export async function POST(request: Request) {
     const ctx = await stripeContext()
     const result = await synchronizePayment(ctx, id, { eventId: event.id })
     revalidatePath('/account')
+    revalidatePath('/account/billing/[billId]', 'page')
     revalidatePath(`/admin/students/${result.bill.user_profile_id}`)
+    try {
+      await billingNotices(result.bill.user_profile_id, result.bill.id)
+    } catch {
+      // Payment is already persisted. Retry only the durable, deduplicated notices.
+      console.error('Stripe payment saved; billing email delivery needs retry', {
+        eventId: event.id,
+      })
+      return Response.json(
+        { error: 'Payment saved. Notification delivery needs retry.' },
+        { status: 503 },
+      )
+    }
     return Response.json({ status: 'synchronized' })
   } catch {
     // Keep unresolved events retryable and visible in Stripe Workbench. Do not

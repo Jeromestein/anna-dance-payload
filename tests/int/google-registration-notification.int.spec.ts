@@ -49,6 +49,7 @@ describe('Google registration notification', () => {
       student_id: event.user_id,
     })
     expect(mocks.send).toHaveBeenCalledExactlyOnceWith({
+      userId: event.user_id,
       studentName: event.student_name,
       email: event.email,
       registeredAt: event.registered_at,

@@ -1,6 +1,8 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState } from 'react'
+import { IssueBill } from './billing-issue'
+import { BillShareTools } from './billing-share-tools'
 import { manageBill } from '@/actions/billing'
 import { money, type Bill } from '@/lib/billing/model'
 import { BillDetails } from './billing-records'
@@ -55,127 +57,6 @@ function BillAction({
     </form>
   )
 }
-function IssueBill({ owner, bills, id }: { owner: string; bills: Bill[]; id: string }) {
-  const [state, action, pending] = useActionState(manageBill, {})
-  const [items, setItems] = useState([{ key: 0, description: '', quantity: '1', price: '' }])
-  const total = items.reduce(
-    (sum, item) => sum + Math.round(Number(item.price) * 100) * Number(item.quantity),
-    0,
-  )
-  return (
-    <form action={action} className={styles.form}>
-      <input type="hidden" name="owner" value={owner} />
-      <input type="hidden" name="id" value={id} />
-      <input type="hidden" name="operation" value="issue" />
-      <h3>Create an itemized bill</h3>
-      <p>Review the charges before issuing. Issued amounts cannot be edited.</p>
-      {items.map((item, index) => (
-        <fieldset key={item.key}>
-          <legend>Item {index + 1}</legend>
-          <label>
-            Description
-            <input
-              name="description"
-              required
-              maxLength={200}
-              value={item.description}
-              onChange={(e) =>
-                setItems(
-                  items.map((i) =>
-                    i.key === item.key ? { ...i, description: e.target.value } : i,
-                  ),
-                )
-              }
-            />
-          </label>
-          <div className={styles.row}>
-            <label>
-              Quantity
-              <input
-                type="number"
-                name="quantity"
-                min="1"
-                max="100"
-                step="1"
-                required
-                value={item.quantity}
-                onChange={(e) =>
-                  setItems(
-                    items.map((i) => (i.key === item.key ? { ...i, quantity: e.target.value } : i)),
-                  )
-                }
-              />
-            </label>
-            <label>
-              Unit price (USD)
-              <input
-                type="number"
-                name="price"
-                min="0"
-                max="100000"
-                step="0.01"
-                required
-                value={item.price}
-                onChange={(e) =>
-                  setItems(
-                    items.map((i) => (i.key === item.key ? { ...i, price: e.target.value } : i)),
-                  )
-                }
-              />
-            </label>
-          </div>
-          {items.length > 1 && (
-            <button type="button" onClick={() => setItems(items.filter((i) => i.key !== item.key))}>
-              Remove item {index + 1}
-            </button>
-          )}
-        </fieldset>
-      ))}
-      <button
-        type="button"
-        disabled={items.length >= 20}
-        onClick={() =>
-          setItems([
-            ...items,
-            {
-              key: Math.max(...items.map((i) => i.key)) + 1,
-              description: '',
-              quantity: '1',
-              price: '',
-            },
-          ])
-        }
-      >
-        Add item
-      </button>
-      <strong>Total: {money(Number.isFinite(total) ? total : 0, 'usd')}</strong>
-      <label>
-        Due date (optional)
-        <input type="date" name="due" />
-      </label>
-      <label>
-        Replaces an earlier bill (optional)
-        <select name="replaces">
-          <option value="">None</option>
-          {bills.map((bill) => (
-            <option key={bill.id} value={bill.id}>
-              {bill.bill_number} · {money(bill.amount_cents, bill.currency)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className={styles.confirm}>
-        <input type="checkbox" name="confirmed" value="yes" required />I checked the items and
-        total. Issue this bill to the student.
-      </label>
-      <button disabled={pending || Boolean(state.success)}>
-        {pending ? 'Issuing…' : 'Issue bill'}
-      </button>
-      {state.error && <p role="alert">{state.error}</p>}
-      {state.success && <p role="status">{state.success}</p>}
-    </form>
-  )
-}
 export function BillingAdmin({
   owner,
   bills,
@@ -184,19 +65,27 @@ export function BillingAdmin({
   ownerName,
   stripeConfig = { enabled: false, mode: null },
   testBillId = newBillId,
+  paymentOrigin,
 }: {
   owner: string
   bills: Bill[]
   unavailable: boolean
   newBillId: string
   testBillId?: string
+  paymentOrigin?: string
   ownerName: string
   stripeConfig?: { enabled: boolean; mode: 'test' | 'live' | null }
 }) {
   if (unavailable)
     return (
       <div className={styles.records}>
-        <RefundLauncher owner={owner} ownerName={ownerName} bills={[]} unavailable />
+        <RefundLauncher
+          owner={owner}
+          ownerName={ownerName}
+          bills={[]}
+          unavailable
+          allowDemo={stripeConfig.mode === 'test'}
+        />
         <p role="alert">
           Billing is unavailable. Check the database migration and connection before issuing bills.
         </p>
@@ -204,7 +93,12 @@ export function BillingAdmin({
     )
   return (
     <div className={styles.records}>
-      <RefundLauncher owner={owner} ownerName={ownerName} bills={bills} />
+      <RefundLauncher
+        owner={owner}
+        ownerName={ownerName}
+        bills={bills}
+        allowDemo={stripeConfig.mode === 'test'}
+      />
       <StripeAdminTools owner={owner} testId={testBillId} {...stripeConfig} />
       {bills.length === 0 && <p>No billing activity yet.</p>}
       {bills.map((bill) => (
@@ -222,13 +116,26 @@ export function BillingAdmin({
           {(bill.payment_channel === 'stripe' || bill.stripe_livemode != null) && (
             <StripeStatusRefresh owner={owner} id={bill.id} />
           )}
+          <BillShareTools
+            bill={bill}
+            owner={owner}
+            ownerName={ownerName}
+            paymentOrigin={paymentOrigin}
+          />
           <BillingRefund owner={owner} ownerName={ownerName} bill={bill} />
         </BillDetails>
       ))}
       <details className={styles.bill}>
         <summary>Create bill</summary>
         <div className={styles.body}>
-          <IssueBill key={bills.length} owner={owner} bills={bills} id={newBillId} />
+          <IssueBill
+            owner={owner}
+            ownerName={ownerName}
+            bills={bills}
+            id={newBillId}
+            test={stripeConfig.mode === 'test'}
+            paymentOrigin={paymentOrigin}
+          />
         </div>
       </details>
     </div>

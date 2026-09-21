@@ -34,10 +34,13 @@ export type Bill = {
   checkout_available?: boolean
   refund_available?: boolean
   website_refunds_disabled?: boolean
+  email_notices?: Array<{ kind: string; status: string; sent_at: string | null }>
+  teacher_note?: string
+  app_bill_acknowledgements?: { note: string; accepted_at: string } | null
   app_payment_items: BillItem[]
 }
 export const billSelect =
-  'id,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(description,quantity,unit_amount_cents,position)'
+  'id,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(description,quantity,unit_amount_cents,position),app_bill_acknowledgements(note,accepted_at)'
 export const statusLabels: Record<Bill['status'], string> = {
   payment_due: 'Unpaid',
   pending_verification: 'Pending verification',
@@ -82,6 +85,35 @@ export function parseCents(value: string) {
   return Number(whole) * 100 + Number(fraction.padEnd(2, '0'))
 }
 export function readItems(form: FormData): BillItem[] {
+  if (form.get('bill_kind') === 'fixed') {
+    const name = String(form.get('package_name') ?? '').trim()
+    const coverage = String(form.get('coverage') ?? '').trim()
+    const count = Number(form.get('course_count'))
+    const unit = String(form.get('course_unit'))
+    const amount = parseCents(String(form.get('total_price') ?? ''))
+    if (
+      !name ||
+      name.length > 60 ||
+      !coverage ||
+      coverage.length > 100 ||
+      !Number.isInteger(count) ||
+      count < 1 ||
+      count > 100 ||
+      !['lessons', 'days'].includes(unit)
+    )
+      throw new Error('Enter a course name, 1–100 lessons or days, and a coverage description.')
+    if (amount < 50 || amount > 10000000)
+      throw new Error('The bill total must be between $0.50 and $100,000.')
+    // Quantity stays one: a negotiated total need not divide evenly by lesson count.
+    return [
+      {
+        description: `${name} (${count} ${count === 1 ? unit.slice(0, -1) : unit}) — ${coverage}`,
+        quantity: 1,
+        unit_amount_cents: amount,
+      },
+    ]
+  }
+  const packageBill = form.get('bill_kind') === 'lessons'
   const descriptions = form.getAll('description').map(String)
   const quantities = form.getAll('quantity').map(String)
   const prices = form.getAll('price').map(String)
@@ -104,10 +136,19 @@ export function readItems(form: FormData): BillItem[] {
       unit_amount_cents > 10000000
     )
       throw new Error('Check the item description, quantity, and price.')
-    return { description: description.trim(), quantity, unit_amount_cents }
+    const label = packageBill
+      ? `${description.trim()} (${quantity} ${quantity === 1 ? 'lesson' : 'lessons'})`
+      : description.trim()
+    if (label.length > 200 || (packageBill && unit_amount_cents < 1))
+      throw new Error('Use a shorter course name and a positive price per lesson.')
+    return { description: label, quantity, unit_amount_cents }
   })
   const total = items.reduce((sum, item) => sum + item.quantity * item.unit_amount_cents, 0)
   if (total < 1 || total > 10000000)
     throw new Error('The bill total must be between $0.01 and $100,000.')
   return items
+}
+
+export function billPath(id: string) {
+  return `/account/billing/${encodeURIComponent(id)}`
 }

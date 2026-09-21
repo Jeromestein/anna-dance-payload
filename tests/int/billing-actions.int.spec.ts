@@ -21,7 +21,7 @@ function form() {
 beforeEach(() => {
   vi.resetAllMocks()
   mocks.auth.mockResolvedValue({ id: 7, role: 'administrator' })
-  mocks.rpc.mockResolvedValue({ error: null })
+  mocks.rpc.mockResolvedValue({ error: null, data: '20000000-0000-4000-8000-000000000001' })
 })
 describe('billing server boundary', () => {
   it('denies writes before touching privileged storage when staff auth fails', async () => {
@@ -35,7 +35,7 @@ describe('billing server boundary', () => {
     data.set('total', '1')
     expect((await manageBill({}, data)).success).toBeDefined()
     expect(mocks.rpc).toHaveBeenCalledWith(
-      'app_manage_bill',
+      'app_issue_bill',
       expect.objectContaining({
         p_actor: '7',
         p_items: [{ description: 'Lesson', quantity: 2, unit_amount_cents: 4000 }],

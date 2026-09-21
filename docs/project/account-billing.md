@@ -1,5 +1,9 @@
 # Payment and Billing Design
 
+September 21 implementation update: see [Registered-account billing MVP](registered-account-billing-mvp.md)
+for custom-total bills, notification delivery, local verification, and rollout prerequisites.
+The older status tables below describe the September 17 checkpoint.
+
 Updated: September 17, 2026
 
 ## Purpose and current status

@@ -1,4 +1,5 @@
 import 'server-only'
+import { siteOrigin } from '@/lib/stripe/config'
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 const DEFAULT_NOTIFICATION_TO = 'annadanceacademy@gmail.com'
@@ -8,6 +9,7 @@ type SignUpUser = {
 }
 
 export type StudentRegistrationNotification = {
+  userId?: string
   studentName: string
   email: string
   studentPhone: string | null
@@ -22,7 +24,10 @@ export type StudentRegistrationNotificationResult =
   | { status: 'failed'; reason: 'provider_error' | 'network_error' }
 
 function cleanSingleLine(value: string, maxLength: number) {
-  return value.replace(/[\r\n]+/g, ' ').trim().slice(0, maxLength)
+  return value
+    .replace(/[\r\n]+/g, ' ')
+    .trim()
+    .slice(0, maxLength)
 }
 
 export function hasNewEmailIdentity<T extends SignUpUser>(
@@ -63,6 +68,14 @@ export async function sendStudentRegistrationNotification(
     ? cleanSingleLine(notification.guardianPhone, 24)
     : 'Not provided'
   const registeredAt = cleanSingleLine(notification.registeredAt, 50)
+  let adminLink = ''
+  if (notification.userId && /^[0-9a-f-]{36}$/i.test(notification.userId)) {
+    try {
+      adminLink = `${siteOrigin()}/admin/students/${notification.userId}`
+    } catch {
+      /* Signup must not depend on billing URL configuration. */
+    }
+  }
 
   try {
     const response = await fetch(RESEND_ENDPOINT, {
@@ -85,6 +98,7 @@ export async function sendStudentRegistrationNotification(
           `Parent/guardian name: ${guardianName}`,
           `Parent/guardian phone: ${guardianPhone}`,
           `Registered at: ${registeredAt}`,
+          ...(adminLink ? ['', `View account and create a bill: ${adminLink}`] : []),
         ].join('\n'),
       }),
     })

@@ -161,6 +161,7 @@ export async function signup(formData: FormData) {
 
   if (hasNewEmailIdentity(data.user)) {
     await sendStudentRegistrationNotification({
+      userId: data.user.id,
       studentName: userProfile.name,
       email: credentials.email,
       studentPhone: userProfile.phone,

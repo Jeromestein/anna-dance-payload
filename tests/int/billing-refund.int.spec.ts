@@ -88,9 +88,16 @@ describe('refund front end', () => {
   })
 
   it('shows refund controls with no records and completes a demo without calling the server', () => {
-    render(createElement(RefundLauncher, { owner: 'owner', ownerName: 'Jason', bills: [] }))
+    render(
+      createElement(RefundLauncher, {
+        owner: 'owner',
+        ownerName: 'Jason',
+        bills: [],
+        allowDemo: true,
+      }),
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Refund payment' }))
-    expect(screen.getByRole('status').textContent).toContain('No paid bills')
+    expect(screen.getByRole('status').textContent).toContain('No payments available for refund')
     fireEvent.click(screen.getByRole('button', { name: 'Try refund demo' }))
     expect(screen.getByText('DEMO — sample payment, no money moves')).toBeDefined()
     expect(screen.queryByText('Already refunded outside this website?')).toBeNull()
@@ -118,6 +125,7 @@ describe('refund front end', () => {
         ownerName: 'Jason',
         bills: [],
         unavailable: true,
+        allowDemo: true,
       }),
     )
     fireEvent.click(screen.getByRole('button', { name: 'Refund payment' }))

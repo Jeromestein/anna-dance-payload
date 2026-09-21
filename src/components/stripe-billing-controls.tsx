@@ -13,11 +13,15 @@ export function StripeCheckout({
   owner,
   staffTest = false,
   test = false,
+  amountLabel,
+  acknowledgement,
 }: {
   id: string
   owner?: string
   staffTest?: boolean
   test?: boolean
+  amountLabel?: string
+  acknowledgement?: { note: string; accepted_at: string } | null
 }) {
   const [state, action, pending] = useActionState(checkoutStripeBill, {})
   return (
@@ -30,8 +34,46 @@ export function StripeCheckout({
         </>
       )}
       {test && <p>Test payment only. Use a Stripe test card; no real money moves.</p>}
-      <button disabled={pending}>
-        {pending ? 'Opening checkout…' : test ? 'Pay test bill' : 'Pay bill'}
+      {!staffTest && (
+        <>
+          <label>
+            Message for the teacher (optional)
+            <textarea
+              name="note"
+              maxLength={500}
+              defaultValue={acknowledgement?.note ?? ''}
+              readOnly={Boolean(acknowledgement)}
+            />
+          </label>
+          <p>
+            {acknowledgement
+              ? 'Your message has been saved. Contact the academy if you need to change it.'
+              : 'Your message will be saved when you open checkout.'}
+          </p>
+          <label className={styles.confirm}>
+            <input type="checkbox" required name="termsAccepted" value="yes" />
+            <span>
+              I have reviewed the course details and total and agree to the{' '}
+              <a href="/terms" target="_blank" rel="noreferrer">
+                Website Terms of Use
+              </a>
+              .
+            </span>
+          </label>
+          <p>
+            The full enrollment agreement and liability waiver must be signed separately before
+            participation.
+          </p>
+        </>
+      )}
+      <button disabled={pending || Boolean(state.url)}>
+        {pending
+          ? 'Opening checkout…'
+          : test
+            ? `Pay test bill${amountLabel ? ` — ${amountLabel}` : ''}`
+            : amountLabel
+              ? `Pay ${amountLabel}`
+              : 'Pay bill'}
       </button>
       {state.url && <a href={state.url}>Continue to secure Stripe checkout ↗</a>}
       {state.error && <p role="alert">{state.error}</p>}
@@ -65,7 +107,7 @@ export function StripeAdminTools({
   const [importState, importAction, importPending] = useActionState(importStripePayment, {})
   return (
     <details className={styles.bill}>
-      <summary>Stripe payments & testing</summary>
+      <summary>{mode === 'test' ? 'Stripe sandbox tools' : 'Stripe payment tools'}</summary>
       <div className={styles.body}>
         <p>
           {mode === 'test'
@@ -78,12 +120,24 @@ export function StripeAdminTools({
           <form action={testAction} className={styles.form}>
             <input type="hidden" name="owner" value={owner} />
             <input type="hidden" name="id" value={testId} />
+            <label>
+              Test amount (USD)
+              <input
+                name="price"
+                type="number"
+                min="0.50"
+                max="100000"
+                step="0.01"
+                defaultValue="0.50"
+                required
+              />
+            </label>
             <label className={styles.confirm}>
               <input type="checkbox" required name="confirmed" value="yes" />
-              Create a separate $0.50 test bill for this student.
+              Create a separate test bill for this student. No real money moves.
             </label>
             <button disabled={!enabled || testPending || Boolean(testState.success)}>
-              Create $0.50 test bill
+              Create test bill
             </button>
             {testState.success && <p role="status">{testState.success}</p>}
             {testState.error && <p role="alert">{testState.error}</p>}
