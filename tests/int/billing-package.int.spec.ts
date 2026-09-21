@@ -89,12 +89,12 @@ describe('lesson package and test visibility', () => {
     fireEvent.change(screen.getByLabelText('Dates and fee explanation'), {
       target: { value: 'Dec 21–23, after credit' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Review bill' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review payment details' }))
     expect(screen.getByText('Winter Camp (3 days) — Dec 21–23, after credit')).toBeDefined()
     expect(screen.getByText('$100.01 USD')).toBeDefined()
     expect(m.issue).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('checkbox'))
-    fireEvent.click(screen.getByRole('button', { name: 'Create bill' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create payment link' }))
     await waitFor(() => expect(m.issue).toHaveBeenCalledTimes(1))
     expect(readItems(m.issue.mock.calls[0][1])[0].unit_amount_cents).toBe(10001)
   })
@@ -112,12 +112,13 @@ describe('lesson package and test visibility', () => {
       const view = render(createElement(BillingAdmin, props))
       expect(screen.queryByRole('button', { name: 'Try refund demo' })).toBeNull()
       expect(screen.queryByText('Create test bill')).toBeNull()
-      expect(screen.getByText('Stripe payment tools')).toBeDefined()
+      expect(screen.queryByText('Stripe payment tools')).toBeNull()
+      expect(screen.queryByText('Verify and import payment')).toBeNull()
       view.rerender(createElement(BillingAdmin, { ...props, unavailable: true }))
       expect(screen.queryByRole('button', { name: 'Try refund demo' })).toBeNull()
     },
   )
-  it('retains demo and adjustable test amount only in sandbox Admin', () => {
+  it('retains refund demo but hides Stripe tools in sandbox Admin', () => {
     render(
       createElement(BillingAdmin, {
         owner: 'owner',
@@ -129,30 +130,30 @@ describe('lesson package and test visibility', () => {
       }),
     )
     expect(screen.getByRole('button', { name: 'Try refund demo' })).toBeDefined()
-    fireEvent.click(screen.getByText('Stripe sandbox tools'))
-    fireEvent.change(screen.getByLabelText('Test amount (USD)'), { target: { value: '300' } })
-    expect((screen.getByLabelText('Test amount (USD)') as HTMLInputElement).value).toBe('300')
+    expect(screen.queryByText('Stripe sandbox tools')).toBeNull()
+    expect(screen.queryByLabelText('Test amount (USD)')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Create payment link' })).toBeDefined()
   })
   it('reviews lesson counts and totals before issuing, preserves the request id on a retry', async () => {
     m.issue.mockResolvedValue({ error: 'Please retry after checking.' })
     render(
       createElement(IssueBill, { owner: 'owner', ownerName: 'Jason', bills: [], id, test: true }),
     )
-    fireEvent.change(screen.getByLabelText('Bill type'), { target: { value: 'lessons' } })
+    fireEvent.change(screen.getByLabelText('Payment type'), { target: { value: 'lessons' } })
     fireEvent.change(screen.getByLabelText('Course / package name'), {
       target: { value: 'Ballet' },
     })
     fireEvent.change(screen.getByLabelText('Number of lessons'), { target: { value: '10' } })
     fireEvent.change(screen.getByLabelText('Price per lesson (USD)'), { target: { value: '30' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Review bill' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review payment details' }))
     expect(screen.getByText('Ballet (10 lessons)')).toBeDefined()
     expect(screen.getByText('$300.00 USD')).toBeDefined()
     expect(m.issue).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('checkbox'))
-    fireEvent.click(screen.getByRole('button', { name: 'Create bill' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create payment link' }))
     await waitFor(() => expect(m.issue).toHaveBeenCalledTimes(1))
     await screen.findByRole('alert')
-    fireEvent.click(screen.getByRole('button', { name: 'Create bill' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create payment link' }))
     await waitFor(() => expect(m.issue).toHaveBeenCalledTimes(2))
     for (const call of m.issue.mock.calls) {
       expect(call[1].get('id')).toBe(id)

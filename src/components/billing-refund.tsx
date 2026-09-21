@@ -1,6 +1,14 @@
 'use client'
 
-import { startTransition, useActionState, useEffect, useId, useRef, useState } from 'react'
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { createPortal } from 'react-dom'
 import { refundStripeBill } from '@/actions/stripe-billing'
 import { StripeStatusRefresh } from './stripe-billing-controls'
@@ -449,12 +457,14 @@ export function RefundLauncher({
   bills,
   unavailable = false,
   allowDemo = false,
+  primaryAction,
 }: {
   owner: string
   ownerName: string
   bills: Bill[]
   unavailable?: boolean
   allowDemo?: boolean
+  primaryAction?: ReactNode
 }) {
   const [mode, setMode] = useState<'closed' | 'real' | 'demo'>('closed')
   const [selectedId, setSelectedId] = useState('')
@@ -462,14 +472,9 @@ export function RefundLauncher({
   const paidBills = bills.filter((bill) => bill.status === 'paid')
   const selectedBill = paidBills.find((bill) => bill.id === selectedId) ?? paidBills[0]
   return (
-    <section className={styles.refundLauncher} aria-label="Refund actions">
-      <div className={styles.refundHeader}>
-        <div>
-          <h3>Refunds</h3>
-          <p>Return a paid bill in full. Review and confirmation are required.</p>
-        </div>
-      </div>
+    <section className={styles.refundLauncher} aria-label="Payment actions">
       <div className={styles.refundActions}>
+        {primaryAction}
         <button
           type="button"
           className={`${styles.refundButton} ${styles.refundEntry}`}
@@ -491,7 +496,7 @@ export function RefundLauncher({
           </button>
         )}
       </div>
-      <div id={panelId} hidden={mode === 'closed'}>
+      <div id={panelId} className={styles.refundPanel} hidden={mode === 'closed'}>
         {mode === 'real' &&
           (unavailable ? (
             <p role="alert">
@@ -521,8 +526,7 @@ export function RefundLauncher({
             </>
           ) : (
             <p role="status">
-              No payments available for refund. Review the billing history below. Import a
-              historical payment only if it is missing from that history.
+              No payments available for refund. Completed payments will appear here for review.
             </p>
           ))}
         {allowDemo && mode === 'demo' && (

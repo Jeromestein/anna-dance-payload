@@ -427,13 +427,12 @@ export async function StudentDetailView(props: AdminViewServerProps) {
               <header className={previewStyles.panelHeader}>
                 <div>
                   <h2 id="admin-payment-heading">Billing</h2>
-                  <p>Issue bills and record externally verified payments or full refunds.</p>
+                  <p>Send payment links, track payments, and manage refunds.</p>
                 </div>
               </header>
               <BillingAdmin
                 paymentOrigin={paymentOrigin}
                 stripeConfig={stripeAvailability()}
-                testBillId={crypto.randomUUID()}
                 newBillId={crypto.randomUUID()}
                 ownerName={data.name}
                 owner={id}

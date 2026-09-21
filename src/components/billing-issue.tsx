@@ -65,7 +65,7 @@ export function IssueBill({
       <input type="hidden" name="id" value={requestId} />
       <input type="hidden" name="operation" value="issue" />
       <h3 ref={headingRef} tabIndex={-1}>
-        {saved ? 'Bill created' : review ? 'Review bill' : 'Create a bill'}
+        {saved ? 'Payment request created' : review ? 'Review payment details' : 'Payment details'}
       </h3>
       <p>
         For <strong>{ownerName}</strong>
@@ -74,11 +74,11 @@ export function IssueBill({
       <fieldset disabled={pending || Boolean(saved)} className={styles.issueFields}>
         <div hidden={Boolean(review)}>
           <label>
-            Bill type
+            Payment type
             <select name="bill_kind" value={kind} onChange={(e) => setKind(e.target.value)}>
               <option value="fixed">Custom total · classes or camp</option>
               <option value="lessons">Lesson package</option>
-              <option value="general">General itemized bill</option>
+              <option value="general">Other itemized payment</option>
             </select>
           </label>
           {kind === 'fixed' && (
@@ -233,7 +233,7 @@ export function IssueBill({
             <input type="date" name="due" />
           </label>
           <label>
-            Replaces an earlier bill (optional)
+            Replaces an earlier payment request (optional)
             <select name="replaces">
               <option value="">None</option>
               {bills.map((bill) => (
@@ -264,8 +264,9 @@ export function IssueBill({
             </p>
             <p>Due date: {reviewDue}</p>
             <p>
-              {kind === 'lessons' && 'Lesson dates are arranged separately. '}Issuing locks these
-              charges.
+              {kind === 'lessons' && 'Lesson dates are arranged separately. '}The course details and
+              total cannot be changed after creation. Creating a request does not charge the
+              student.
             </p>
             {!saved && (
               <label className={styles.confirm}>
@@ -282,7 +283,7 @@ export function IssueBill({
         )}
         {!saved && (
           <button className={styles.primaryAction} disabled={pending}>
-            {pending ? 'Creating…' : review ? 'Create bill' : 'Review bill'}
+            {pending ? 'Creating…' : review ? 'Create payment link' : 'Review payment details'}
           </button>
         )}
       </fieldset>
@@ -291,7 +292,8 @@ export function IssueBill({
       {saved && (
         <>
           <p role="status">
-            Bill created. Send the payment email below to notify the account holder.
+            Payment request saved. When online payment is available, copy the link or send a payment
+            email below.
           </p>
           {savedBill && (
             <BillShareTools
@@ -310,7 +312,7 @@ export function IssueBill({
               edit()
             }}
           >
-            Create another bill
+            Create another payment link
           </button>
         </>
       )}

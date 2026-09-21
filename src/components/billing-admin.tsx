@@ -1,12 +1,12 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useId, useState } from 'react'
 import { IssueBill } from './billing-issue'
 import { BillShareTools } from './billing-share-tools'
 import { manageBill } from '@/actions/billing'
 import { money, type Bill } from '@/lib/billing/model'
 import { BillDetails } from './billing-records'
-import { StripeAdminTools, StripeCheckout, StripeStatusRefresh } from './stripe-billing-controls'
+import { StripeCheckout, StripeStatusRefresh } from './stripe-billing-controls'
 import { BillingRefund, RefundLauncher } from './billing-refund'
 import styles from './billing.module.css'
 
@@ -64,18 +64,18 @@ export function BillingAdmin({
   newBillId,
   ownerName,
   stripeConfig = { enabled: false, mode: null },
-  testBillId = newBillId,
   paymentOrigin,
 }: {
   owner: string
   bills: Bill[]
   unavailable: boolean
   newBillId: string
-  testBillId?: string
   paymentOrigin?: string
   ownerName: string
   stripeConfig?: { enabled: boolean; mode: 'test' | 'live' | null }
 }) {
+  const [creating, setCreating] = useState(false)
+  const createPanelId = useId()
   if (unavailable)
     return (
       <div className={styles.records}>
@@ -98,9 +98,34 @@ export function BillingAdmin({
         ownerName={ownerName}
         bills={bills}
         allowDemo={stripeConfig.mode === 'test'}
+        primaryAction={
+          <button
+            type="button"
+            className={styles.createLinkButton}
+            aria-expanded={creating}
+            aria-controls={createPanelId}
+            onClick={() => setCreating(!creating)}
+          >
+            {creating ? 'Close payment form' : 'Create payment link'}
+          </button>
+        }
       />
-      <StripeAdminTools owner={owner} testId={testBillId} {...stripeConfig} />
-      {bills.length === 0 && <p>No billing activity yet.</p>}
+      <div id={createPanelId} hidden={!creating} className={styles.createPanel}>
+        <IssueBill
+          owner={owner}
+          ownerName={ownerName}
+          bills={bills}
+          id={newBillId}
+          test={stripeConfig.mode === 'test'}
+          paymentOrigin={paymentOrigin}
+        />
+      </div>
+      {bills.length === 0 && (
+        <div className={styles.billingEmpty}>
+          <p>No payment requests yet.</p>
+          <p>Create a payment link to request this student’s course fees.</p>
+        </div>
+      )}
       {bills.map((bill) => (
         <BillDetails key={bill.id} bill={bill} bills={bills}>
           {['payment_due', 'pending_verification'].includes(bill.status) &&
@@ -125,19 +150,6 @@ export function BillingAdmin({
           <BillingRefund owner={owner} ownerName={ownerName} bill={bill} />
         </BillDetails>
       ))}
-      <details className={styles.bill}>
-        <summary>Create bill</summary>
-        <div className={styles.body}>
-          <IssueBill
-            owner={owner}
-            ownerName={ownerName}
-            bills={bills}
-            id={newBillId}
-            test={stripeConfig.mode === 'test'}
-            paymentOrigin={paymentOrigin}
-          />
-        </div>
-      </details>
     </div>
   )
 }

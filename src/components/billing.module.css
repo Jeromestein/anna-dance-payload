@@ -194,15 +194,6 @@
 .refundNotice p {
   margin: 5px 0 0;
 }
-.refundNotice[data-state='failed'] {
-  border-left: 4px solid #b14c30;
-}
-.refundNotice[data-state='pending'] {
-  border-left: 4px solid #987021;
-}
-.refundNotice[data-state='succeeded'] {
-  border-left: 4px solid #28795b;
-}
 .refundButton {
   padding: 11px 16px;
   border: 1px solid var(--theme-elevation-300, #aac2c2);
@@ -267,14 +258,70 @@
 }
 
 .refundLauncher {
-  padding: 18px;
-  border: 1px solid var(--theme-elevation-200, #c9dedb);
-  border-radius: 10px;
-  background: var(--theme-elevation-50, #f2f7f6);
+  min-width: 0;
 }
-.refundLauncher .refundActions > button:first-child {
-  font-weight: 700;
-  border-color: var(--theme-elevation-500, #08788e);
+.refundLauncher .refundActions > button {
+  flex: 0 1 auto;
+  min-height: 44px;
+  padding: 12px 18px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.createLinkButton {
+  border: 1px solid #ac2c68;
+  background: #ac2c68;
+  color: #fff;
+}
+.createLinkButton:hover {
+  background: #902256;
+  border-color: #902256;
+}
+.createLinkButton:focus-visible {
+  outline: 2px solid #08788e;
+  outline-offset: 3px;
+}
+.refundLauncher .refundEntry {
+  border: 1px solid var(--theme-elevation-250, #d7d0d4);
+  background: transparent;
+  color: var(--theme-text, #4d4249);
+}
+.refundLauncher .refundEntry:hover {
+  background: var(--theme-elevation-50, #f7f5f6);
+}
+.refundPanel:not([hidden]) {
+  margin-top: 20px;
+  padding-top: 4px;
+  border-top: 1px solid var(--theme-elevation-150, #e8e2e5);
+}
+.createPanel > .form {
+  margin-top: 6px;
+}
+.createPanel .form .primaryAction {
+  background: #ac2c68;
+  border-color: #ac2c68;
+}
+.createPanel .form .primaryAction:hover:not(:disabled) {
+  background: #902256;
+  border-color: #902256;
+}
+.billingEmpty {
+  padding: 22px 0 4px;
+  margin-top: 8px;
+  border-top: 1px solid var(--theme-elevation-150, #e8e2e5);
+}
+.billingEmpty p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.billingEmpty p + p {
+  margin-top: 4px;
+  color: var(--theme-elevation-600, #776c73);
+  font-size: 13px;
 }
 .refundLauncher > div:not(.refundActions) > .refundButton:last-child {
   margin-top: 16px;
@@ -295,40 +342,6 @@
   background: var(--theme-elevation-0, white);
 }
 
-/* Refund colors intentionally remain distinct from Payload's neutral controls. */
-.refundLauncher {
-  border-color: #e8c7cc;
-  border-top: 3px solid #a52746;
-  background: #fffafb;
-  color: #322831;
-  padding: 22px;
-}
-.refundLauncher .refundHeader p {
-  color: #6d5962;
-  margin-top: 6px;
-  line-height: 1.5;
-}
-.refundLauncher .refundActions > .refundEntry {
-  background: #a52746;
-  border-color: #a52746;
-  color: #fff;
-  font-weight: 650;
-  flex: 1.3;
-}
-.refundLauncher .refundActions > .refundEntry:hover {
-  background: #841b36;
-}
-.refundLauncher .refundButton:not(.refundEntry) {
-  background: #fff;
-  color: #62525b;
-  border-color: #d9cdd1;
-}
-.refundLauncher .refundSelect select {
-  color: #322831;
-  background: #fff;
-  border-color: #d9cdd1;
-  min-height: 44px;
-}
 .refundSection .refundHeader > strong {
   color: #a52746;
   font-variant-numeric: tabular-nums;
@@ -338,7 +351,6 @@
   background: #fff5e5;
   color: #744611;
   border: 1px solid #f1d29d;
-  border-left: 4px solid #b57716;
 }
 .refundNotice[data-state='demo'] {
   background: #edf6fd;
@@ -365,7 +377,6 @@
   margin: auto;
   padding: 26px;
   border: 1px solid #dfc8ce;
-  border-top: 4px solid #a52746;
   border-radius: 18px;
   background: #fff;
   color: #322831;
@@ -571,9 +582,6 @@
   outline: 3px solid #17758b;
   outline-offset: 3px;
 }
-.refundReview[data-demo='true'] {
-  border-top-color: #276487;
-}
 .refundReview[data-demo='true'] .refundBadge {
   color: #276487;
 }
@@ -583,8 +591,11 @@
   color: #245575;
 }
 @media (max-width: 600px) {
-  .refundLauncher {
-    padding: 16px;
+  .refundLauncher .refundActions > button {
+    flex: 1 1 180px;
+  }
+  .row {
+    grid-template-columns: minmax(0, 1fr);
   }
   .refundReview {
     width: calc(100vw - 20px);
