@@ -435,13 +435,11 @@ export function BillingEmail({
           </Text>
         )}
       </Section>
-      {!request && (
+      {refund && (bill.refunded_at || bill.refund_reference) && (
         <Details
           rows={[
-            ['Payment recorded', bill.paid_at],
-            ['Transaction', bill.transaction_reference],
-            ['Refund confirmed', refund ? bill.refunded_at : null],
-            ['Refund reference', refund ? bill.refund_reference : null],
+            ['Refund confirmed', bill.refunded_at],
+            ['Refund reference', bill.refund_reference],
           ]}
         />
       )}

@@ -113,8 +113,6 @@ export async function billingNotices(owner: string, id: string, requestPayment =
           ? 'Your bank or payment provider may need additional time to show the refund. This confirmation does not mean it has already appeared on your statement.'
           : '',
         request && bill.due_date ? `Due date: ${bill.due_date}` : '',
-        !request && bill.paid_at ? `Payment recorded: ${bill.paid_at}` : '',
-        !request && bill.transaction_reference ? `Transaction: ${bill.transaction_reference}` : '',
         admin && !refund && acknowledgement.data?.note
           ? `Message for the teacher: ${acknowledgement.data.note}`
           : '',

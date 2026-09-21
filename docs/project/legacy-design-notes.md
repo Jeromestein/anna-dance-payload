@@ -423,6 +423,9 @@ Use system fonts, inline styles, and table layouts suitable for email clients.
 The shared footer uses `Call Us` linked to `tel:+17014009213` (701-400-9213), followed
 by the website link. Do not use a school email link as the footer contact action.
 The inquiry-specific `Reply to Inquiry` button still replies to the inquiring family.
+Omit the payment-recorded timestamp and payment transaction reference from both HTML and
+plain-text emails, including school notifications. Keep those fields in the underlying payment
+record. Refund confirmation details remain visible in refund emails.
 
 ### Capitalization and copy
 
