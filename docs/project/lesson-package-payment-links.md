@@ -1,5 +1,7 @@
 # Lesson Package Bills and Payment Links
 
+> September 21 course-credit extension: a new locally implemented mode uses one negotiated total with separate included-course counts. See the [course-credit checklist](stripe-course-credits-checklist-20260921.md) and [local acceptance/rollout limits](../operations/course-credits-local-acceptance-20260921.md). The earlier modes and evidence below remain historical context.
+
 Updated: September 21, 2026
 
 Status: Implemented locally and included in commit `06b6cd5`. The owner authorized implementation after the original design. A 10 × $30 package completed sandbox Checkout, signed webhook synchronization, and Admin full refund. Production migration/deployment are documented in the September 21 release checkpoint; live Checkout enablement remains unverified. See [package acceptance evidence](../operations/package-payment-acceptance.md). The September 21 [registered-account billing MVP](registered-account-billing-mvp.md) extends this flow with custom totals, acknowledgement, and email notifications; its consented customer sandbox payment/refund and branded email flow passed at 13:26–13:28 PDT. Concurrent-webhook retry and live configuration remain open; see the [current release checkpoint](../operations/billing-release-acceptance-20260921.md).

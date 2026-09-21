@@ -2,9 +2,18 @@
 
 import { startTransition, useActionState, useRef, useState } from 'react'
 import { manageBill } from '@/actions/billing'
-import { money, readItems, type Bill, type BillItem } from '@/lib/billing/model'
+import {
+  money,
+  readItems,
+  readAgreedTotal,
+  itemDetail,
+  itemAmount,
+  type Bill,
+  type BillItem,
+} from '@/lib/billing/model'
 import { BillShareTools } from './billing-share-tools'
 import styles from './billing.module.css'
+import { courseOptions } from '@/lib/billing/courses'
 
 export function IssueBill({
   owner,
@@ -23,16 +32,21 @@ export function IssueBill({
 }) {
   const [state, action, pending] = useActionState(manageBill, {})
   const [requestId, setRequestId] = useState(id)
-  const [kind, setKind] = useState('fixed')
+  const [kind, setKind] = useState('courses')
   const [items, setItems] = useState([{ key: 0, description: '', quantity: '1', price: '' }])
   const [review, setReview] = useState<BillItem[] | null>(null)
   const [validation, setValidation] = useState('')
+  const [courses, setCourses] = useState([{ key: 'solo30', count: '1' }])
+  const [agreedTotal, setAgreedTotal] = useState(0)
   const [reviewDue, setReviewDue] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const saved = state.billId === requestId && state.success
   const savedBill = saved ? bills.find((bill) => bill.id === requestId) : undefined
-  const total = review?.reduce((sum, item) => sum + item.quantity * item.unit_amount_cents, 0)
+  const total =
+    kind === 'courses'
+      ? agreedTotal
+      : review?.reduce((sum, item) => sum + item.quantity * (item.unit_amount_cents ?? 0), 0)
   function edit() {
     setReview(null)
     setValidation('')
@@ -50,6 +64,7 @@ export function IssueBill({
           const checked = readItems(data)
           if (!review) {
             setReview(checked)
+            if (kind === 'courses') setAgreedTotal(readAgreedTotal(data))
             setReviewDue(String(data.get('due') || 'Not set'))
             setValidation('')
             requestAnimationFrame(() => headingRef.current?.focus())
@@ -76,11 +91,96 @@ export function IssueBill({
           <label>
             Payment type
             <select name="bill_kind" value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="fixed">Custom total · classes or camp</option>
-              <option value="lessons">Lesson package</option>
+              <option value="courses">Course lessons · agreed total</option>
+              <option value="fixed">Other payment / camp · custom total</option>
               <option value="general">Other itemized payment</option>
             </select>
           </label>
+          {kind === 'courses' && (
+            <fieldset>
+              <legend>Total and included lessons</legend>
+              <label>
+                Total to collect (USD)
+                <input
+                  name="total_price"
+                  type="number"
+                  min="0.50"
+                  max="100000"
+                  step="0.01"
+                  required
+                />
+              </label>
+              <p>
+                Enter the agreed total for this entire request. List the included lessons below.
+              </p>
+              {courses.map((row, index) => (
+                <div className={styles.row} key={index}>
+                  <label>
+                    Course {index + 1}
+                    <select
+                      name="course_key"
+                      value={row.key}
+                      onChange={(e) =>
+                        setCourses(
+                          courses.map((c, i) => (i === index ? { ...c, key: e.target.value } : c)),
+                        )
+                      }
+                    >
+                      {courseOptions.map((course) => (
+                        <option key={course.key} value={course.key}>
+                          {course.name} · {course.minutes} minutes
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Number of lessons
+                    <input
+                      name="credit_count"
+                      type="number"
+                      min="1"
+                      max="100"
+                      step="1"
+                      required
+                      value={row.count}
+                      onChange={(e) =>
+                        setCourses(
+                          courses.map((c, i) =>
+                            i === index ? { ...c, count: e.target.value } : c,
+                          ),
+                        )
+                      }
+                    />
+                  </label>
+                  {courses.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setCourses(courses.filter((_, i) => i !== index))}
+                    >
+                      Remove course {index + 1}
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                disabled={courses.length >= 4}
+                onClick={() =>
+                  setCourses([
+                    ...courses,
+                    {
+                      key:
+                        courseOptions.find((c) => !courses.some((r) => r.key === c.key))?.key ??
+                        'group',
+                      count: '1',
+                    },
+                  ])
+                }
+              >
+                Add course
+              </button>
+            </fieldset>
+          )}
           {kind === 'fixed' && (
             <fieldset>
               <legend>Course and agreed fee</legend>
@@ -130,12 +230,12 @@ export function IssueBill({
                 />
               </label>
               <p>
-                Enter the final agreed total, including any discount or credit. The account holder
-                will see these details.
+                Enter the final agreed total. This option records a charge without creating course
+                credits. The account holder will see these details.
               </p>
             </fieldset>
           )}
-          {kind !== 'fixed' &&
+          {!['fixed', 'courses'].includes(kind) &&
             items.map((item, index) => (
               <fieldset key={item.key}>
                 <legend>
@@ -207,7 +307,7 @@ export function IssueBill({
                 )}
               </fieldset>
             ))}
-          {kind !== 'fixed' && (
+          {!['fixed', 'courses'].includes(kind) && (
             <button
               type="button"
               disabled={items.length >= 20}
@@ -251,11 +351,9 @@ export function IssueBill({
                 <li key={i}>
                   <span>
                     {item.description}
-                    <small>
-                      {item.quantity} × {money(item.unit_amount_cents, 'usd')}
-                    </small>
+                    <small>{itemDetail(item, 'usd')}</small>
                   </span>
-                  <strong>{money(item.quantity * item.unit_amount_cents, 'usd')}</strong>
+                  <strong>{itemAmount(item, 'usd')}</strong>
                 </li>
               ))}
             </ul>
@@ -264,9 +362,9 @@ export function IssueBill({
             </p>
             <p>Due date: {reviewDue}</p>
             <p>
-              {kind === 'lessons' && 'Lesson dates are arranged separately. '}The course details and
-              total cannot be changed after creation. Creating a request does not charge the
-              student.
+              {['lessons', 'courses'].includes(kind) && 'Lesson dates are arranged separately. '}The
+              course details and total cannot be changed after creation. Creating a request does not
+              charge the student.
             </p>
             {!saved && (
               <label className={styles.confirm}>
@@ -307,6 +405,7 @@ export function IssueBill({
             type="button"
             onClick={() => {
               setRequestId(crypto.randomUUID())
+              setCourses([{ key: 'solo30', count: '1' }])
               setItems([{ key: 0, description: '', quantity: '1', price: '' }])
               formRef.current?.reset()
               edit()

@@ -1,3 +1,5 @@
+import { CourseCredits } from '@/components/course-credits'
+import { loadCourseCredits } from '@/lib/account/course-credits.server'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter, SetStepNav } from '@payloadcms/ui'
 import type { AdminViewServerProps } from 'payload'
@@ -335,6 +337,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
   const routeError = getSearchParam(props.searchParams?.error)
   const message = getSearchParam(props.searchParams?.message)
   const billing = await loadBills(supabase, id)
+  const credits = await loadCourseCredits(supabase, id, stripeAvailability().mode === 'test')
   if (billing.bills.length) {
     const ids = billing.bills.map((bill) => bill.id)
     const [notices, notes] = await Promise.all([
@@ -453,6 +456,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
                   <p>Academy classes and linked Cal.com appointments.</p>
                 </div>
               </header>
+              <CourseCredits data={credits} owner={id} />
               <div className={previewStyles.events}>
                 {scheduleResult.error && (
                   <p className="student-admin__alert student-admin__alert--error" role="alert">

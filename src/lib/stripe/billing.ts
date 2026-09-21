@@ -1,12 +1,15 @@
 import 'server-only'
 import { randomUUID } from 'node:crypto'
-import { billPath } from '@/lib/billing/model'
+import { checkoutItems } from '@/lib/billing/checkout-items'
+import { billPath, itemDetail, type BillItem } from '@/lib/billing/model'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { stripeContext, siteOrigin } from './config'
 import { paymentSnapshot } from './snapshot'
 
 type Context = Awaited<ReturnType<typeof stripeContext>>
 type StoredBill = {
+  pricing_mode?: string
+  cal_booking_id?: number | null
   id: string
   user_profile_id: string
   amount_cents: number
@@ -25,7 +28,7 @@ type StoredBill = {
   transaction_reference: string | null
 }
 const storedSelect =
-  'id,user_profile_id,amount_cents,currency,status,stripe_account_id,stripe_livemode,stripe_payment_intent_id,stripe_checkout_key,stripe_checkout_session_id,stripe_checkout_started_at,refund_request_key,refund_requested_at,refund_reason,refund_state,transaction_reference'
+  'id,pricing_mode,cal_booking_id,user_profile_id,amount_cents,currency,status,stripe_account_id,stripe_livemode,stripe_payment_intent_id,stripe_checkout_key,stripe_checkout_session_id,stripe_checkout_started_at,refund_request_key,refund_requested_at,refund_reason,refund_state,transaction_reference'
 export const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function stripeBillRPC(
@@ -186,6 +189,42 @@ export async function synchronizePayment(
     description: (description || pi.description || 'Booking payment').slice(0, 200),
     calBookingId,
   })
+  // Only configured, verified Cal bookings receive one credit, already allocated.
+  // Missing catalog setup leaves legacy synchronization unchanged.
+  if (result.cal_booking_id && result.status === 'paid') {
+    const booking = await db
+      .from('app_schedule_entries')
+      .select('cal_event_type_slug')
+      .eq('cal_booking_id', result.cal_booking_id)
+      .eq('user_profile_id', owner)
+      .eq('source', 'cal_com')
+      .eq('match_status', 'linked')
+      .limit(2)
+    if (booking.error)
+      throw new Error('Booking credits need reconciliation. Refresh the payment status.')
+    if (booking.data?.length === 1) {
+      const keys: Record<string, string> = {
+        'level-class': 'group',
+        'duet-class': 'duet',
+        'solo-class-30min': 'solo30',
+        'solo-class': 'solo60',
+      }
+      const key = keys[booking.data[0].cal_event_type_slug]
+      const product =
+        key &&
+        process.env[`STRIPE_${ctx.livemode ? 'LIVE' : 'TEST'}_PRODUCT_${key.toUpperCase()}`]?.trim()
+      if (product && /^prod_[A-Za-z0-9]+$/.test(product)) {
+        const linked = await db.rpc('app_link_cal_course_credit', {
+          p_owner: owner,
+          p_bill: result.id,
+          p_course: key,
+          p_product: product,
+        })
+        if (linked.error)
+          throw new Error('Booking credits need reconciliation. Refresh the payment status.')
+      }
+    }
+  }
   return { bill: result, ...evidence }
 }
 function assertEnvironmentForSync(bill: StoredBill, ctx: Context) {
@@ -254,15 +293,14 @@ export async function startCheckout(owner: string, id: string) {
     )
   const items = await createSupabaseAdminClient()
     .from('app_payment_items')
-    .select('description,quantity,unit_amount_cents')
+    .select(
+      'description,quantity,unit_amount_cents,course_key,stripe_product_id,credit_count,lesson_duration_minutes',
+    )
     .eq('payment_id', id)
     .order('position')
-  if (
-    items.error ||
-    !items.data?.length ||
-    items.data.reduce((sum, i) => sum + i.quantity * i.unit_amount_cents, 0) !== bill.amount_cents
-  )
-    throw new Error('Bill item totals need review.')
+  if (items.error || !items.data) throw new Error('Bill item totals need review.')
+  const storedItems = items.data as BillItem[]
+  const lineItems = checkoutItems(bill, storedItems)
   const origin = siteOrigin()
   const metadata = { ada_bill_id: id, ada_checkout_key: bill.stripe_checkout_key! }
   const session = await ctx.stripe.checkout.sessions.create(
@@ -272,14 +310,18 @@ export async function startCheckout(owner: string, id: string) {
       client_reference_id: id,
       metadata,
       payment_intent_data: { metadata },
-      line_items: items.data.map((i) => ({
-        quantity: i.quantity,
-        price_data: {
-          currency: bill.currency,
-          unit_amount: i.unit_amount_cents,
-          product_data: { name: i.description },
-        },
-      })),
+      line_items: lineItems,
+      ...(bill.pricing_mode === 'agreed_total'
+        ? {
+            custom_text: {
+              submit: {
+                message: storedItems
+                  .map((i) => `${i.description}: ${itemDetail(i, bill.currency)}`)
+                  .join('; '),
+              },
+            },
+          }
+        : {}),
       success_url: `${origin}${billPath(id)}?checkout=submitted`,
       cancel_url: `${origin}${billPath(id)}?checkout=closed`,
     },

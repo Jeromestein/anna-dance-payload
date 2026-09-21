@@ -1,10 +1,18 @@
+import { courseOption } from './courses'
+
 export type BillItem = {
+  id?: string
+  course_key?: string | null
+  stripe_product_id?: string | null
+  credit_count?: number | null
+  lesson_duration_minutes?: number | null
   description: string
   quantity: number
-  unit_amount_cents: number
+  unit_amount_cents: number | null
   position?: number
 }
 export type Bill = {
+  pricing_mode?: 'itemized' | 'agreed_total'
   id: string
   bill_number: string
   amount_cents: number
@@ -40,7 +48,7 @@ export type Bill = {
   app_payment_items: BillItem[]
 }
 export const billSelect =
-  'id,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(description,quantity,unit_amount_cents,position),app_bill_acknowledgements(note,accepted_at)'
+  'id,pricing_mode,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(id,description,quantity,unit_amount_cents,position,course_key,stripe_product_id,credit_count,lesson_duration_minutes),app_bill_acknowledgements(note,accepted_at)'
 export const statusLabels: Record<Bill['status'], string> = {
   payment_due: 'Unpaid',
   pending_verification: 'Pending verification',
@@ -85,6 +93,32 @@ export function parseCents(value: string) {
   return Number(whole) * 100 + Number(fraction.padEnd(2, '0'))
 }
 export function readItems(form: FormData): BillItem[] {
+  if (form.get('bill_kind') === 'courses') {
+    const keys = form.getAll('course_key').map(String)
+    const counts = form.getAll('credit_count').map(String)
+    readAgreedTotal(form)
+    if (
+      !keys.length ||
+      keys.length > 4 ||
+      keys.length !== counts.length ||
+      new Set(keys).size !== keys.length
+    )
+      throw new Error('Choose each included course once, with its number of lessons.')
+    return keys.map((key, index) => {
+      const course = courseOption(key)
+      const count = Number(counts[index])
+      if (!course || !Number.isInteger(count) || count < 1 || count > 100)
+        throw new Error('Choose a course and enter 1–100 lessons.')
+      return {
+        course_key: key,
+        description: `${course.name} · ${course.minutes} minutes`,
+        credit_count: count,
+        lesson_duration_minutes: course.minutes,
+        quantity: 1,
+        unit_amount_cents: null,
+      }
+    })
+  }
   if (form.get('bill_kind') === 'fixed') {
     const name = String(form.get('package_name') ?? '').trim()
     const coverage = String(form.get('coverage') ?? '').trim()
@@ -151,4 +185,24 @@ export function readItems(form: FormData): BillItem[] {
 
 export function billPath(id: string) {
   return `/account/billing/${encodeURIComponent(id)}`
+}
+
+export function readAgreedTotal(form: FormData) {
+  const amount = parseCents(String(form.get('total_price') ?? ''))
+  if (amount < 50 || amount > 10000000)
+    throw new Error('The bill total must be between $0.50 and $100,000.')
+  return amount
+}
+
+export function itemDetail(item: BillItem, currency: string) {
+  return item.credit_count != null
+    ? `${item.credit_count} ${item.credit_count === 1 ? 'lesson' : 'lessons'} included`
+    : item.unit_amount_cents != null
+      ? `${item.quantity} × ${money(item.unit_amount_cents, currency)}`
+      : ''
+}
+export function itemAmount(item: BillItem, currency: string) {
+  return item.unit_amount_cents == null
+    ? ''
+    : money(item.quantity * item.unit_amount_cents, currency)
 }

@@ -1,3 +1,4 @@
+import { loadCourseCredits } from '@/lib/account/course-credits.server'
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
@@ -62,6 +63,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     .limit(50)
 
   const billing = await loadBills(supabase, studentId)
+  const credits = await loadCourseCredits(supabase, studentId)
 
   const profile: EditableStudentProfile = {
     id: studentId,
@@ -81,6 +83,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   return (
     <StudentAccountDashboard
+      credits={credits}
       bills={billing.bills}
       billingUnavailable={billing.unavailable}
       profile={profile}

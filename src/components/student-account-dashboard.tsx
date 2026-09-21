@@ -1,3 +1,5 @@
+import { CourseCredits } from '@/components/course-credits'
+import type { CourseCreditData } from '@/lib/account/course-credits'
 import type { EditableStudentProfile } from '@/components/student-profile-form'
 import { MobileAccountTabs } from '@/components/mobile-account-tabs'
 import { StudentScheduleCalendar } from '@/components/student-schedule-calendar'
@@ -9,6 +11,7 @@ import { type AccountScheduleEntry, formatScheduleEntry } from '@/lib/account/sc
 import styles from './student-account-dashboard.module.css'
 
 type StudentAccountDashboardProps = {
+  credits?: CourseCreditData
   bills: Bill[]
   billingUnavailable: boolean
   profile: EditableStudentProfile
@@ -20,6 +23,7 @@ type StudentAccountDashboardProps = {
 }
 
 export function StudentAccountDashboard({
+  credits,
   bills,
   billingUnavailable,
   profile,
@@ -93,6 +97,7 @@ export function StudentAccountDashboard({
                 </div>
               </header>
 
+              {credits && <CourseCredits data={credits} />}
               <StudentScheduleCalendar entries={scheduleEntries} loadError={scheduleLoadError} />
             </article>
 

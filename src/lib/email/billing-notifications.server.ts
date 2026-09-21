@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { billPath, billSelect, money, type Bill } from '@/lib/billing/model'
+import { billPath, billSelect, money, itemDetail, type Bill } from '@/lib/billing/model'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { siteOrigin } from '@/lib/stripe/config'
 import { renderBillingEmail } from './templates'
@@ -63,10 +63,7 @@ export async function billingNotices(owner: string, id: string, requestPayment =
     'annadanceacademy@gmail.com'
   const summary = [...bill.app_payment_items]
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-    .map(
-      (item) =>
-        `${item.description} — ${item.quantity} × ${money(item.unit_amount_cents, bill.currency)}`,
-    )
+    .map((item) => `${item.description} — ${itemDetail(item, bill.currency)}`)
     .join('\n')
   const label = `${test ? '[SANDBOX] ' : ''}${bill.bill_number}`
   let failed = false
@@ -103,9 +100,8 @@ export async function billingNotices(owner: string, id: string, requestPayment =
         `Student: ${profile.data?.name ?? ''}`,
         admin ? `Account email: ${user.email}` : '',
         `Bill: ${bill.bill_number}`,
-        summary,
-        `Total: ${money(bill.amount_cents, bill.currency)}`,
-        refund ? `Refund amount: ${money(bill.amount_cents, bill.currency)}` : '',
+        refund ? '' : summary,
+        `${refund ? 'Refund amount' : 'Total'}: ${money(bill.amount_cents, bill.currency)}`,
         refund ? 'Destination: Original payment method.' : '',
         refund
           ? 'Your bank or payment provider may need additional time to show the refund. This confirmation does not mean it has already appeared on your statement.'

@@ -78,6 +78,7 @@ describe('lesson package and test visibility', () => {
     render(
       createElement(IssueBill, { owner: 'owner', ownerName: 'Jason', bills: [], id, test: true }),
     )
+    fireEvent.change(screen.getByLabelText('Payment type'), { target: { value: 'fixed' } })
     fireEvent.change(screen.getByLabelText('Course / camp name'), {
       target: { value: 'Winter Camp' },
     })
@@ -139,14 +140,11 @@ describe('lesson package and test visibility', () => {
     render(
       createElement(IssueBill, { owner: 'owner', ownerName: 'Jason', bills: [], id, test: true }),
     )
-    fireEvent.change(screen.getByLabelText('Payment type'), { target: { value: 'lessons' } })
-    fireEvent.change(screen.getByLabelText('Course / package name'), {
-      target: { value: 'Ballet' },
-    })
+    fireEvent.change(screen.getByLabelText('Course 1'), { target: { value: 'group' } })
     fireEvent.change(screen.getByLabelText('Number of lessons'), { target: { value: '10' } })
-    fireEvent.change(screen.getByLabelText('Price per lesson (USD)'), { target: { value: '30' } })
+    fireEvent.change(screen.getByLabelText('Total to collect (USD)'), { target: { value: '300' } })
     fireEvent.click(screen.getByRole('button', { name: 'Review payment details' }))
-    expect(screen.getByText('Ballet (10 lessons)')).toBeDefined()
+    expect(screen.getByText('10 lessons included')).toBeDefined()
     expect(screen.getByText('$300.00 USD')).toBeDefined()
     expect(m.issue).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('checkbox'))
@@ -157,7 +155,11 @@ describe('lesson package and test visibility', () => {
     await waitFor(() => expect(m.issue).toHaveBeenCalledTimes(2))
     for (const call of m.issue.mock.calls) {
       expect(call[1].get('id')).toBe(id)
-      expect(readItems(call[1])).toEqual(bill.app_payment_items)
+      expect(readItems(call[1])[0]).toMatchObject({
+        course_key: 'group',
+        credit_count: 10,
+        unit_amount_cents: null,
+      })
     }
   })
   it('computes immutable lesson descriptions and rejects fractional lessons, invalid prices and overlong names', () => {

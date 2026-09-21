@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react'
-import { balanceDue, billPath, money, statusLabels, type Bill } from '@/lib/billing/model'
+import {
+  balanceDue,
+  billPath,
+  money,
+  itemDetail,
+  itemAmount,
+  statusLabels,
+  type Bill,
+} from '@/lib/billing/model'
 import { StripeCheckout } from './stripe-billing-controls'
 import styles from './billing.module.css'
 
@@ -26,7 +34,11 @@ export function BillDetails({
     <details open={expanded} className={styles.bill} id={`bill-${bill.id}`}>
       <summary>
         <span>
-          <strong>{bill.app_payment_items[0]?.description || 'Billing record'}</strong>
+          <strong>
+            {bill.pricing_mode === 'agreed_total'
+              ? 'Course package'
+              : bill.app_payment_items[0]?.description || 'Billing record'}
+          </strong>
           <small>{date(bill.created_at)}</small>
         </span>
         <span>
@@ -62,11 +74,9 @@ export function BillDetails({
               <li key={index}>
                 <span>
                   {item.description}
-                  <small>
-                    {item.quantity} × {money(item.unit_amount_cents, bill.currency)}
-                  </small>
+                  <small>{itemDetail(item, bill.currency)}</small>
                 </span>
-                <strong>{money(item.quantity * item.unit_amount_cents, bill.currency)}</strong>
+                <strong>{itemAmount(item, bill.currency)}</strong>
               </li>
             ))}
         </ul>

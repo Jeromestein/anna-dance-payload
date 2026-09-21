@@ -14,7 +14,7 @@ import {
   render,
 } from 'react-email'
 
-import { billPath, money, type Bill } from '@/lib/billing/model'
+import { billPath, money, itemDetail, itemAmount, type Bill } from '@/lib/billing/model'
 import { EmailBrandLogo, emailBrandLogoStyles, emailWebsite } from './email-brand-logo'
 
 const website = emailWebsite
@@ -118,10 +118,7 @@ function EmailLayout({
             </Text>
             <Text style={{ fontSize: 12, lineHeight: '20px', color: muted, margin: '8px 0' }}>
               Questions?{' '}
-              <Link
-                href="tel:+17014009213"
-                style={{ color: rose, textDecoration: 'underline' }}
-              >
+              <Link href="tel:+17014009213" style={{ color: rose, textDecoration: 'underline' }}>
                 Call Us
               </Link>
               {' · '}
@@ -331,82 +328,86 @@ export function BillingEmail({
           ['Due date', request ? bill.due_date : null],
         ]}
       />
-      <Text style={label}>Course Details</Text>
-      <table
-        width="100%"
-        cellPadding="0"
-        cellSpacing="0"
-        style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}
-      >
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              style={{
-                textAlign: 'left',
-                fontSize: 12,
-                color: muted,
-                padding: '0 0 12px',
-                fontWeight: 400,
-              }}
-            >
-              Description
-            </th>
-            <th
-              scope="col"
-              style={{
-                textAlign: 'right',
-                fontSize: 12,
-                color: muted,
-                padding: '0 0 12px',
-                width: '30%',
-                fontWeight: 400,
-              }}
-            >
-              Amount
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {[...bill.app_payment_items]
-            .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-            .map((item, index) => (
-              <tr key={index}>
-                <td
+      {!refund && (
+        <>
+          <Text style={label}>Course Details</Text>
+          <table
+            width="100%"
+            cellPadding="0"
+            cellSpacing="0"
+            style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}
+          >
+            <thead>
+              <tr>
+                <th
+                  scope="col"
                   style={{
-                    padding: '14px 12px 14px 0',
-                    borderTop: '1px solid #eee3e9',
-                    verticalAlign: 'top',
-                    fontSize: 14,
-                    lineHeight: '22px',
-                    color: ink,
-                    overflowWrap: 'anywhere',
-                    wordBreak: 'break-word',
+                    textAlign: 'left',
+                    fontSize: 12,
+                    color: muted,
+                    padding: '0 0 12px',
+                    fontWeight: 400,
                   }}
                 >
-                  {item.description}
-                  <br />
-                  <span style={{ fontSize: 12, color: muted }}>
-                    {item.quantity} × {money(item.unit_amount_cents, bill.currency)}
-                  </span>
-                </td>
-                <td
+                  Description
+                </th>
+                <th
+                  scope="col"
                   style={{
-                    padding: '14px 0',
-                    borderTop: '1px solid #eee3e9',
                     textAlign: 'right',
-                    verticalAlign: 'top',
-                    fontSize: 14,
-                    lineHeight: '22px',
-                    color: ink,
+                    fontSize: 12,
+                    color: muted,
+                    padding: '0 0 12px',
+                    width: '30%',
+                    fontWeight: 400,
                   }}
                 >
-                  {money(item.quantity * item.unit_amount_cents, bill.currency)}
-                </td>
+                  {bill.pricing_mode === 'agreed_total' ? '' : 'Amount'}
+                </th>
               </tr>
-            ))}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {[...bill.app_payment_items]
+                .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+                .map((item, index) => (
+                  <tr key={index}>
+                    <td
+                      style={{
+                        padding: '14px 12px 14px 0',
+                        borderTop: '1px solid #eee3e9',
+                        verticalAlign: 'top',
+                        fontSize: 14,
+                        lineHeight: '22px',
+                        color: ink,
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {item.description}
+                      <br />
+                      <span style={{ fontSize: 12, color: muted }}>
+                        {itemDetail(item, bill.currency)}
+                      </span>
+                    </td>
+                    <td
+                      style={{
+                        padding: '14px 0',
+                        borderTop: '1px solid #eee3e9',
+                        textAlign: 'right',
+                        verticalAlign: 'top',
+                        fontSize: 14,
+                        lineHeight: '22px',
+                        color: ink,
+                      }}
+                    >
+                      {itemAmount(item, bill.currency)}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </>
+      )}
       <Section
         style={{
           backgroundColor: '#f8edf3',

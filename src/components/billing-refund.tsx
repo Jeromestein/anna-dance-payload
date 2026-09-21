@@ -13,7 +13,7 @@ import { createPortal } from 'react-dom'
 import { refundStripeBill } from '@/actions/stripe-billing'
 import { StripeStatusRefresh } from './stripe-billing-controls'
 import { manageBill } from '@/actions/billing'
-import { money, type Bill } from '@/lib/billing/model'
+import { money, itemDetail, itemAmount, type Bill } from '@/lib/billing/model'
 import styles from './billing.module.css'
 
 // Only verified provider data may present a completed real refund.
@@ -306,11 +306,9 @@ export function BillingRefund({
                 <li key={index}>
                   <span>
                     {item.description}
-                    <small>
-                      {item.quantity} × {money(item.unit_amount_cents, bill.currency)}
-                    </small>
+                    <small>{itemDetail(item, bill.currency)}</small>
                   </span>
-                  <strong>{money(item.quantity * item.unit_amount_cents, bill.currency)}</strong>
+                  <strong>{itemAmount(item, bill.currency)}</strong>
                 </li>
               ))}
             </ul>

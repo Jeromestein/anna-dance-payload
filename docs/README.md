@@ -10,6 +10,9 @@ README remain authoritative for the Payload implementation.
 
 ## Project planning and design
 
+- [Stripe course products, lesson credits, and scheduling checklist](project/stripe-course-credits-checklist-20260921.md)
+  — Product-ID-only custom-total billing, structured lesson credits, manual scheduling,
+  and database/UI changes implemented locally; configuration and hosted acceptance remain pending.
 - [Payment and Billing Design](project/account-billing.md) — current two-table billing model,
   Stripe synchronization, full-refund policy, and rollout status.
 - [Lesson Package Bills and Payment Links](project/lesson-package-payment-links.md) — design-only
@@ -30,6 +33,9 @@ README remain authoritative for the Payload implementation.
   the former standalone Next.js/Supabase repository.
 
 ## Operations
+
+- [Course-credit local acceptance and rollout](operations/course-credits-local-acceptance-20260921.md)
+  — migration/configuration prerequisites, regression evidence, browser checks, and compatibility limits.
 
 - [Stripe payment and full-refund verification](operations/stripe-payment-refund-testing.md) —
   current sandbox/live evidence and remaining payment, refund, and package-collection acceptance.

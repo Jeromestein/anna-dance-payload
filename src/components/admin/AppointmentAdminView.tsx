@@ -194,7 +194,6 @@ export async function AppointmentAdminView(props: AdminViewServerProps) {
       .select(
         'id, user_profile_id, attendee_name, attendee_email, cal_booking_uid, cal_session_key, seat_capacity, entry_type, title, starts_at, ends_at, timezone, location, status, source',
       )
-      .eq('source', 'cal_com')
       .eq('match_status', 'linked')
       .not('user_profile_id', 'is', null)
       .order('starts_at', { ascending: false })
@@ -257,7 +256,7 @@ export async function AppointmentAdminView(props: AdminViewServerProps) {
         <SetStepNav nav={[{ label: 'Appointments' }]} />
         <header className="student-admin__header">
           <h1>Appointments</h1>
-          <p>Review account-linked class appointments synchronized from Cal.com.</p>
+          <p>Review Academy lessons and account-linked Cal.com appointments.</p>
         </header>
 
         {routeError && (
@@ -279,7 +278,7 @@ export async function AppointmentAdminView(props: AdminViewServerProps) {
 
         {!loadError && appointments.length === 0 ? (
           <div className="appointment-admin__empty">
-            <h2>No synchronized appointments yet</h2>
+            <h2>No appointments yet</h2>
             <p>Bookings made by signed-in Students will appear here after secure confirmation.</p>
           </div>
         ) : (

@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { requirePayloadAdministrator } from '@/lib/staff/auth'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
-import { billPath, readItems } from '@/lib/billing/model'
+import { billPath, readItems, readAgreedTotal } from '@/lib/billing/model'
+import { resolveCourseProducts } from '@/lib/billing/course-products.server'
 import { stripeSettings } from '@/lib/stripe/config'
 
 export type BillingActionState = { error?: string; success?: string; billId?: string }
@@ -53,8 +54,23 @@ export async function manageBill(
       p_reference: reference || null,
       p_reason: reason || null,
     }
-    const { error, data } =
-      operation === 'issue'
+    const courses =
+      operation === 'issue' && form.get('bill_kind') === 'courses'
+        ? await resolveCourseProducts(items)
+        : null
+    const { error, data } = courses
+      ? await createSupabaseAdminClient().rpc('app_issue_course_bill', {
+          p_owner: owner,
+          p_id: id,
+          p_actor: String(staff.id),
+          p_items: courses.items,
+          p_total: readAgreedTotal(form),
+          p_due: due || null,
+          p_replaces: replaces || null,
+          p_account: courses.account,
+          p_live: courses.live,
+        })
+      : operation === 'issue'
         ? await createSupabaseAdminClient().rpc('app_issue_bill', {
             p_owner: owner,
             p_id: id,
@@ -85,7 +101,7 @@ export async function manageBill(
       error:
         error instanceof Error &&
         operation === 'issue' &&
-        /^(The bill total|Enter a course name|Enter a valid price|Check the item|Use a shorter|Add between)/.test(
+        /^(The bill total|Enter a course name|Enter a valid price|Check the item|Use a shorter|Add between|Choose |Course products|The selected course|Each course)/.test(
           error.message,
         )
           ? error.message

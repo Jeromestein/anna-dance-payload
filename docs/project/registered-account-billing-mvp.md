@@ -1,5 +1,7 @@
 # Registered-account billing MVP
 
+> September 21 course-credit extension: a new locally implemented mode uses one negotiated total with separate included-course counts. See the [course-credit checklist](stripe-course-credits-checklist-20260921.md) and [local acceptance/rollout limits](../operations/course-credits-local-acceptance-20260921.md). The earlier modes and evidence below remain historical context.
+
 Implementation: September 21, 2026. Production migrations and deployment are now recorded;
 the consented customer sandbox payment/refund flow and branded emails are verified. Live Checkout
 enablement and concurrent-webhook retry acceptance remain pending. See the
