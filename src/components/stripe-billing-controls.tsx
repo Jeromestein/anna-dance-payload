@@ -66,7 +66,7 @@ export function StripeCheckout({
           </p>
         </>
       )}
-      <button disabled={pending || Boolean(state.url)}>
+      <button disabled={pending}>
         {pending
           ? 'Opening checkout…'
           : test
@@ -75,7 +75,6 @@ export function StripeCheckout({
               ? `Pay ${amountLabel}`
               : 'Pay bill'}
       </button>
-      {state.url && <a href={state.url}>Continue to secure Stripe checkout ↗</a>}
       {state.error && <p role="alert">{state.error}</p>}
     </form>
   )

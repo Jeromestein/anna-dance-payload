@@ -3,11 +3,24 @@ import { createHash } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { requirePayloadAdministrator } from '@/lib/staff/auth'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
-import { lessonDates, newYorkInstant } from '@/lib/account/course-credits'
+import { newYorkInstant } from '@/lib/account/course-credits'
 import { stripeSettings } from '@/lib/stripe/config'
 
 export type ScheduleActionState = { error?: string; success?: string }
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const scheduleErrors: Record<string, string> = {
+  'Student already has a lesson at this time':
+    'Time conflict: this student already has a lesson or appointment during this slot. Choose another start time or date.',
+  'Choose a future lesson time': 'Choose a start time in the future.',
+  'No lesson credits available':
+    'No credits remain for this course. Refresh to see the latest balance.',
+  'Lesson changed; refresh before editing':
+    'This lesson was changed by another administrator. Refresh before editing it again.',
+  'Course payment needs verification before scheduling':
+    'This payment or refund needs verification before you can schedule a lesson.',
+  'This lesson is already resolved':
+    'This lesson is already cancelled or completed. Refresh the calendar.',
+}
 export async function manageCourseSchedule(
   _: ScheduleActionState,
   form: FormData,
@@ -32,16 +45,10 @@ export async function manageCourseSchedule(
     if (operation === 'create') {
       const request = String(form.get('request') ?? '')
       if (!uuid.test(request)) return { error: 'Refresh the scheduling form.' }
-      const dates = lessonDates(
-        String(form.get('local') ?? ''),
-        Number(form.get('weeks') ?? '1'),
-        String(form.get('skipped') ?? ''),
-      )
-      entries = dates.map((date, index) => {
-        const hash = createHash('sha256').update(`${request}:${index}`).digest('hex')
-        const id = `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`
-        return { id, starts_at: date.instant, location }
-      })
+      const startsAt = newYorkInstant(String(form.get('local') ?? ''))
+      const hash = createHash('sha256').update(`${request}:0`).digest('hex')
+      const id = `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`
+      entries = [{ id, starts_at: startsAt, location }]
     } else {
       const id = String(form.get('lesson') ?? '')
       const revision = Number(form.get('revision'))
@@ -70,7 +77,8 @@ export async function manageCourseSchedule(
     if (error)
       return {
         error:
-          'Could not save. Refresh to check available credits, payment status, overlapping times, or another staff change.',
+          scheduleErrors[error.message] ??
+          'Could not save this lesson. Refresh the calendar and try again. No changes were saved.',
       }
     revalidatePath('/account')
     revalidatePath(`/admin/students/${owner}`)

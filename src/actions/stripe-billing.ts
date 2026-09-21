@@ -1,5 +1,6 @@
 'use server'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { requirePayloadAdministrator } from '@/lib/staff/auth'
 import { createClient } from '@/lib/supabase/server'
 import { stripeContext } from '@/lib/stripe/config'
@@ -15,7 +16,7 @@ import { randomUUID } from 'node:crypto'
 import { parseCents } from '@/lib/billing/model'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
-export type StripeActionState = { error?: string; success?: string; url?: string }
+export type StripeActionState = { error?: string; success?: string }
 function values(form: FormData) {
   const owner = String(form.get('owner') ?? '')
   const id = String(form.get('id') ?? '')
@@ -137,6 +138,7 @@ export async function checkoutStripeBill(
   _previous: StripeActionState,
   form: FormData,
 ): Promise<StripeActionState> {
+  let checkoutUrl: string
   try {
     const id = String(form.get('id') ?? '')
     if (!uuidPattern.test(id)) return { error: 'Invalid bill.' }
@@ -167,10 +169,10 @@ export async function checkoutStripeBill(
       if (acknowledgement.error)
         return { error: 'Could not save your confirmation. Refresh the bill before paying.' }
     }
-    const url = await startCheckout(owner, id)
+    checkoutUrl = await startCheckout(owner, id)
     refresh(owner)
-    return { url }
   } catch (error) {
     return { error: safeError(error) }
   }
+  redirect(checkoutUrl)
 }

@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react'
 import { manageCourseSchedule } from '@/actions/course-schedule'
 import {
-  lessonDates,
+  newYorkInstant,
   type CourseCreditData,
   type CourseBalance,
   type ManagedLesson,
@@ -16,6 +16,46 @@ const dateLabel = (date: string) =>
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(date))
+function LessonTimeFields({
+  local,
+  onChange,
+  duration,
+}: {
+  local: string
+  onChange: (value: string) => void
+  duration: number
+}) {
+  let endTime = ''
+  let error = ''
+  if (local) {
+    try {
+      const start = newYorkInstant(local)
+      endTime = dateLabel(new Date(Date.parse(start) + duration * 60000).toISOString())
+    } catch (cause) {
+      error = (cause as Error).message
+    }
+  }
+  return (
+    <>
+      <label>
+        Start time · New York
+        <input
+          name="local"
+          type="datetime-local"
+          required
+          value={local}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </label>
+      <label>
+        End time · New York (automatic)
+        <input type="text" readOnly value={endTime} placeholder="Choose a start time" />
+      </label>
+      <p>{duration} minutes · End time is calculated automatically.</p>
+      {error && <p role="alert">{error}</p>}
+    </>
+  )
+}
 function CourseScheduleForm({
   owner,
   item,
@@ -28,17 +68,6 @@ function CourseScheduleForm({
   const [state, action, pending] = useActionState(manageCourseSchedule, {})
   const [request] = useState(() => item.request_id ?? crypto.randomUUID())
   const [local, setLocal] = useState('')
-  const [weeks, setWeeks] = useState(1)
-  const [skipped, setSkipped] = useState('')
-  let dates: ReturnType<typeof lessonDates> = []
-  let previewError = ''
-  if (local) {
-    try {
-      dates = lessonDates(local, weeks, skipped)
-    } catch (error) {
-      previewError = (error as Error).message
-    }
-  }
   return (
     <form action={action} className={styles.form}>
       <input type="hidden" name="owner" value={owner} />
@@ -47,60 +76,13 @@ function CourseScheduleForm({
       <input type="hidden" name="operation" value="create" />
       <input type="hidden" name="request" value={request} />
       <fieldset disabled={pending || Boolean(state.success)}>
-        <label>
-          First lesson · New York time
-          <input
-            name="local"
-            type="datetime-local"
-            required
-            value={local}
-            onChange={(e) => setLocal(e.target.value)}
-          />
-        </label>
-        <label>
-          Weekly dates (1 for a single lesson)
-          <input
-            name="weeks"
-            type="number"
-            min="1"
-            max="100"
-            value={weeks}
-            onChange={(e) => setWeeks(Number(e.target.value))}
-            required
-          />
-        </label>
-        <label>
-          Skip dates (optional, YYYY-MM-DD)
-          <input name="skipped" value={skipped} onChange={(e) => setSkipped(e.target.value)} />
-        </label>
-        <label>
-          Location
-          <input name="location" maxLength={200} />
-        </label>
-        <p>
-          {item.lesson_duration_minutes} minutes per lesson · {item.available} available to schedule
-        </p>
-        {dates.length > 0 && (
-          <details open>
-            <summary>{dates.length} lessons to arrange</summary>
-            <ul>
-              {dates.map((date) => (
-                <li key={date.local}>{dateLabel(date.instant)}</li>
-              ))}
-            </ul>
-          </details>
-        )}
-        {previewError && <p role="alert">{previewError}</p>}
-        {dates.length > item.available && (
-          <p role="alert">This series exceeds the available lessons.</p>
-        )}
-        <button
-          disabled={
-            pending || !dates.length || Boolean(previewError) || dates.length > item.available
-          }
-        >
-          Save lesson dates
-        </button>
+        <LessonTimeFields
+          local={local}
+          onChange={setLocal}
+          duration={item.lesson_duration_minutes}
+        />
+        <p>Uses 1 lesson credit · {item.available} available to schedule</p>
+        <button disabled={pending || !local || item.available < 1}>Save lesson</button>
       </fieldset>
       {state.error && <p role="alert">{state.error}</p>}
       {state.success && <p role="status">{state.success}</p>}
@@ -110,17 +92,20 @@ function CourseScheduleForm({
 function LessonActions({
   owner,
   lesson,
+  duration,
   test,
 }: {
   owner: string
   lesson: ManagedLesson
+  duration: number
   test: boolean
 }) {
   const [state, action, pending] = useActionState(manageCourseSchedule, {})
   const [operation, setOperation] = useState('reschedule')
+  const [local, setLocal] = useState('')
   const [now] = useState(Date.now)
   return (
-    <details>
+    <details className={styles.lessonDisclosure}>
       <summary>Adjust lesson</summary>
       <form action={action} className={styles.form}>
         <input type="hidden" name="owner" value={owner} />
@@ -138,14 +123,8 @@ function LessonActions({
         </label>
         {operation === 'reschedule' && (
           <>
-            <label>
-              New time · New York
-              <input name="local" type="datetime-local" required />
-            </label>
-            <label>
-              Location
-              <input name="location" defaultValue={lesson.location ?? ''} maxLength={200} />
-            </label>
+            <LessonTimeFields local={local} onChange={setLocal} duration={duration} />
+            <input type="hidden" name="location" value={lesson.location ?? ''} />
           </>
         )}
         {operation === 'cancel' && (
@@ -198,8 +177,8 @@ export function CourseCredits({ data, owner }: { data: CourseCreditData; owner?:
               </p>
             )}
             {owner && item.allocatable && item.available > 0 && (
-              <details>
-                <summary>Schedule lessons</summary>
+              <details className={styles.lessonDisclosure}>
+                <summary>Schedule a lesson</summary>
                 <CourseScheduleForm
                   key={`${item.item_id}:${item.available}`}
                   owner={owner}
@@ -227,6 +206,7 @@ export function CourseCredits({ data, owner }: { data: CourseCreditData; owner?:
                         key={`${lesson.id}:${lesson.revision}`}
                         owner={owner}
                         lesson={lesson}
+                        duration={item.lesson_duration_minutes}
                         test={Boolean(data.test)}
                       />
                     )}

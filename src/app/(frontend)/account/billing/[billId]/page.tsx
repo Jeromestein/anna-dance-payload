@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { BillDetails } from '@/components/billing-records'
-import { BillingRefresh } from '@/components/billing-refresh'
 import { StripeCheckout } from '@/components/stripe-billing-controls'
 import { billPath, money, statusLabels } from '@/lib/billing/model'
 import { loadBill } from '@/lib/billing/load'
@@ -35,7 +34,6 @@ export default async function BillPage({
       <section className={styles.billPage}>
         <h1>Bill unavailable</h1>
         <p role="alert">We could not load your bill. Please try again.</p>
-        <BillingRefresh />
         <Link href="/account">Back to My Account</Link>
       </section>
     )
@@ -105,7 +103,6 @@ export default async function BillPage({
                 academy.
               </p>
             ) : null}
-            <BillingRefresh />
           </div>
         </BillDetails>
       </article>

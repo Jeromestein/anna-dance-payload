@@ -1,4 +1,5 @@
-import { CourseCredits } from '@/components/course-credits'
+import { StudentSchedule } from './StudentSchedule'
+import { courseDateKey, courseDateLabel, courseTimeRange } from '@/lib/account/schedule-planning'
 import { loadCourseCredits } from '@/lib/account/course-credits.server'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter, SetStepNav } from '@payloadcms/ui'
@@ -12,13 +13,7 @@ import { siteOrigin, stripeAvailability } from '@/lib/stripe/config'
 import { loadBills } from '@/lib/billing/load'
 import { billingSummary } from '@/lib/billing/model'
 import { BillingAdmin } from '@/components/billing-admin'
-import {
-  type AccountScheduleEntry,
-  formatScheduleEntry,
-  getScheduleSourceLabel,
-  getScheduleStatusLabel,
-  mapStoredScheduleEntry,
-} from '@/lib/account/schedule'
+import { type AccountScheduleEntry, mapStoredScheduleEntry } from '@/lib/account/schedule'
 import {
   buildStudentSearchFilter,
   getStudentIdFromRouteSegments,
@@ -324,11 +319,12 @@ export async function StudentDetailView(props: AdminViewServerProps) {
       .maybeSingle<StudentProfile>(),
     supabase
       .from('app_schedule_entries')
-      .select('id, entry_type, title, starts_at, ends_at, timezone, location, status, source')
+      .select('id, entry_type, title, starts_at, ends_at, timezone, location, status, source', {
+        count: 'exact',
+      })
       .eq('user_profile_id', id)
-      .gte('ends_at', new Date().toISOString())
       .order('starts_at', { ascending: true })
-      .limit(50),
+      .limit(1000),
   ])
   const { data, error } = profileResult
 
@@ -367,8 +363,13 @@ export async function StudentDetailView(props: AdminViewServerProps) {
   const scheduleEntries = ((scheduleResult.data ?? []) as StoredScheduleEntry[]).map(
     mapStoredScheduleEntry,
   )
-  const nextEntry = scheduleEntries.find((entry) => entry.status !== 'cancelled')
-  const nextEntryDisplay = nextEntry ? formatScheduleEntry(nextEntry) : null
+  const now = new Date().getTime()
+  const nextEntry = scheduleEntries.find(
+    (entry) => entry.status !== 'cancelled' && Date.parse(entry.endsAt) >= now,
+  )
+  const nextEntryDisplay = nextEntry
+    ? `${courseDateLabel(courseDateKey(nextEntry.startsAt))} · ${courseTimeRange(nextEntry.startsAt, nextEntry.endsAt)} · New York`
+    : null
 
   return (
     <StudentAdminTemplate props={props}>
@@ -412,11 +413,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
             <article>
               <span className={previewStyles.label}>Next appointment</span>
               <strong>{nextEntry?.title ?? 'None scheduled'}</strong>
-              <p>
-                {nextEntryDisplay
-                  ? `${nextEntryDisplay.date} · ${nextEntryDisplay.time}`
-                  : 'No linked appointment'}
-              </p>
+              <p>{nextEntryDisplay ?? 'No linked appointment'}</p>
             </article>
           </div>
 
@@ -456,37 +453,16 @@ export async function StudentDetailView(props: AdminViewServerProps) {
                   <p>Academy classes and linked Cal.com appointments.</p>
                 </div>
               </header>
-              <CourseCredits data={credits} owner={id} />
-              <div className={previewStyles.events}>
-                {scheduleResult.error && (
-                  <p className="student-admin__alert student-admin__alert--error" role="alert">
-                    Schedule records could not be loaded.
-                  </p>
-                )}
-                {!scheduleResult.error && scheduleEntries.length === 0 && (
-                  <p className={previewStyles.empty}>No linked appointments or classes.</p>
-                )}
-                {scheduleEntries.map((entry) => {
-                  const display = formatScheduleEntry(entry)
-
-                  return (
-                    <article className={previewStyles.event} key={entry.id}>
-                      <time className={previewStyles.date} dateTime={entry.startsAt}>
-                        <span>{display.month}</span>
-                        <strong>{display.day}</strong>
-                      </time>
-                      <div className={previewStyles.eventInfo}>
-                        <strong>{entry.title}</strong>
-                        <span>
-                          {display.time} · {entry.location || 'Location to be confirmed'}
-                        </span>
-                        <small>{getScheduleStatusLabel(entry)}</small>
-                      </div>
-                      <span className={previewStyles.source}>{getScheduleSourceLabel(entry)}</span>
-                    </article>
-                  )
-                })}
-              </div>
+              <StudentSchedule
+                owner={id}
+                credits={credits}
+                entries={scheduleEntries}
+                loadError={
+                  Boolean(scheduleResult.error) ||
+                  (scheduleResult.count ?? 0) > scheduleEntries.length
+                }
+                today={courseDateKey(new Date())}
+              />
             </section>
           </div>
 

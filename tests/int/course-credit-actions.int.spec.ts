@@ -110,7 +110,7 @@ describe('staff schedule actions', () => {
     await expect(manageCourseSchedule({}, form({ owner, item }))).rejects.toThrow('not admin')
     expect(m.rpc).not.toHaveBeenCalled()
   })
-  it('uses repeatable identities and preserves New York wall time across DST', async () => {
+  it('creates one slot with a repeatable identity, ignoring batch counts and supplied end times', async () => {
     const f = form({
       owner,
       item,
@@ -118,6 +118,7 @@ describe('staff schedule actions', () => {
       request,
       local: '2026-10-25T10:00',
       weeks: '2',
+      ends_at: '2026-10-25T22:00:00.000Z',
       location: 'Studio',
     })
     await manageCourseSchedule({}, f)
@@ -126,9 +127,23 @@ describe('staff schedule actions', () => {
     const args = m.rpc.mock.calls[0][1]
     expect(args.p_entries.map((e: { starts_at: string }) => e.starts_at)).toEqual([
       '2026-10-25T14:00:00.000Z',
-      '2026-11-01T15:00:00.000Z',
     ])
+    expect(args.p_entries[0]).not.toHaveProperty('ends_at')
     expect(args.p_actor).toBe('42')
+  })
+  it.each([
+    ['Student already has a lesson at this time', 'Time conflict:'],
+    ['No lesson credits available', 'No credits remain'],
+    ['Choose a future lesson time', 'in the future'],
+    ['Lesson changed; refresh before editing', 'another administrator'],
+  ])('explains database rejection: %s', async (message, expected) => {
+    m.rpc.mockResolvedValue({ error: { message } })
+    const result = await manageCourseSchedule(
+      {},
+      form({ owner, item, operation: 'create', request, local: '2030-06-10T10:00' }),
+    )
+    expect(result.error).toContain(expected)
+    expect(m.revalidate).not.toHaveBeenCalled()
   })
   it('rejects forged sandbox scheduling in live mode and invalid times', async () => {
     const f = form({

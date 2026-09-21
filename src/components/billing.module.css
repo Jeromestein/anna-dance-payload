@@ -827,3 +827,133 @@
   align-items: center;
   gap: 16px;
 }
+
+/* Payload uses a smaller root font; give student management its own readable scale. */
+:global(.student-admin) .body,
+:global(.student-admin) .form,
+.refundReview .form,
+:global(.student-admin) .form label,
+:global(.student-admin) .refundSelect,
+.refundReview,
+.refundReview .form label {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+:global(.student-admin) .records h3 {
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+:global(.student-admin) .body h4 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+:global(.student-admin) .bill small,
+:global(.student-admin) .reference,
+:global(.student-admin) .shareTools label,
+:global(.student-admin) .shareTools p,
+:global(.student-admin) .billingEmpty p,
+.refundBadge,
+.refundSteps,
+.refundAmount > span,
+.refundCaution,
+.refundReferences,
+.refundReview .items,
+.refundReview .form > p {
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+:global(.student-admin) .form input:not([type='hidden']):not([type='checkbox']),
+:global(.student-admin) .form select,
+:global(.student-admin) .form textarea,
+:global(.student-admin) .refundSelect select,
+:global(.student-admin) .shareTools input,
+:global(.student-admin) .form button,
+:global(.student-admin) .refundButton,
+:global(.student-admin) .refundLauncher .refundActions > button,
+:global(.student-admin) .shareTools > button,
+:global(.student-admin) .secondaryAction,
+.refundReview .form button,
+.refundReview .form textarea {
+  min-height: 48px;
+  font-size: 16px;
+}
+
+.refundDismiss {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+:global(.student-admin) .records summary,
+:global(.student-admin) .form summary,
+.refundReferences summary {
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 12px;
+  font-size: 16px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+:global(.student-admin) .lessonDisclosure > summary {
+  margin-top: 16px;
+  border: 1px solid var(--theme-elevation-300, #aac2c2);
+  border-radius: 8px;
+  background: var(--theme-elevation-50, #f2f7f6);
+  font-weight: 600;
+}
+
+:global(.student-admin) .records summary:focus-visible,
+:global(.student-admin) .form summary:focus-visible,
+.refundReferences summary:focus-visible,
+:global(.student-admin) .form input:focus-visible,
+:global(.student-admin) .form select:focus-visible,
+:global(.student-admin) .form textarea:focus-visible {
+  outline: 2px solid #08788e;
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  :global(.student-admin) .body {
+    padding: 14px;
+  }
+
+  :global(.student-admin) .bill > summary {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  :global(.student-admin) .bill > summary span:last-child {
+    flex: 1 1 100%;
+  }
+
+  :global(.student-admin) .form fieldset {
+    margin: 0;
+    padding: 12px;
+  }
+
+  :global(.student-admin) .form .courseCount {
+    grid-template-columns: minmax(0, 1fr) 72px;
+    gap: 10px;
+  }
+
+  :global(.student-admin) .refundHeader,
+  :global(.student-admin) .items li {
+    flex-wrap: wrap;
+  }
+
+  .refundReview .totals div {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .refundReview .totals dd {
+    margin-left: auto;
+  }
+}

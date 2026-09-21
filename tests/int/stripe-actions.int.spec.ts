@@ -9,7 +9,9 @@ const m = vi.hoisted(() => ({
   checkout: vi.fn(),
   ctx: vi.fn(),
   issue: vi.fn(),
+  redirect: vi.fn(),
 }))
+vi.mock('next/navigation', () => ({ redirect: m.redirect }))
 vi.mock('@/lib/supabase/admin', () => ({ createSupabaseAdminClient: () => ({ rpc: m.issue }) }))
 vi.mock('@/lib/staff/auth', () => ({ requirePayloadAdministrator: m.auth }))
 vi.mock('@/lib/stripe/billing', () => ({
@@ -54,6 +56,9 @@ beforeEach(() => {
   m.rpc.mockResolvedValue({})
   m.claims.mockResolvedValue({ data: { claims: { sub: owner } } })
   m.checkout.mockResolvedValue('https://checkout.stripe.com/test')
+  m.redirect.mockImplementation(() => {
+    throw new Error('NEXT_REDIRECT')
+  })
 })
 describe('Stripe action boundaries', () => {
   it('requires administrator auth before refunding', async () => {
@@ -73,8 +78,9 @@ describe('Stripe action boundaries', () => {
   it('derives checkout owner from the student session', async () => {
     const f = form()
     f.set('owner', 'forged')
-    await checkoutStripeBill({}, f)
+    await expect(checkoutStripeBill({}, f)).rejects.toThrow('NEXT_REDIRECT')
     expect(m.checkout).toHaveBeenCalledWith(owner, id)
+    expect(m.redirect).toHaveBeenCalledWith('https://checkout.stripe.com/test')
   })
   it('does not charge when no student session exists', async () => {
     m.claims.mockResolvedValue({ error: 'no session' })
@@ -90,7 +96,7 @@ describe('Stripe action boundaries', () => {
     f.set('termsAccepted', 'yes')
     f.set('note', 'Please confirm the Saturday dates.')
     f.set('owner', 'forged')
-    await checkoutStripeBill({}, f)
+    await expect(checkoutStripeBill({}, f)).rejects.toThrow('NEXT_REDIRECT')
     expect(m.issue).toHaveBeenCalledWith('app_accept_bill', {
       p_owner: owner,
       p_id: id,
@@ -137,5 +143,15 @@ describe('Stripe action boundaries', () => {
     f.set('staffTest', 'yes')
     expect((await checkoutStripeBill({}, f)).error).toBeDefined()
     expect(m.checkout).not.toHaveBeenCalled()
+  })
+  it('redirects sandbox staff checkout and keeps provider errors on the bill', async () => {
+    const f = form()
+    f.set('staffTest', 'yes')
+    await expect(checkoutStripeBill({}, f)).rejects.toThrow('NEXT_REDIRECT')
+    expect(m.redirect).toHaveBeenCalledWith('https://checkout.stripe.com/test')
+    m.redirect.mockClear()
+    m.checkout.mockRejectedValue(new Error('Checkout is unavailable.'))
+    expect(await checkoutStripeBill({}, f)).toEqual({ error: 'Checkout is unavailable.' })
+    expect(m.redirect).not.toHaveBeenCalled()
   })
 })

@@ -123,6 +123,8 @@
 }
 
 .student-admin {
+  font-size: 16px;
+  line-height: 1.5;
   width: 100%;
   padding: calc(var(--base) * 1.8) 0 calc(var(--base) * 3);
 }
@@ -598,7 +600,7 @@
 }
 
 .student-admin--detail {
-  max-width: 900px;
+  max-width: 1040px;
 }
 
 .student-admin__header {
@@ -617,6 +619,7 @@
 }
 
 .student-admin__back-link {
+  min-height: 48px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -666,6 +669,8 @@
   }
 
   input {
+    box-sizing: border-box;
+    min-width: 0;
     width: 100%;
     min-height: 48px;
     padding: 0 calc(var(--base) * 0.75) 0 calc(var(--base) * 1.8);
@@ -675,6 +680,7 @@
     background: var(--theme-elevation-50);
     color: var(--theme-text);
     font: inherit;
+    font-size: 16px;
 
     &::placeholder {
       color: var(--theme-elevation-400);
@@ -688,6 +694,7 @@
 }
 
 .student-admin__table-wrap {
+  overflow-x: auto;
   margin-bottom: 0;
 }
 
@@ -781,7 +788,9 @@
 
   a,
   > span {
-    min-height: 32px;
+    min-height: 48px;
+    min-width: 48px;
+    justify-content: center;
     display: inline-flex;
     align-items: center;
     padding: 0 calc(var(--base) * 0.45);
@@ -848,10 +857,11 @@
 
 .student-admin__fields {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--base);
 
   label {
+    min-width: 0;
     display: block;
     font-weight: 600;
   }
@@ -859,12 +869,14 @@
   label > span {
     margin-left: 5px;
     color: var(--theme-elevation-500);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 400;
     text-transform: uppercase;
   }
 
   input {
+    box-sizing: border-box;
+    min-width: 0;
     width: 100%;
     min-height: 48px;
     margin-top: calc(var(--base) * 0.3);
@@ -875,6 +887,7 @@
     background: var(--theme-input-bg, var(--theme-elevation-0));
     color: var(--theme-text);
     font: inherit;
+    font-size: 16px;
 
     &:focus-visible {
       border-color: var(--theme-elevation-400);
@@ -905,7 +918,7 @@
   legend span {
     margin-left: 5px;
     color: var(--theme-elevation-500);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 400;
     text-transform: uppercase;
   }
@@ -917,7 +930,7 @@
   margin-top: calc(var(--base) * 1.5);
 
   button {
-    min-height: 42px;
+    min-height: 48px;
     padding: 0 calc(var(--base) * 0.8);
     border: 1px solid var(--theme-elevation-800);
     border-radius: var(--style-radius-s);
@@ -925,6 +938,7 @@
     color: var(--theme-elevation-0);
     cursor: pointer;
     font: inherit;
+    font-size: 16px;
 
     &:hover {
       background: var(--theme-elevation-700);
@@ -932,7 +946,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 800px) {
   .student-admin {
     padding-top: var(--base);
   }
@@ -979,7 +993,7 @@
     place-items: center;
     border-radius: 50%;
     background: var(--theme-elevation-100);
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 600;
   }
 
@@ -997,7 +1011,7 @@
     > span {
       margin-top: 2px;
       color: var(--theme-elevation-600);
-      font-size: 12px;
+      font-size: 14px;
     }
   }
 
@@ -1018,5 +1032,27 @@
 
   .student-admin__save-row button {
     width: 100%;
+  }
+}
+
+.student-admin__form-heading h2 {
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+@media (max-width: 800px) {
+  body:has(.student-admin) {
+    .app-header__wrapper,
+    .app-header__step-nav-wrapper {
+      min-width: 0;
+    }
+
+    .app-header__step-nav-wrapper {
+      overflow-x: auto;
+    }
+
+    .nav__header {
+      width: calc(100% - var(--gutter-h));
+    }
   }
 }
