@@ -1,6 +1,8 @@
 # Lesson-package payment acceptance
 
-Updated September 21, 2026. This records isolated sandbox evidence, not production acceptance.
+Updated September 21, 2026. Historical sandbox evidence is preserved below. See the
+[release acceptance checkpoint](billing-release-acceptance-20260921.md) for current production
+read-only checks, branded inbox receipt, and remaining launch gates.
 
 ## Provider-backed package flow — September 17
 
@@ -53,7 +55,10 @@ not restarted. No live Stripe key, permission, webhook configuration, or payment
 Mail-specific implementation gaps and delivery checks are maintained in the
 [central email checklist](production-email-notification-acceptance-checklist.md#current-coverage-and-next-checks--september-21-2026).
 
-- [ ] Verify deployed migrations and current production UI, including live demo/test hiding.
+- [x] Production migrations were applied in the [separate rollout](billing-production-migration-20260921.md).
+      Latest deployment `4a596bb` is Current/Ready; the authenticated Admin billing view loads and
+      hides demo/test actions. No new production bill was created.
+- [ ] Verify the authenticated production Student Account and enabled live Checkout separately.
 - [x] Verify a signed-out bill visit redirects to login with the original bill URL preserved.
 - [ ] Complete sign-in and return after the new mandatory Terms checkbox is accepted by the user;
       automated verification stopped at that consent gate. Complete keyboard-only package issuance.

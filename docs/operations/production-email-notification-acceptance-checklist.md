@@ -348,7 +348,7 @@ Stripe may also send its own receipt under the separately configured provider se
 
 ### Missing coverage — priorities and decisions
 
-These items are not implemented. The checklist update does not send mail, change provider
+Unchecked items remain open. The checklist update does not send mail, change provider
 configuration, or authorize bulk/historical notifications.
 
 - [x] **Priority 1 — full refund confirmation:** website business confirmations now notify both
@@ -356,9 +356,11 @@ configuration, or authorize bulk/historical notifications.
       destination and refund reference. Sandbox inbox delivery is verified above. No bank-settlement
       promise, historical backfill, or duplicate website notice on retries. Stripe's own receipt
       settings are unchanged; its separate bank/payment receipt remains a provider acceptance item.
-- [ ] Deploy `20260921210000_refund_notifications.sql` after the billing-notification migration,
-      deploy the matching application, and verify the next authorized genuine refund notification.
-      Only local sandbox rollout has been completed.
+- [x] Production migrations, including `20260921210000_refund_notifications.sql`, were applied
+      in the [separate rollout](billing-production-migration-20260921.md); matching application code
+      is deployed.
+- [ ] Verify the next authorized genuine refund notification in production. Deployment does not
+      establish live inbox delivery.
 - [ ] **Priority 1 — failed refund alert:** add an Academy alert and clear recovery path when the
       verified refund fails. Distinguish requested/pending from completed; never send a success
       notice just because Admin clicked Refund. Define handling if a completed refund later fails.
@@ -420,3 +422,11 @@ production receipt reverified. Preserved the September 7 Cal.com lifecycle and s
 results. Added current website billing mail implementation/acceptance, refund/Cal-payment/offline
 coverage gaps, delivery recovery and optional-message decisions. The September 17 USD 300 sandbox
 payment and refund proved financial synchronization, not confirmation-mail delivery.
+
+### Release-readiness follow-up — September 21, 2026
+
+See the [release acceptance checkpoint](billing-release-acceptance-20260921.md): production
+deployment and Admin visibility checked, branded payment-request inbox delivery (including a due
+date) verified at 13:10 PDT, and locally signed concurrent replay preserved refunded state and all
+notice IDs. Customer consent/login completion and live configuration remain pending. The replay
+used synthetic signed envelopes and does not close the actual Stripe delivery-retry checklist.

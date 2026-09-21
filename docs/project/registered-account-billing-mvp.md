@@ -1,7 +1,8 @@
 # Registered-account billing MVP
 
-Implementation: September 21, 2026. Local implementation and isolated verification only;
-production rollout and provider delivery acceptance are still pending.
+Implementation: September 21, 2026. Production migrations and deployment are now recorded;
+live Checkout enablement and complete customer-flow acceptance remain pending. See the
+[release checkpoint](../operations/billing-release-acceptance-20260921.md).
 
 ## Operator and account-holder flow
 
@@ -113,6 +114,6 @@ The earlier lesson-package core has separate [sandbox acceptance evidence](../op
 
 Customer and Academy refund notices were verified in separate Gmail inboxes after Admin refunded
 a USD 2.50 sandbox bill. The refunded Admin UI and duplicate-safe retry were verified in-app.
-The new migration is applied only locally; production rollout remains pending. See the
+The migration was subsequently applied in the [production rollout](../operations/billing-production-migration-20260921.md); live refund-mail delivery remains pending. See the
 [refund acceptance record](../operations/production-email-notification-acceptance-checklist.md#full-refund-inbox-acceptance--september-21-2026)
 for recipients, provider references, tests and the concurrent-webhook retry caveat.
