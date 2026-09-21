@@ -60,16 +60,20 @@ Mail-specific implementation gaps and delivery checks are maintained in the
       hides demo/test actions. No new production bill was created.
 - [ ] Verify the authenticated production Student Account and enabled live Checkout separately.
 - [x] Verify a signed-out bill visit redirects to login with the original bill URL preserved.
-- [ ] Complete sign-in and return after the new mandatory Terms checkbox is accepted by the user;
-      automated verification stopped at that consent gate. Complete keyboard-only package issuance.
-- [ ] Complete package-specific replacement payment, multi-course browser flow, decline/close,
-      and concurrent-tab acceptance. Service/database tests cover several of these invariants but
-      are not evidence that every provider/browser scenario has run.
+- [x] Complete customer sign-in and return after explicit user consent to the mandatory Terms
+      checkbox; verify bill acknowledgement and teacher-note persistence on the USD 3.01 bill.
+- [x] Close/reopen Checkout, decline then retry successfully, and open the same bill in two tabs:
+      both tabs reused one Checkout session and removed payment actions after success.
+- [ ] Complete keyboard-only issuance, package-specific replacement payment, multi-course browser
+      flow and expired/delayed/provider-retry scenarios. Current evidence does not cover all cases.
 - [x] September 21 separate authorized email test: issue an Admin sandbox bill, send its request,
       pay through **Pay test bill**, and observe customer plus Academy confirmations at the
       designated test inbox. [Actual inbox evidence and webhook caveat](production-email-notification-acceptance-checklist.md#authorized-sandbox-inbox-acceptance--september-21-2026).
-- [ ] Complete the customer acknowledgement/terms route separately and verify signed webhook
-      redelivery after concurrent notification claims. The Admin test does not prove these steps.
+- [x] Complete the customer acknowledgement/terms route separately, followed by Admin full refund;
+      inspect branded payment/refund notices in both authorized inboxes at 13:26/13:28 PDT.
+      [Continuation evidence](billing-release-acceptance-20260921.md#consented-customer-flow-continuation--13231330-pdt).
+- [ ] Verify hosted signed webhook redelivery after concurrent notification claims. Real sandbox
+      deliveries still included 503 responses despite successful financial and mail outcomes.
 - [ ] Review/approve live Checkout permission and payment enablement separately; then observe a
       genuine package payment. Sandbox success does not prove live collection readiness.
 

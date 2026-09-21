@@ -2,7 +2,7 @@
 
 Updated: September 21, 2026
 
-Status: Implemented locally and included in commit `06b6cd5`. The owner authorized implementation after the original design. A 10 × $30 package completed sandbox Checkout, signed webhook synchronization, and Admin full refund. Production migration/deployment and live Checkout enablement are not confirmed by this checkpoint. See [package acceptance evidence](../operations/package-payment-acceptance.md). The September 21 [registered-account billing MVP](registered-account-billing-mvp.md) extends this flow with custom totals, acknowledgement, and email notifications; its separate end-to-end acceptance remains pending.
+Status: Implemented locally and included in commit `06b6cd5`. The owner authorized implementation after the original design. A 10 × $30 package completed sandbox Checkout, signed webhook synchronization, and Admin full refund. Production migration/deployment are documented in the September 21 release checkpoint; live Checkout enablement remains unverified. See [package acceptance evidence](../operations/package-payment-acceptance.md). The September 21 [registered-account billing MVP](registered-account-billing-mvp.md) extends this flow with custom totals, acknowledgement, and email notifications; its consented customer sandbox payment/refund and branded email flow passed at 13:26–13:28 PDT. Concurrent-webhook retry and live configuration remain open; see the [current release checkpoint](../operations/billing-release-acceptance-20260921.md).
 
 Related: [Payment and Billing Design](account-billing.md) · [Stripe operations and acceptance](../operations/stripe-payment-refund-testing.md)
 
@@ -105,7 +105,7 @@ For lesson-package lines, construct an explicit description such as `Ballet — 
 
 The server recalculates the total from stored integer-cent values and requires it to match the bill. Ten lessons at $30.00 produces $300.00. A three-lesson package advertised as exactly $100.00 cannot be represented by rounding a per-lesson price: that would change the charge. Use the separately implemented Custom total option for that case: it stores one charge and puts the lesson count in the description, without inventing a rounded per-lesson rate. Existing validation and line-count limits still apply.
 
-Package issuance requires `20260917200000_issue_package_bills.sql`: a service-only, retry-safe `app_issue_bill` function, using a transaction lock and immutable payload comparison. It adds no financial tables. The September 21 notification/acknowledgement extension additionally requires `20260921200000_billing_notifications.sql`; deploy both before the combined code. Both are applied only to the isolated local sandbox in this verification, not production.
+Package issuance requires `20260917200000_issue_package_bills.sql`: a service-only, retry-safe `app_issue_bill` function, using a transaction lock and immutable payload comparison. It adds no financial tables. The September 21 notification/acknowledgement extension additionally requires `20260921200000_billing_notifications.sql`; deploy both before the combined code. Both were subsequently applied in the [September 21 production rollout](../operations/billing-production-migration-20260921.md). Do not reapply the non-idempotent migrations.
 
 ## Status, retry, and refund behavior
 
@@ -172,9 +172,11 @@ The demo/test visibility cleanup is implemented and covered locally. Production 
 - [ ] Verify multi-course lines, lesson-count validation, integer-cent totals, and rejection of an unsupported fixed-total rounding shortcut.
 - [x] Verify copied links and clipboard failure fallback; owner filtering and cross-account 404; customer bill at 390px and 1280px.
 - [x] Verify signed-out bill navigation preserves the bill URL in the login destination.
-- [ ] Complete login return after user acceptance of the mandatory Terms checkbox, and full keyboard-only package issuance review.
+- [x] Complete login return and bill acknowledgement after explicit user acceptance of the mandatory Terms checkbox; verify teacher-note persistence.
+- [ ] Complete full keyboard-only package issuance review.
 - [x] Pay once in sandbox and prove webhook-driven update of the same bill without manual Paid or Refresh Stripe status actions; capture delivery evidence and item preservation.
-- [ ] Exercise declined payment, closing Checkout, delayed webhook, duplicate/out-of-order event, open/expired session, stale request, and concurrent pay attempts.
+- [x] Verify declined payment, close/reopen Checkout and two-tab reuse of one open session on the USD 3.01 customer sandbox bill.
+- [ ] Exercise delayed webhook, provider-managed retry, expired session, stale request and remaining out-of-order scenarios. Concurrent events still produced some 503 responses; see the release checkpoint.
 - [x] Perform a sandbox full refund; verify the old link remains historical with no Pay action and intact lesson details.
 - [ ] Complete package-specific replacement-bill browser acceptance through its separate payment.
 - [x] Run focused tests, type checks, and in-app desktop/mobile verification; do not run `pnpm build`.
@@ -182,7 +184,7 @@ The demo/test visibility cleanup is implemented and covered locally. Production 
 ### Phase 4 — Controlled release
 
 - [x] Obtain implementation authorization (owner request following the design).
-- [ ] Apply both required migrations and release the combined implementation through the approved deployment process.
+- [x] Apply required migrations and verify deployed billing UI in the September 21 production rollout. Later local template changes still require their own deployment.
 - [ ] Verify the intended merchant/mode and minimum required Checkout permissions in sandbox, then obtain the required live permission approval.
 - [ ] Enable the independent live payment switch only for the approved rollout; retain existing refund behavior.
 - [ ] Verify the deployed page and payment-link controls using non-financial viewing/copy actions.

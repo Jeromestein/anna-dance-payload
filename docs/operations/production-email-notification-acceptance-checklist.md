@@ -204,8 +204,9 @@ Items below distinguish source coverage from the explicitly scoped inbox accepta
       a populated due-date email remains unchecked.
 - [x] Run Admin **Pay test bill** → Stripe sandbox Checkout → signed webhook → customer and Academy
       confirmations. Both templates actually reached the test inbox; evidence below.
-- [ ] Run the separate customer acknowledgement → Checkout flow after user acceptance of the
-      mandatory terms. The Admin sandbox entry intentionally does not record customer acceptance.
+- [x] Run the separate customer acknowledgement → Checkout flow after explicit user acceptance of
+      the mandatory terms. The USD 3.01 customer test completed at 13:26 PDT; both branded payment
+      confirmations reached the authorized inboxes, followed by both refund notices at 13:28 PDT.
 - [x] Retry already-sent confirmations from Admin; confirm no additional outbox rows, provider IDs
       or inbox messages, and preserve Paid status.
 - [ ] Verify mail failure/retry never changes financial status or duplicates accepted notices;
@@ -428,5 +429,29 @@ payment and refund proved financial synchronization, not confirmation-mail deliv
 See the [release acceptance checkpoint](billing-release-acceptance-20260921.md): production
 deployment and Admin visibility checked, branded payment-request inbox delivery (including a due
 date) verified at 13:10 PDT, and locally signed concurrent replay preserved refunded state and all
-notice IDs. Customer consent/login completion and live configuration remain pending. The replay
+notice IDs. Customer consent/login completion was subsequently verified below; live configuration
+remains pending. The replay
 used synthetic signed envelopes and does not close the actual Stripe delivery-retry checklist.
+
+### Consented customer Checkout and branded notices — 13:26–13:28 PDT
+
+See the [customer-flow continuation](billing-release-acceptance-20260921.md#consented-customer-flow-continuation--13231330-pdt)
+for bill `ADA-20260921-D1A1945E5C61`, provider IDs, actual signed events and UI evidence.
+
+- [x] After explicit consent, sign in from the original bill destination and save the bill terms
+      acknowledgement and teacher note. Close/reopen Checkout, decline, then pay USD 3.01 in sandbox.
+- [x] Read the new branded payment confirmations in `errplusone@gmail.com` and
+      `annadanceacademy@gmail.com` at 13:26 PDT. The Academy copy includes the teacher note.
+- [x] Complete a full refund through Admin's two-step dialog and read both branded refund
+      confirmations in those same inboxes at 13:28 PDT.
+- [x] Inspect the logo, wordmark, course/count, total, recipient-specific bill/Admin links and
+      **Call Us** footer. Current payment/refund messages omit timestamps and provider references.
+- [x] Verify exactly five sent notices on the bill: request, two payment and two refund notices.
+- [ ] Concurrent events still return some 503 responses; hosted retry and failure recovery remain
+      open. Successful receipt does not establish that every event returned 200.
+- [ ] Improve Admin's asynchronous email status refresh. Refund notices briefly remained pending
+      on the existing screen after inbox receipt; reloading displayed the correct provider status.
+
+This test used an isolated source snapshot based on `2aa20bb` plus the concurrent uncommitted email
+timestamp/reference removals. It does not establish deployment of those template changes or live
+recipient configuration. No live transaction was made.

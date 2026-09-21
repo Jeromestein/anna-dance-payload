@@ -1,7 +1,8 @@
 # Registered-account billing MVP
 
 Implementation: September 21, 2026. Production migrations and deployment are now recorded;
-live Checkout enablement and complete customer-flow acceptance remain pending. See the
+the consented customer sandbox payment/refund flow and branded emails are verified. Live Checkout
+enablement and concurrent-webhook retry acceptance remain pending. See the
 [release checkpoint](../operations/billing-release-acceptance-20260921.md).
 
 ## Operator and account-holder flow
@@ -105,8 +106,13 @@ The subsequent authorized sandbox email test below sent three real emails to the
   `annadanceacademy@gmail.com`, with customer notices separately routed to `errplusone@gmail.com`.
   The new optional sandbox Admin override and its isolation checks passed 16 tests, typecheck and
   scoped ESLint. [Separate inbox evidence](../operations/production-email-notification-acceptance-checklist.md#separate-academy-inbox-acceptance--september-21-2026).
-- Still pending: deployed migrations, customer acknowledgement/terms flow, live-deployment email
-  acceptance, and signed event redelivery after concurrent notice-claim 503 responses.
+- The consented USD 3.01 customer flow subsequently completed login return, teacher-note storage,
+  close/reopen, decline/success, two-tab session reuse, signed financial synchronization and Admin
+  full refund. Branded payment and refund emails reached both authorized Gmail inboxes at
+  13:26/13:28 PDT. [Current evidence](../operations/billing-release-acceptance-20260921.md).
+- Still pending: live Checkout configuration and live email acceptance, plus hosted signed event
+  redelivery after concurrent notice-claim 503 responses. Production migrations are recorded in the
+  [separate rollout](../operations/billing-production-migration-20260921.md).
 
 The earlier lesson-package core has separate [sandbox acceptance evidence](../operations/package-payment-acceptance.md): September 17 Checkout and Admin full refund completed with signed HTTP 200 deliveries and preserved 10-lesson detail. September 21 current-source checks verified the refunded bill layout and wrong-owner denial. These checks do not complete the new acknowledgement and notification end-to-end flow above.
 
