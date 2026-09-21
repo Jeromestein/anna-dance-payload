@@ -120,7 +120,7 @@ export async function billingNotices(owner: string, id: string, requestPayment =
           : '',
         `${request ? 'Review and Pay' : 'View Payment Record'}: ${origin}${billPath(id)}`,
         admin ? `Admin record: ${origin}/admin/students/${owner}` : '',
-        'For questions, contact annadanceacademy@gmail.com.',
+        'For questions, call us at 701-400-9213.',
       ]
         .filter(Boolean)
         .join('\n\n'),

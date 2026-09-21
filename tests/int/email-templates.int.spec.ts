@@ -21,7 +21,7 @@ describe('branded email output', () => {
     expect(document.querySelectorAll('h1')).toHaveLength(1)
     expect(document.querySelectorAll('script')).toHaveLength(0)
     for (const link of document.querySelectorAll('a')) {
-      expect(link.href).toMatch(/^(https:\/\/|mailto:)/)
+      expect(link.href).toMatch(/^(https:\/\/|mailto:|tel:)/)
     }
     if (name !== 'contact' && name !== 'registration') {
       expect(document.body.textContent).toContain('$240.00')

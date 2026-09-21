@@ -420,6 +420,9 @@ Updated: September 21, 2026. Applies to the seven custom React Email notificatio
 
 Logo alignment is centered; email content and action buttons remain left-aligned.
 Use system fonts, inline styles, and table layouts suitable for email clients.
+The shared footer uses `Call Us` linked to `tel:+17014009213` (701-400-9213), followed
+by the website link. Do not use a school email link as the footer contact action.
+The inquiry-specific `Reply to Inquiry` button still replies to the inquiring family.
 
 ### Capitalization and copy
 

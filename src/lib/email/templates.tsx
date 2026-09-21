@@ -119,10 +119,10 @@ function EmailLayout({
             <Text style={{ fontSize: 12, lineHeight: '20px', color: muted, margin: '8px 0' }}>
               Questions?{' '}
               <Link
-                href="mailto:annadanceacademy@gmail.com"
+                href="tel:+17014009213"
                 style={{ color: rose, textDecoration: 'underline' }}
               >
-                Contact the Academy
+                Call Us
               </Link>
               {' · '}
               <Link href={website} style={{ color: rose, textDecoration: 'underline' }}>
