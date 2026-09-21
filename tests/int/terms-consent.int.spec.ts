@@ -33,10 +33,10 @@ describe('Website terms consent', () => {
     expect(button.disabled).toBe(true)
   })
 
-  it('requires consent on the Google login entry too', () => {
-    render(createElement(GoogleSignInButton, { requireTerms: true }))
-    expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(false)
-    expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(true)
+  it('allows Google login without terms consent', () => {
+    render(createElement(GoogleSignInButton, { requireTerms: false }))
+    expect(screen.queryByRole('checkbox')).toBeNull()
+    expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false)
   })
 
   it('loads booking only after consent and hides it when consent is withdrawn', async () => {

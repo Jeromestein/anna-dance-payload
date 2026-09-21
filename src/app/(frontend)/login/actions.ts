@@ -115,9 +115,6 @@ function ensureConfigured(mode: AuthMode, nextPath: string) {
 export async function login(formData: FormData) {
   const mode: AuthMode = 'login'
   const nextPath = getSafeNextPath(formData.get('next'))
-  if (formData.get('termsAccepted') !== 'yes') {
-    redirectToLogin(mode, 'error', 'Please agree to the Website Terms of Use to log in.', nextPath)
-  }
   ensureConfigured(mode, nextPath)
   const credentials = readCredentials(formData, mode, nextPath)
   const supabase = await createClient()

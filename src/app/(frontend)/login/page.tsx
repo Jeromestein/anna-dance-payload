@@ -88,7 +88,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <GoogleSignInButton
             key={isSignup ? 'signup' : 'login'}
             nextPath={nextPath}
-            requireTerms
+            requireTerms={isSignup}
           />
           <div className="auth-divider">
             <span>or continue with email</span>
