@@ -1,8 +1,8 @@
-# Stripe Course Products, Lesson Credits, and Scheduling Checklist
+# Course Purchases, Lesson Credits, and Scheduling Checklist
 
 Date: September 21, 2026
 
-Status: Core implementation is committed and the production database migration is applied. Stripe product configuration and hosted purchase acceptance remain pending. See [production Billing recovery](../operations/course-credits-production-migration-20260921.md). See [local implementation and acceptance](../operations/course-credits-local-acceptance-20260921.md).
+Status: Core implementation is committed and the production database migration is applied. The follow-up removes the Stripe catalog configuration requirement; hosted purchase acceptance remains pending. See [optional Product IDs](../operations/optional-course-products-20260921.md). See [production Billing recovery](../operations/course-credits-production-migration-20260921.md). See [local implementation and acceptance](../operations/course-credits-local-acceptance-20260921.md).
 
 ## Outcome
 
@@ -12,25 +12,25 @@ Different customers can pay different negotiated totals for the same or differen
 
 ## Agreed design
 
-- Manage four course products in Stripe: Group Class (60 minutes), Duet Class (60 minutes), Solo Class (30 minutes), and Solo Class (60 minutes).
-- Store the Stripe Product ID on each local bill item. Do not require or persist a Stripe Price ID for the application workflow.
+- Define four course types locally: Group Class (60 minutes), Duet Class (60 minutes), Solo Class (30 minutes), and Solo Class (60 minutes).
+- Identify each course with its local `course_key`. Preserve optional historical Stripe Product IDs; new course bills do not populate them. Do not require or persist a Stripe Price ID for the application workflow.
 - Use the existing `app_payments`, `app_payment_items`, and `app_schedule_entries` tables. Do not introduce a course-product or course-package table for this release.
-- Save the agreed total once on the parent payment. Its course items specify the included products and lesson counts without per-course amounts. Do not divide, prorate, or allocate the total across courses.
+- Save the agreed total once on the parent payment. Its course items specify the included courses and lesson counts without per-course amounts. Do not divide, prorate, or allocate the total across courses.
 - Keep the existing account ownership model, full-payment collection, USD amounts, stable website bill links, and provider verification.
 - Keep non-course charges and historical bills readable and payable through their existing paths. Do not reinterpret ordinary quantities or camp days as lesson credits.
 
-Stripe supports inline prices, so the application need not maintain a Price ID. A single-course request can reference that course's Product ID directly. A mixed-course request uses one descriptive package charge for the whole total, with its course entitlements retained locally; it does not invent priced Stripe lines for each included course. See [Stripe: Create an inline price](https://docs.stripe.com/products-prices/manage-prices#create-an-inline-price).
+Stripe supports inline prices, so the application need not maintain a Price ID. New single-course and mixed-course requests use inline `product_data` with the saved course/count description and one charge for the whole total. Previously issued single-course bills with a saved Product ID retain their original Checkout parameters for safe retries. See [Stripe: Create an inline price](https://docs.stripe.com/products-prices/manage-prices#create-an-inline-price).
 
 ## Baseline inspected before implementation
 
 | Area | Current behavior | Required change |
 | --- | --- | --- |
-| Course catalog | Payload `classes` manages website content; four booking options are defined in code | Add a small server-side mapping from the four course keys to environment-specific Stripe Product IDs and durations |
-| Create payment request | Custom total, lesson package, and other itemized payment modes; course names are free text | Add one request-level total and repeatable course/count rows, with no price inputs on those rows |
-| Fixed-total bill | Count and unit are embedded in the description; billing quantity is 1 | Persist a separate numeric lesson count and product reference |
+| Course catalog | Payload `classes` manages website content; four booking options are defined in code | Use four local course keys and server-derived durations; no Stripe catalog mapping |
+| Create payment request | Custom total, lesson package, and other itemized payment modes; course names are free text | Add one request-level total and four fixed course/count rows, with no price inputs on those rows |
+| Fixed-total bill | Count and unit are embedded in the description; billing quantity is 1 | Persist a separate numeric lesson count and local course key |
 | Bill storage | Parent amount is calculated from priced bill items | Add an explicit agreed-total billing mode; preserve itemized calculations for old/general bills |
 | Copy payment link | Copies `/account/billing/[billId]`; does not create a Stripe Payment Link object | Retain the URL and owner login; update preview and customer wording |
-| Checkout | Uses inline `price_data` with `product_data.name` from each item | One charge for the parent total; single-course Product ID or an honest mixed-course package description |
+| Checkout | Uses inline `price_data` with `product_data.name` from each item | One charge for the parent total; inline course/package description for new requests |
 | Payment confirmation | Reconciles Stripe evidence into the existing bill | Make verified paid course items eligible for allocation, without a separate credit-grant insertion |
 | Schedule | Stores dates, status, account, and optional parent `payment_id` | Link each credit-backed lesson to the precise bill item |
 | Admin appointments | Filters for linked Cal.com rows only | Include Academy-created lessons and add scheduling actions |
@@ -53,25 +53,26 @@ The inspected source is local code and migration definitions, not a fresh audit 
 | Field | Treatment |
 | --- | --- |
 | `id`, `payment_id`, `position` | Reuse existing identity and parent relationship |
-| `stripe_product_id` | New nullable text field; required for new course-credit items |
-| `credit_count` | New nullable integer, 1–100; required together with the product reference |
+| `course_key` | Required local identity: `group`, `duet`, `solo30`, or `solo60` |
+| `stripe_product_id` | Optional historical metadata; null on new course-credit items |
+| `credit_count` | New nullable integer, 1–100; required together with the local course key and duration |
 | `lesson_duration_minutes` | New nullable duration snapshot, 30 or 60 for the initial four courses; derived by the server |
 | `description` | Preserve a readable, immutable course/count/coverage snapshot |
 | `quantity` | Use 1 as a compatibility value for each included course row; `credit_count` alone means lesson count |
 | `unit_amount_cents` | Allow null for included course rows under an agreed-total bill; null means no separate price, not a free course. Retain existing numeric values on itemized bills |
 
-Keep new course fields null on legacy and general items. Enforce all-or-none course fields, valid integer ranges, and server-validated product selection. Enforce the parent-mode/item-shape relationship through the database issuance/mutation path: agreed-total rows are unpriced course entitlements, and itemized rows retain their financial values. Do not copy the parent total onto every course, allocate it to the first course, or store other courses as zero-price giveaways. A reviewed historical annotation must preserve original financial quantities and amounts.
+Keep new course fields null on legacy and general items. Enforce required course key/count/duration, optional Product ID, valid integer ranges, and server-validated course selection. Enforce the parent-mode/item-shape relationship through the database issuance/mutation path: agreed-total rows are unpriced course entitlements, and itemized rows retain their financial values. Do not copy the parent total onto every course, allocate it to the first course, or store other courses as zero-price giveaways. A reviewed historical annotation must preserve original financial quantities and amounts.
 
-Capture account/mode consistently for product-backed bills, including unpaid and manually settled bills. An environment mismatch must not become a usable entitlement. Update every amount consumer to branch on billing mode instead of multiplying nullable course-item amounts. Historical bills continue using their original arithmetic.
+Capture account/mode consistently for course bills, including unpaid and manually settled bills. An environment mismatch must not become a usable entitlement. Update every amount consumer to branch on billing mode instead of multiplying nullable course-item amounts. Historical bills continue using their original arithmetic.
 
-Product identity and duration are fixed when issued. Keep descriptions and durations available locally so viewing old bills or scheduling paid lessons does not require a successful Stripe catalog request. Archiving a product can disable new sales without erasing an already paid student's entitlement.
+Local course identity and duration are fixed when issued. Keep descriptions and durations available locally so viewing old bills or scheduling paid lessons does not require a successful Stripe catalog request. New issuance does not query the Stripe product catalog. Merchant account and payment-mode verification remain required.
 
 ### Schedule: `app_schedule_entries`
 
 - Add nullable `payment_item_id` referencing `app_payment_items.id` with restricted deletion, plus an index supporting item/status balance queries.
 - One linked row represents one lesson for one account. A three-lesson batch creates three rows.
 - Keep existing `payment_id` consistent with the linked item's parent bill. The item's owner must equal `user_profile_id`; validate both in the database mutation path.
-- Keep `entry_type` as the event category. Use `class` for group and duet, and `private_lesson` for solo; the bill item identifies the exact purchased product and duration.
+- Keep `entry_type` as the event category. Use `class` for group and duet, and `private_lesson` for solo; the bill item identifies the exact purchased course and duration.
 - Use `source = academy` for locally arranged lessons. Leave existing Cal.com rows valid with no new item relationship.
 - Add private audit data for schedule operations (actor, operation, timestamp, reason, prior/new times and status). Do not expose staff-only audit data through student reads.
 - Use a client-generated request UUID and immutable request checks for retry-safe creation. Batch requests must be all-or-nothing, with stable per-row IDs and no duplicate lessons after retries.
@@ -118,11 +119,11 @@ Initial scheduling is per student. Shared-class rosters, teacher availability, c
 ## Payment and refund rules
 
 - For an agreed-total bill, send exactly one Stripe charge line with quantity 1, USD, and the stored parent `amount_cents`. Do not generate separate monetary lines from its included courses or fetch default prices to override the negotiated total.
-- For a single included course, use its stored `price_data.product`. For multiple courses, use inline `product_data` with a clear generic package name and a description of the included courses/counts, following the application's existing inline-product mechanism. This does not require a fifth manually maintained catalog product or a new local table. Course Product IDs remain on local entitlement rows; Stripe revenue for the mixed package is not attributed separately to those products. Never mislabel the whole bundle as one of its constituent courses.
+- For new course bills, use inline `product_data` with the course name (single course) or a package name (multiple courses), plus the included courses/counts. No precreated Product or Price IDs are required. Preserve the original `price_data.product` for historical single-course bills with a saved Product ID, so Checkout retries do not change parameters.
 - Preserve the existing Checkout branch for legacy/general items, including old quantities. Use immutable stored item fields, never client-supplied amounts or product references at payment time.
 - Retain bill metadata, owner checks, verified provider state, open-session reuse, expiration checks, and the safeguard for old ambiguous requests.
 - Course credits become available from the verified bill state; a repeated webhook therefore cannot grant the same credits twice. Website returns and receipt emails do not establish payment.
-- Verified manual settlement uses the same eligibility rules. General historic Stripe imports do not automatically create course credits. A verified, configured Cal.com single-session payment is linked to its existing booking as one already allocated credit; it does not create an extra available lesson.
+- Verified manual settlement uses the same eligibility rules. General historic Stripe imports do not automatically create course credits. A verified, known-course Cal.com single-session payment is linked to its existing booking as one already allocated credit; it does not create an extra available lesson.
 - A refund request/review blocks new allocation. A verified full refund cancels future Academy allocations linked to the affected items and makes unused credits unavailable; completed lessons remain history. Unresolved past lessons remain visibly flagged for staff review.
 - Apply refund and allocation guards transactionally with consistent lock ordering: parent bill, item, then affected schedule rows. A simultaneous refund or second scheduling request cannot overspend credits.
 - Partial refunds or disputed provider states require staff resolution; never infer refunded lesson counts from refunded dollars.
@@ -135,28 +136,27 @@ The following are proposed operating defaults, not new Academy policy: ordinary 
 
 Checked items describe implemented local code, not production deployment. Unchecked items include external configuration, historical backfill, operational policy, and hosted acceptance. See the linked acceptance report for boundaries.
 
-### A. Product configuration and compatibility
+### A. Local course identity and compatibility
 
-- [ ] Inspect the existing Stripe catalog in the intended account/mode; reuse matching products or create missing ones without duplicating the catalog.
-- [ ] Configure the four course-key-to-product mappings separately for sandbox and live, including display name and duration; store no fixed Price ID requirement.
-- [ ] Verify product ownership, mode, activity, and required API permissions using the actual configuration; do not change the live collection switch merely to configure products.
-- [ ] Keep standard Cal.com appointment prices separate from negotiated website course-package totals. Do not silently alter Cal.com checkout or public advertised prices.
-- [ ] Add readiness errors for missing or wrong-mode products before issuing a course-credit request. No fallback to an unrelated product or a guessed ID.
+- [x] Keep four local course keys and durations; remove the eight test/live Product ID environment variables and catalog lookup helper.
+- [x] Verify the Stripe merchant account and test/live mode without retrieving course Products.
+- [x] Make Product IDs optional with a forward migration; preserve historical IDs and original Checkout retry parameters.
+- [x] Keep standard Cal.com appointment prices separate from negotiated website totals; known verified single-session purchases no longer need a Product ID mapping.
 
 ### B. Database and server contracts
 
 - [x] Add a forward migration for parent pricing mode, nullable unpriced course-item amounts, product/count/duration fields, schedule item reference, indexes, validation, and private audit data. Do not edit already applied migrations.
 - [x] Extend `BillItem`, bill selects, read functions, serialization, and test fixtures to include the local item ID and new fields.
 - [x] Extend `readItems` and `manageBill` with the dedicated `app_issue_course_bill` RPC for the separate parent total and unpriced course rows; retain the original `app_issue_bill`/`app_manage_bill` itemized paths unchanged.
-- [x] Include pricing mode, parent total, products, counts, durations, and environment in immutable retry comparisons. Reject a repeated request ID with any changed commercial details.
+- [x] Include pricing mode, parent total, course keys, optional historical Product IDs, counts, durations, and environment in immutable retry comparisons. Reject a repeated request ID with any changed commercial details.
 - [x] Add service-only schedule mutations for create/batch-create, reschedule, cancel, and complete, with staff authorization, ownership checks, locks, and retry protection.
 - [x] Add an owner-scoped balance query using complete history, separate from paginated calendar reads; prevent RLS bypass or student mutations.
-- [x] Enforce same-owner/same-parent relationships, product-derived duration, no over-allocation, and same-student time conflict checks inside the database transaction.
+- [x] Enforce same-owner/same-parent relationships, course-derived duration, no over-allocation, and same-student time conflict checks inside the database transaction.
 - [ ] Integrate allocation blocking and refund reconciliation into all authoritative state-change paths, including Dashboard refunds observed through synchronization and manual settlement/refund paths.
 
 ### C. Payment-request creation and customer presentation
 
-- [x] Replace course pricing inputs with one overall total and repeatable course/count selectors, plus a review step in `billing-issue.tsx`. No per-course price or subtotal input in the agreed-total flow.
+- [x] Replace course pricing inputs with one overall total and four fixed course/count inputs defaulting to zero, plus a review step in `billing-issue.tsx`. No per-course price or subtotal input in the agreed-total flow.
 - [x] Support several included courses with independent quotas under the one negotiated total. Preserve general itemized/camp billing as a separate mode; do not mix priced fee rows into this initial unpriced-course mode.
 - [x] Update preview, billing records, account bill page, Admin cards, refund review, and confirmation copy to show the overall total once and the included course names, durations, and counts without course amounts.
 - [x] Update HTML and plain-text payment requests and customer/Academy payment confirmations to show the saved overall total plus included courses/counts. Refund-confirmation emails show only the refund amount, without course details; distinguish unpaid requests from verified purchases. Preserve existing outbox payloads and do not resend old notifications to adopt new wording.
@@ -166,7 +166,7 @@ Checked items describe implemented local code, not production deployment. Unchec
 ### D. Stripe Checkout and reconciliation
 
 - [x] Branch Checkout by persisted pricing mode: one overall charge for agreed-total bills versus unchanged priced lines for historical/general itemized bills. Validate the appropriate total invariant for each mode.
-- [x] Use the stored Product ID for a single-course package and a descriptive inline bundle product for a mixed-course package; retain course Product IDs locally without fabricating a revenue split or fixed Price IDs.
+- [x] Use inline product descriptions for new single/multi-course bills; preserve historical saved Product IDs for compatible Checkout retries without requiring catalog configuration.
 - [ ] Preserve readable included-course counts at Checkout without mutating shared Products; verify bundle descriptions/session-level summaries against supported API limits, with the immutable website bill as the complete course breakdown.
 - [x] Preserve old open/ambiguous Checkout requests and their original payloads/idempotency keys. Never retry the same Stripe key with newly changed product parameters.
 - [x] Keep old unpaid bill payloads unchanged. A migrated unpaid bill must first have its previous Checkout safely resolved and any financial correction handled by replacement.
@@ -175,10 +175,10 @@ Checked items describe implemented local code, not production deployment. Unchec
 
 ### E. Allocation and schedule interface
 
-- [x] Add per-product/per-purchase credit cards to Admin student details and Student Account; preserve the source bill when showing aggregate totals.
+- [x] Add per-course/per-purchase credit cards to Admin student details and Student Account; preserve the source bill when showing aggregate totals.
 - [x] Add single-date and weekly batch scheduling with explicit date preview, skip dates, duration, location, and remaining-credit checks.
 - [x] Add reschedule, cancel, and mark-completed actions with clear resulting balance and audit history; detect stale concurrent edits.
-- [x] Prevent changing a linked lesson to another product/account by editing its label or parent bill reference.
+- [x] Prevent changing a linked lesson to another course/account by editing its label or parent bill reference.
 - [x] Include Academy entries in Admin Appointments and distinguish them from Cal.com appointments. Preserve Cal seated-booking grouping.
 - [x] Keep Cal.com webhook updates from modifying Academy credit rows; no automatic cross-source attachment by name, amount, or approximate time.
 - [x] Show cancelled/refunded allocations and completed history without losing future-calendar usability; explicitly mark unresolved past lessons.
@@ -193,7 +193,7 @@ Checked items describe implemented local code, not production deployment. Unchec
 - [ ] Preserve old URLs, transaction references, refunds, notifications, and existing Cal.com bookings. Linking an existing appointment must reuse it, not create a second allocation.
 - [ ] Validate the migration in a disposable database; deploy additive schema before code. Verify rolling compatibility with old issuance paths.
 - [ ] Verify old/new code compatibility before choosing rollback: after new credits exist, disable new issuance/allocation if needed and retain capable reconciliation/reads; never roll back to code that bypasses credit/refund controls.
-- [ ] Configure sandbox products and complete the end-to-end acceptance below before enabling real allocation. Sandbox credits must not enter real student balances.
+- [ ] Complete the end-to-end acceptance below before enabling real allocation. Sandbox credits must not enter real student balances.
 - [ ] Verify live configuration and actual deployed schema separately; record deployment/migration evidence and remaining limits. This checklist itself does not perform a rollout.
 - [ ] Update earlier billing/package design documents during implementation so they no longer describe new course counts as description-only. Preserve dated historical acceptance evidence.
 
@@ -201,9 +201,9 @@ Checked items describe implemented local code, not production deployment. Unchec
 
 | Case | Expected result |
 | --- | --- |
-| Same product, different negotiated totals and counts | Amounts come from each saved request; no fixed course price, inferred quota, or local Price ID requirement |
+| Same course, different negotiated totals and counts | Amounts come from each saved request; no fixed course price, inferred quota, or local Price ID requirement |
 | Total not evenly divisible by lesson count | Charge the exact entered total once; retain the explicit count without rounding a per-lesson price |
-| Multiple courses under one total | Each course retains its own Product ID and quota; Checkout charges the total once with no invented course-price allocation |
+| Multiple courses under one total | Each course retains its own local course key and quota; Checkout charges the total once with no invented course-price allocation |
 | Multi-course request and notification emails | Admin review, customer bill, and HTML/plain-text emails show the same one total and included course/count list, with no course subtotals; requests do not claim payment has succeeded |
 | General itemized or camp bill | Existing amount calculations remain intact; ordinary quantities/day counts do not grant lesson credits |
 | Unpaid, pending, wrong owner, or sandbox in real mode | No real allocation permitted |
@@ -217,7 +217,7 @@ Checked items describe implemented local code, not production deployment. Unchec
 | Historical old-format/open Checkout | Same amounts, original parameters, working link and refund flow; no retroactive credits |
 | Legacy backfill with prior lessons | Reconciliation accounts for past usage before availability appears; repeated backfill cannot double-count |
 | Cal.com paid appointment webhook/replay | Existing booking/payment sync remains intact; no second entitlement or duplicate lesson |
-| Product renamed/archived or Stripe catalog unavailable | History and eligible paid credit views remain readable; new-sale readiness is explicit |
+| No course Product IDs configured / catalog retrieval unavailable | New course issuance and inline Checkout do not query the catalog; merchant verification and historical Checkout behavior remain intact |
 | Authorization | Student A cannot see/use Student B's credits; anonymous/student clients cannot call staff mutation functions |
 | Time zones and weekly repeats | New York local time preserved across DST; ambiguous/nonexistent local times are handled explicitly |
 

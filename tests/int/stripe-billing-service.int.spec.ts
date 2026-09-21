@@ -167,3 +167,36 @@ describe('Stripe refund orchestration', () => {
     expect(m.rpc).not.toHaveBeenCalled()
   })
 })
+
+describe('Cal booking credits without product configuration', () => {
+  it.each(['solo-class-30min', 'unknown-course'])(
+    'links only a verified known booking: %s',
+    async (slug) => {
+      row.cal_booking_id = 98765
+      const billQuery = {
+        select: () => billQuery,
+        eq: () => billQuery,
+        maybeSingle: async () => ({ data: { ...row } }),
+      }
+      const bookingQuery = {
+        select: () => bookingQuery,
+        eq: () => bookingQuery,
+        limit: async () => ({ data: [{ cal_event_type_slug: slug }] }),
+      }
+      m.db.mockReturnValue({
+        from: (table: string) => (table === 'app_payments' ? billQuery : bookingQuery),
+        rpc: m.rpc,
+      })
+      await synchronizePayment(ctx as never, 'pi_123', { expectedOwner: owner })
+      if (slug === 'solo-class-30min')
+        expect(m.rpc).toHaveBeenCalledWith('app_link_cal_course_credit', {
+          p_owner: owner,
+          p_bill: id,
+          p_course: 'solo30',
+          p_product: null,
+        })
+      else
+        expect(m.rpc.mock.calls.some(([name]) => name === 'app_link_cal_course_credit')).toBe(false)
+    },
+  )
+})

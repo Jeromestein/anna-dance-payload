@@ -214,7 +214,7 @@ describe('billing email delivery', () => {
     expect(JSON.parse(m.fetch.mock.calls[0][1].body).to).toEqual(['staff@example.com'])
   })
   it.each(['refunded_customer', 'refunded_admin'])(
-    'sends itemized full refund evidence for %s',
+    'sends the refund amount without course details for %s',
     async (kind) => {
       Object.assign(bill, {
         status: 'refunded',
@@ -231,7 +231,8 @@ describe('billing email delivery', () => {
       ])
       expect(payload.subject).toBe('Full Refund Confirmed · ADA-123')
       expect(payload.text).toContain('Refund amount: $100.01')
-      expect(payload.text).toContain('3 lessons')
+      expect(payload.text).not.toContain('3 lessons')
+      expect(payload.html).not.toContain('3 lessons')
       expect(payload.text).not.toContain('re_full')
       expect(payload.text).not.toContain('2026-09-21T13:00:00Z')
       expect(payload.text).toContain('Original payment method')

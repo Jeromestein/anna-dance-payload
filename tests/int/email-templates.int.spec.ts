@@ -25,8 +25,13 @@ describe('branded email output', () => {
     }
     if (name !== 'contact' && name !== 'registration') {
       expect(document.body.textContent).toContain('$240.00')
-      expect(document.body.textContent).toContain('$180.00')
-      expect(document.querySelectorAll('th[scope="col"]')).toHaveLength(2)
+      if (name.startsWith('refunded_')) {
+        expect(document.body.textContent).not.toContain('$180.00')
+        expect(document.querySelectorAll('th[scope="col"]')).toHaveLength(0)
+      } else {
+        expect(document.body.textContent).toContain('$180.00')
+        expect(document.querySelectorAll('th[scope="col"]')).toHaveLength(2)
+      }
       expect(html.includes('/admin/students/')).toBe(name.endsWith('_admin'))
       expect(html.includes('sophie@example.com')).toBe(name.endsWith('_admin'))
     }

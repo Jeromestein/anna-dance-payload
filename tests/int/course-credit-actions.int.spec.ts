@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 const m = vi.hoisted(() => ({
   auth: vi.fn(),
   rpc: vi.fn(),
@@ -12,7 +12,6 @@ vi.mock('@/lib/staff/auth', () => ({ requirePayloadAdministrator: m.auth }))
 vi.mock('@/lib/supabase/admin', () => ({ createSupabaseAdminClient: () => ({ rpc: m.rpc }) }))
 vi.mock('@/lib/stripe/config', () => ({ stripeContext: m.ctx, stripeSettings: m.settings }))
 vi.mock('next/cache', () => ({ revalidatePath: m.revalidate }))
-import { resolveCourseProducts } from '@/lib/billing/course-products.server'
 import { manageCourseSchedule } from '@/actions/course-schedule'
 import { manageBill } from '@/actions/billing'
 const owner = '00000000-0000-4000-8000-000000000001'
@@ -29,17 +28,15 @@ beforeEach(() => {
     account: 'acct_fixture',
     stripe: { products: { retrieve: m.product } },
   })
-  m.product.mockResolvedValue({ active: true, livemode: true })
-  vi.stubEnv('STRIPE_LIVE_PRODUCT_SOLO30', 'prod_fixture')
+  m.product.mockRejectedValue(new Error('Catalog unavailable'))
 })
-afterEach(() => vi.unstubAllEnvs())
 function form(values: Record<string, string>) {
   const f = new FormData()
   Object.entries(values).forEach(([k, v]) => f.set(k, v))
   return f
 }
 describe('course issuance boundary', () => {
-  it('resolves products from trusted configuration, not submitted ids or prices', async () => {
+  it('issues without catalog access and ignores submitted product ids or prices', async () => {
     const f = form({
       owner,
       id: request,
@@ -53,6 +50,7 @@ describe('course issuance boundary', () => {
       unit_amount_cents: '1',
     })
     expect(await manageBill({}, f)).toHaveProperty('success')
+    expect(m.product).not.toHaveBeenCalled()
     expect(m.rpc).toHaveBeenCalledWith(
       'app_issue_course_bill',
       expect.objectContaining({
@@ -61,7 +59,7 @@ describe('course issuance boundary', () => {
         p_live: true,
         p_items: [
           expect.objectContaining({
-            stripe_product_id: 'prod_fixture',
+            stripe_product_id: null,
             credit_count: 3,
             unit_amount_cents: null,
           }),
@@ -69,22 +67,41 @@ describe('course issuance boundary', () => {
       }),
     )
   })
-  it('rejects wrong-mode or inactive products before issuing a bill', async () => {
-    m.product.mockResolvedValue({ active: true, livemode: false })
-    await expect(
-      resolveCourseProducts([
-        { course_key: 'solo30', description: 'Solo', quantity: 1, unit_amount_cents: null },
-      ]),
-    ).rejects.toThrow('unavailable')
+  it('still requires verified merchant context before issuing a course bill', async () => {
+    m.ctx.mockRejectedValue(new Error('Stripe account does not match configuration.'))
+    const result = await manageBill(
+      {},
+      form({
+        owner,
+        id: request,
+        operation: 'issue',
+        confirmed: 'yes',
+        bill_kind: 'courses',
+        total_price: '50',
+        course_key: 'solo30',
+        credit_count: '1',
+      }),
+    )
+    expect(result).toHaveProperty('error')
     expect(m.rpc).not.toHaveBeenCalled()
   })
-  it('does not fall back to a guessed product when configuration is missing', async () => {
-    vi.stubEnv('STRIPE_LIVE_PRODUCT_SOLO30', '')
-    await expect(
-      resolveCourseProducts([
-        { course_key: 'solo30', description: 'Solo', quantity: 1, unit_amount_cents: null },
-      ]),
-    ).rejects.toThrow('not configured')
+  it('preserves sandbox identity without a product catalog', async () => {
+    m.ctx.mockResolvedValue({ account: 'acct_fixture', livemode: false })
+    const result = await manageBill(
+      {},
+      form({
+        owner,
+        id: request,
+        operation: 'issue',
+        confirmed: 'yes',
+        bill_kind: 'courses',
+        total_price: '50',
+        course_key: 'solo30',
+        credit_count: '1',
+      }),
+    )
+    expect(result).toHaveProperty('success')
+    expect(m.rpc.mock.calls[0][1]).toMatchObject({ p_account: 'acct_fixture', p_live: false })
   })
 })
 describe('staff schedule actions', () => {

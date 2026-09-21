@@ -10,8 +10,8 @@ README remain authoritative for the Payload implementation.
 
 ## Project planning and design
 
-- [Stripe course products, lesson credits, and scheduling checklist](project/stripe-course-credits-checklist-20260921.md)
-  — Product-ID-only custom-total billing, structured lesson credits, manual scheduling,
+- [Course purchases, lesson credits, and scheduling checklist](project/stripe-course-credits-checklist-20260921.md)
+  — Local-course custom-total billing without required Stripe Product IDs, structured lesson credits, manual scheduling,
   and database/UI changes implemented locally; configuration and hosted acceptance remain pending.
 - [Payment and Billing Design](project/account-billing.md) — current two-table billing model,
   Stripe synchronization, full-refund policy, and rollout status.

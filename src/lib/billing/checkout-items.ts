@@ -1,6 +1,7 @@
 import type Stripe from 'stripe'
 import type { BillItem } from './model'
 import { itemDetail } from './model'
+import { courseOption } from './courses'
 
 export function checkoutItems(
   bill: { pricing_mode?: string; amount_cents: number; currency: string },
@@ -14,7 +15,7 @@ export function checkoutItems(
       bill.amount_cents < 50 ||
       items.some(
         (i) =>
-          !i.stripe_product_id?.startsWith('prod_') ||
+          !courseOption(i.course_key ?? '') ||
           !Number.isInteger(i.credit_count) ||
           i.credit_count! < 1 ||
           i.credit_count! > 100 ||
@@ -29,11 +30,15 @@ export function checkoutItems(
         price_data: {
           currency: bill.currency,
           unit_amount: bill.amount_cents,
-          ...(items.length === 1
+          // Preserve historical single-course Checkout parameters for retries.
+          ...(items.length === 1 && items[0].stripe_product_id
             ? { product: items[0].stripe_product_id! }
             : {
                 product_data: {
-                  name: 'Anna Dance Academy · Course package',
+                  name:
+                    items.length === 1
+                      ? items[0].description
+                      : 'Anna Dance Academy · Course package',
                   description: items
                     .map((i) => `${i.description}: ${itemDetail(i, bill.currency)}`)
                     .join('; '),

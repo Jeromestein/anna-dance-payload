@@ -4,8 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { requirePayloadAdministrator } from '@/lib/staff/auth'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { billPath, readItems, readAgreedTotal } from '@/lib/billing/model'
-import { resolveCourseProducts } from '@/lib/billing/course-products.server'
-import { stripeSettings } from '@/lib/stripe/config'
+import { stripeContext, stripeSettings } from '@/lib/stripe/config'
 
 export type BillingActionState = { error?: string; success?: string; billId?: string }
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -55,20 +54,18 @@ export async function manageBill(
       p_reason: reason || null,
     }
     const courses =
-      operation === 'issue' && form.get('bill_kind') === 'courses'
-        ? await resolveCourseProducts(items)
-        : null
+      operation === 'issue' && form.get('bill_kind') === 'courses' ? await stripeContext() : null
     const { error, data } = courses
       ? await createSupabaseAdminClient().rpc('app_issue_course_bill', {
           p_owner: owner,
           p_id: id,
           p_actor: String(staff.id),
-          p_items: courses.items,
+          p_items: items.map((item) => ({ ...item, stripe_product_id: null })),
           p_total: readAgreedTotal(form),
           p_due: due || null,
           p_replaces: replaces || null,
           p_account: courses.account,
-          p_live: courses.live,
+          p_live: courses.livemode,
         })
       : operation === 'issue'
         ? await createSupabaseAdminClient().rpc('app_issue_bill', {
@@ -101,7 +98,7 @@ export async function manageBill(
       error:
         error instanceof Error &&
         operation === 'issue' &&
-        /^(The bill total|Enter a whole number|Enter at least one lesson|Enter a fee name|Enter a course name|Enter a valid price|Check the item|Use a shorter|Add between|Choose |Course products|The selected course|Each course)/.test(
+        /^(The bill total|Enter a whole number|Enter at least one lesson|Enter a fee name|Enter a course name|Enter a valid price|Check the item|Use a shorter|Add between|Choose )/.test(
           error.message,
         )
           ? error.message

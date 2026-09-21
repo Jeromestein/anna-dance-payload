@@ -55,10 +55,7 @@ describe('negotiated total and included course credits', () => {
     expect(() => readItems(form)).toThrow()
   })
   it('charges a bundle once without inventing course prices or using a constituent product', () => {
-    const items = readItems(courseForm()).map((i) => ({
-      ...i,
-      stripe_product_id: `prod_${i.course_key}`,
-    }))
+    const items = readItems(courseForm())
     const lines = checkoutItems(
       { pricing_mode: 'agreed_total', amount_cents: 17329, currency: 'usd' },
       items,
@@ -69,11 +66,19 @@ describe('negotiated total and included course credits', () => {
     expect(lines[0].price_data?.product).toBeUndefined()
     expect(lines[0].price_data?.product_data?.description).toContain('3 lessons included')
     expect(lines[0].price_data?.product_data?.description).toContain('6 lessons included')
+    const single = checkoutItems(
+      { pricing_mode: 'agreed_total', amount_cents: 10001, currency: 'usd' },
+      [items[0]],
+    )[0]
+    expect(single.price_data?.product).toBeUndefined()
+    expect(single.price_data?.product_data?.name).toBe('Solo Class · 30 minutes')
+    expect(single.price_data?.product_data?.description).toContain('3 lessons included')
+    expect(single.price_data?.unit_amount).toBe(10001)
     expect(
       checkoutItems({ pricing_mode: 'agreed_total', amount_cents: 10001, currency: 'usd' }, [
-        items[0],
+        { ...items[0], stripe_product_id: 'prod_history' },
       ])[0].price_data?.product,
-    ).toBe('prod_solo30')
+    ).toBe('prod_history')
   })
   it('keeps historical itemized charges and rejects ambiguous null amounts', () => {
     expect(

@@ -4,17 +4,19 @@ Date: September 21, 2026
 
 Update: The course-credit migration was subsequently applied to production at 21:47:40 UTC to restore Billing. See [production migration and recovery evidence](course-credits-production-migration-20260921.md).
 
+Update: The Product ID requirement described in the initial evidence below has been removed. [Follow-up implementation and migration evidence](optional-course-products-20260921.md) supersedes the earlier catalog prerequisites.
+
 ## Implemented locally
 
 - New course-payment mode: one administrator-entered total, up to four distinct course/count rows, and no per-course price allocation.
 - Existing `app_payments`, `app_payment_items`, and `app_schedule_entries` are extended; no new product or package table and no stored Price ID requirement.
-- Course Product IDs are resolved from server configuration and checked against the selected Stripe account/mode before issuance. Names, durations, counts, and total are saved as immutable bill details.
-- One Stripe charge for the negotiated total. A single-course bill references its Product ID; a mixed-course bill uses an inline descriptive package product. Included course Product IDs remain on local rows; mixed-course revenue is not falsely assigned to an individual course.
+- Courses use local keys without catalog lookups; the selected Stripe merchant account/mode is still verified before issuance. Names, durations, counts, and total are saved as immutable bill details.
+- One Stripe charge for the negotiated total. New bills use inline course/package descriptions; historical single-course bills preserve their saved Product ID for retries. Historical Product IDs remain on local rows; mixed-course revenue is not falsely assigned to an individual course.
 - Bill review, account history, refund review, and HTML/plain-text payment notifications show the one total and each included course/count. Refund-confirmation emails show only the refund amount without course details. Older itemized bills keep their original arithmetic and display.
 - Admin course cards support individual or weekly batch scheduling, skipped dates, rescheduling, cancellation with reason, and completion. Dates use New York time, including DST validation. Student cards are read-only.
 - Quotas are derived from the full schedule history. Database transactions enforce ownership, environment, available credits, duplicate-request identity, and student time conflicts. Future lessons cannot be completed.
 - Refund state blocks allocations; a verified full refund cancels future Academy allocations in the financial transaction and preserves completed history. Cal.com cancellations themselves remain managed through Cal.com.
-- Configured Cal.com single-session purchases can be linked to their existing booking as one purchased credit already allocated once. Duplicate sync does not create a second credit. A provider update cannot reactivate a cancelled booking after its credit was used elsewhere.
+- Known-course Cal.com single-session purchases can be linked to their existing booking as one purchased credit already allocated once. Duplicate sync does not create a second credit. A provider update cannot reactivate a cancelled booking after its credit was used elsewhere.
 
 ## Local evidence
 
@@ -30,9 +32,9 @@ Update: The course-credit migration was subsequently applied to production at 21
 
 1. Review and apply `supabase/migrations/20260922010000_course_credits.sql` to the intended database using the established migration workflow. Completed for project `hsitmgmcekzobksgtjoj` at 21:47:40 UTC; see the production recovery evidence above. Do not reapply it.
 2. Deploy all new readers, email renderers, server actions, Checkout branching, and schedule/refund guards together before issuing any agreed-total bills. Old application instances do not understand nullable course-item amounts. Do not enable issuance during a mixed old/new deployment.
-3. Configure the four `STRIPE_TEST_PRODUCT_*` and, separately, `STRIPE_LIVE_PRODUCT_*` IDs listed in `.env.example`, using products in the configured merchant account. No fixed Price IDs are needed. Product lookup requires the appropriate read capability; verify actual restricted-key permissions.
-4. Preserve existing live payment/refund switches. Configuring a course catalog does not itself enable live collection. Restart the user's development server after environment/backend setup changes.
-5. In the intended sandbox, verify real product lookup, Checkout presentation, payment/webhook, customer/Admin notification delivery, scheduling, and full refund. Stripe and Cal.com receipts are separate from the website's email templates.
+3. Apply `20260922020000_optional_course_product_ids.sql` before deploying the follow-up code. No course Product or Price ID configuration is required; see the follow-up evidence above for deployment status.
+4. Preserve existing live payment/refund switches. Removing the catalog requirement does not enable live collection. Restart the user's development server after environment/backend setup changes.
+5. In the intended sandbox, verify Checkout presentation, payment/webhook, customer/Admin notification delivery, scheduling, and full refund. Stripe and Cal.com receipts are separate from the website's email templates.
 6. Confirm ordinary cancellation policy before operational use: the implemented Admin action explicitly cancels and releases a reservation. No automatic no-show deduction, expiry, or complimentary makeup grant is implemented.
 7. Verify live readiness and actual deployed schema separately. Local passing tests are not a claim of production deployment or payment enablement.
 
@@ -41,7 +43,7 @@ Update: The course-credit migration was subsequently applied to production at 21
 - Old bills, original amounts, links, Checkout request keys, and payment/refund history are not rewritten. Old unsigned descriptions and quantities do not automatically become entitlements.
 - An audited general legacy-credit backfill interface is not implemented. Historical multi-course purchases with prior usage must be reconciled before enabling their balances; do not manually label them as entirely unused.
 - New course bills are provider-configured and use Stripe collection. The original manual-payment controls remain for legacy non-provider-managed bills; a new course bill does not add a separate cash-settlement bypass.
-- Single Cal bookings join credits only when a configured known course, one verified payment item, and exactly one linked booking for the account agree. Missing configuration preserves the existing payment/booking flow without granting a new unallocated credit. Refreshing the verified payment can retry credit association after setup.
+- Single Cal bookings join credits only when a known local course, one verified payment item, and exactly one linked booking for the account agree. Unknown booking types preserve the existing payment/booking flow without granting a new unallocated credit. No Stripe Product ID mapping is required.
 - Shared class rosters, teacher/room capacity checks, and class-wide rescheduling remain outside this per-student implementation.
 - Refund failure/reversal or partial-refund review does not automatically restore cancelled bookings. Staff must reconcile provider state before allocation can resume.
 - Balance calculations use all linked history; the management UI reports unavailable rather than silently truncating when its detail limit is exceeded.

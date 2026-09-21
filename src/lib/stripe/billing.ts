@@ -189,8 +189,7 @@ export async function synchronizePayment(
     description: (description || pi.description || 'Booking payment').slice(0, 200),
     calBookingId,
   })
-  // Only configured, verified Cal bookings receive one credit, already allocated.
-  // Missing catalog setup leaves legacy synchronization unchanged.
+  // A verified known Cal booking receives one credit, already allocated to that booking.
   if (result.cal_booking_id && result.status === 'paid') {
     const booking = await db
       .from('app_schedule_entries')
@@ -210,15 +209,12 @@ export async function synchronizePayment(
         'solo-class': 'solo60',
       }
       const key = keys[booking.data[0].cal_event_type_slug]
-      const product =
-        key &&
-        process.env[`STRIPE_${ctx.livemode ? 'LIVE' : 'TEST'}_PRODUCT_${key.toUpperCase()}`]?.trim()
-      if (product && /^prod_[A-Za-z0-9]+$/.test(product)) {
+      if (key) {
         const linked = await db.rpc('app_link_cal_course_credit', {
           p_owner: owner,
           p_bill: result.id,
           p_course: key,
-          p_product: product,
+          p_product: null,
         })
         if (linked.error)
           throw new Error('Booking credits need reconciliation. Refresh the payment status.')
