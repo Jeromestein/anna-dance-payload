@@ -105,7 +105,12 @@ The owner requested refund initiation from the website Admin interface. The inde
 - [x] Verify the deployed Admin refund review: Jason, original PaymentIntent `pi_3UCoX3DRBUG2kOng0aJ1GrLV`, USD 0.50, original payment method, administrator-requested full-refund reason, confirmation checkbox, and `Refund $0.50` submission button. Visual inspection passed in the in-app browser.
 - [x] Administrator submitted the intended full refund from the production website Admin. No additional purchase was created.
 - [x] Verify the final Admin record and provider reconciliation: original PaymentIntent `pi_3UCoX3DRBUG2kOng0aJ1GrLV`, refund `re_3UCoX3DRBUG2kOng0TiLJ5sx`, Fully refunded USD 0.50, amount due USD 0.00, recorded September 17. Refresh Stripe status returned “Payment and refund status refreshed from Stripe.” and retained Fully refunded.
-- [ ] Independently inspect this refund's signed webhook delivery and the final Student Account display. The observed Admin result and manual provider refresh alone do not prove automatic webhook delivery or bank settlement.
+- [x] Independently inspect historical automatic refund delivery: the September 21 read-only audit
+      found `refund.created`, `charge.refunded` and `refund.updated` deliveries returned HTTP 200.
+      Latest event `evt_3UCoX3DRBUG2kOng08yjYm15` on September 19 returned `synchronized`.
+      See the [production configuration audit](billing-release-acceptance-20260921.md#read-only-production-configuration-audit--approximately-13361344-pdt).
+- [ ] Verify the final authenticated Student Account display. Provider success and webhook
+      synchronization do not prove bank-statement posting.
 
 ## Refund interface refinement — pushed, production UI verification pending
 

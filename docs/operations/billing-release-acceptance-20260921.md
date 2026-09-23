@@ -7,8 +7,8 @@ live money. Production work was read-only. Financial test records remain in the 
 Supabase/Stripe sandbox. The user's existing port-3000 development server was not restarted.
 
 **Decision: do not hand over unsupervised package collection yet.** The customer sandbox flow is
-now verified; live Checkout enablement/permission verification and concurrent-webhook retry
-acceptance remain open. Existing production
+now verified. The read-only production audit found Checkout Sessions permission is still None;
+live Checkout enablement and concurrent-webhook retry acceptance remain open. Existing production
 migration evidence supersedes older checklist statements that migrations are local-only.
 
 ## Verified
@@ -51,10 +51,12 @@ migration evidence supersedes older checklist statements that migrations are loc
       note persistence, Checkout close/reopen, decline/success, two-tab session reuse, signed
       webhook synchronization and customer/Admin displays. See continuation evidence below.
 - [x] Verify new branded payment and full-refund confirmations in both authorized Gmail inboxes.
-- [ ] Verify live Checkout enablement, restricted-key Checkout permission, trusted origin and
-      mail recipients. Opening Vercel Environment Variables was blocked by automatic approval
-      review because the page could expose production credentials. Read-only permission to inspect
-      configuration presence and non-secret settings, without revealing keys, was requested.
+- [x] After explicit read-only permission, inspect production configuration, live restricted-key
+      permissions, Webhook subscriptions/deliveries, trusted origin and mail recipient routing.
+      Findings and write-only-secret limitations are recorded in the production audit below.
+- [ ] Enable live Checkout under separate authorization: the documented application restricted
+      key still has Checkout Sessions None. The historical payment switch is false; its current
+      saved value cannot be revealed in Vercel because it was created as a Secret.
 - [ ] Inspect the authenticated production Student Account. It currently redirects to login;
       the Admin session does not establish a student session.
 - [ ] Replay the actual Stripe-hosted failed delivery. The sandbox restricted key cannot retrieve
@@ -140,3 +142,82 @@ The bill has exactly five sent outbox rows: the original request and these four 
 After verification, the temporary port-3005 app and Stripe forwarder were stopped and the temporary
 Resend key was removed from the isolated app. The sandbox records were retained. No commit or push
 was performed by this continuation.
+
+## Read-only production configuration audit — approximately 13:36–13:44 PDT
+
+The user explicitly authorized viewing Vercel Production Environment Variables and Stripe live
+key permissions/Webhook settings, with credential values masked. No external setting, key,
+permission, subscription, bill or transaction was changed. No event was resent and no email sent.
+
+### Deployment and Vercel configuration
+
+- The project Overview shows commit `24d213a`, **Ready**, as Production Deployment for
+  `www.annadanceacademy.com`, deployment host
+  `anna-dance-payload-6gey0imv1-everlove-foundations-projects.vercel.app`.
+- `NEXT_PUBLIC_SITE_URL` is the Production Config value `https://www.annadanceacademy.com`.
+- `STRIPE_LIVE_REFUNDS_ENABLED` is the Production Config value `true`.
+- `STRIPE_LIVE_PAYMENTS_ENABLED` exists as a Production **Secret**. Its editor explicitly says
+  saved secrets are write-only and cannot be revealed; history contains only **Sep 11: You added
+  in Production**. The September 11/17 operational record says `false`. This supports the prior
+  disabled setting, but does not constitute a fresh direct read of its value or runtime flag.
+- `STRIPE_MODE`, `STRIPE_ACCOUNT_ID`, `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` exist as
+  Production Secrets. Their values were not revealed or exported. Mode/account were historically
+  configured as live / `acct_1U02vmDRBUG2kOng`; current value equality was not independently read.
+- `RESEND_API_KEY` and `RESEND_FROM_EMAIL` exist for Production and Preview, also as write-only
+  Secrets. Presence is verified; the saved sender address/key validity was not directly reread.
+
+### Stripe permissions — confirmed from selected controls, without saving
+
+The live merchant is Anna Dance Academy, `acct_1U02vmDRBUG2kOng`. Its documented application key
+**Anna Dance billing sync - live read only** has these currently selected permissions (the old key
+name does not describe its later refund permission accurately):
+
+| Resource | Current permission | Result |
+| --- | --- | --- |
+| Accounts | Read | Matches account verification requirement |
+| Payment Intents | Read | Matches reconciliation reads |
+| Charges and Refunds | Write | Supports existing full-refund integration |
+| Checkout Sessions | **None** | **Blocks website-created live Checkout** |
+| Events | None | Event retrieval/replay auditing is unavailable through this key; receiving signed Webhooks does not require Events Read |
+
+The permission editor was cancelled without changes. The Vercel key was not revealed for a new
+byte-for-byte comparison; the key-to-application association is the documented deployment setup.
+
+### Webhook — active and correctly subscribed
+
+- Live destination `we_1UGlEfDRBUG2kOngMZHPyKVn`, **Anna Dance billing sync**, is **Active**, receives
+  events from **Your account**, and targets
+  `https://www.annadanceacademy.com/api/integrations/stripe/webhook`.
+- API version: `2026-07-29.dahlia`. Its seven event subscriptions exactly match the deployed handler:
+  `payment_intent.succeeded`, `checkout.session.completed`,
+  `checkout.session.async_payment_succeeded`, `charge.refunded`, `refund.created`,
+  `refund.updated`, `refund.failed`. Signing secret remained masked.
+- The displayed **This week** history has five deliveries and zero failed. All five listed
+  attempts are HTTP 200: two payment-success deliveries and the original refund's created,
+  charge-refunded and updated events. Latest automatic delivery is
+  `evt_3UCoX3DRBUG2kOng08yjYm15`, `refund.updated`, September 19 at 07:07:11 PDT, response
+  `{"status":"synchronized"}` for the existing USD 0.50 refund. This independently verifies its
+  historical automatic delivery; it does not establish a new payment on today's deployment.
+- A fresh unsigned POST on today's production route returned HTTP 400 `Invalid signature.`
+  No financial event was processed. This verifies route availability/signature rejection, not
+  successful authenticated delivery using the currently saved signing secret.
+
+### Email recipients — verified configuration plus deployed routing logic
+
+- Production `STUDENT_REGISTRATION_NOTIFICATION_TO` is `annadanceacademy@gmail.com`.
+- Searching both Project and Shared variables for `BILLING` returned no results: there is no
+  `BILLING_NOTIFICATION_TO` override or configured sandbox billing-recipient override in those lists.
+- Deployed `billing-notifications.server.ts` therefore chooses `annadanceacademy@gmail.com` for
+  new live Academy payment/refund notices through the registration-recipient fallback. Live
+  customer notices use that bill owner's verified account email. Sandbox routing is used only
+  when the bill has `stripe_livemode=false`; existing queued notices keep their immutable payload.
+- The recipient decision is verified; delivery of a newly generated live billing email with this
+  deployment still needs genuine-business acceptance. No test email was sent during this audit.
+
+### Next actions before website package collection
+
+- [ ] Separately approve and grant Checkout Sessions Write on the intended live restricted key.
+- [ ] Separately approve an explicit `STRIPE_LIVE_PAYMENTS_ENABLED=true` setting and redeployment;
+      the current audit did not enable collection. Verify the resulting live customer UI/config.
+- [ ] Complete concurrent-notification retry acceptance already listed above.
+- [ ] Verify the first authorized genuine package payment, financial sync and both live inboxes.

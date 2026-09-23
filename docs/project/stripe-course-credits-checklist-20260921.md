@@ -197,6 +197,34 @@ Checked items describe implemented local code, not production deployment. Unchec
 - [ ] Verify live configuration and actual deployed schema separately; record deployment/migration evidence and remaining limits. This checklist itself does not perform a rollout.
 - [ ] Update earlier billing/package design documents during implementation so they no longer describe new course counts as description-only. Preserve dated historical acceptance evidence.
 
+### G. Deferred: Google Calendar sync and Cal.com availability
+
+Added September 21, 2026 at the user's request. Status: **TODO — deferred, not implemented**.
+Website-created lessons currently stay in the website database; they do not reserve time in
+Google Calendar or Cal.com. This task records future work only and does not authorize account
+connections, calendar writes, invitations, or production configuration changes.
+
+- [ ] Confirm the studio's Google account, target calendar, and teacher-to-calendar mapping.
+      Decide whether a single studio calendar is sufficient or each teacher needs a separate one.
+- [ ] Connect the approved calendar with the necessary authorization. Keep the website as the
+      source of truth for Academy lessons; direct Google Calendar edits are not a supported
+      rescheduling workflow in the first version.
+- [ ] Sync Academy lesson creation, rescheduling, and cancellation to the same Google event,
+      marked Busy. Include future lessons cancelled by a verified refund. Store stable event
+      associations and make retries safe without creating duplicate events.
+- [ ] Record pending, successful, and failed sync states; provide retries and clear Admin feedback.
+      A local save must not imply that external availability has already been blocked. Keep
+      sandbox lessons isolated from the studio's real calendar.
+- [ ] Preserve Cal.com-created events without duplicating them in Google Calendar. This integration
+      should affect Cal.com availability, not manufacture a second Cal.com booking.
+- [ ] Configure Cal.com to check the selected Google calendar for conflicts. If Admin scheduling
+      must also avoid teachers' personal/external events, check the relevant busy times before
+      saving and define behavior for unavailable calendars, sync delays, and concurrent bookings.
+- [ ] Verify create, reschedule, cancel, refund cancellation, retry, duplicate prevention, and
+      New York/DST behavior using an isolated test calendar. Confirm the corresponding time becomes
+      unavailable/available on the actual Cal.com booking page; record propagation delays and
+      remaining limits before operational handover.
+
 ## Required acceptance evidence
 
 | Case | Expected result |
