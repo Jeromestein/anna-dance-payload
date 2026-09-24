@@ -1,0 +1,130 @@
+// Source: 舞蹈课程与费用汇总_2026-09-24.csv. Amounts are USD cents per student.
+// This identifies the current sale, not a semester start date. Change for the next term.
+export const packageCatalog = '2026-09-24'
+export const coursePackages = [
+  {
+    id: 'level-1',
+    label: 'level-1',
+    courseKey: 'group',
+    day: 'Saturday',
+    start: '13:00',
+    end: '14:00',
+    minutes: 60,
+    lessons: 10,
+    unitPrice: 3100,
+    price: 31000,
+  },
+  {
+    id: 'level-2',
+    label: 'level-2',
+    courseKey: 'group',
+    day: 'Saturday',
+    start: '16:00',
+    end: '17:00',
+    minutes: 60,
+    lessons: 10,
+    unitPrice: 3100,
+    price: 31000,
+  },
+  {
+    id: 'level-3',
+    label: 'level-3',
+    courseKey: 'group',
+    day: 'Monday',
+    start: '17:00',
+    end: '18:00',
+    minutes: 60,
+    lessons: 10,
+    unitPrice: 3100,
+    price: 31000,
+  },
+  {
+    id: 'DUET-01',
+    label: 'Duet Class',
+    courseKey: 'duet',
+    day: 'Monday',
+    start: '16:00',
+    end: '17:00',
+    minutes: 60,
+    lessons: 10,
+    unitPrice: 7500,
+    price: 75000,
+  },
+  {
+    id: 'DUET-02',
+    label: 'Duet Class',
+    courseKey: 'duet',
+    day: 'Friday',
+    start: '17:30',
+    end: '18:30',
+    minutes: 60,
+    lessons: 9,
+    unitPrice: 7500,
+    price: 67500,
+  },
+  {
+    id: 'DUET-03',
+    label: 'Duet Class',
+    courseKey: 'duet',
+    day: 'Friday',
+    start: '18:30',
+    end: '19:30',
+    minutes: 60,
+    lessons: 9,
+    unitPrice: 7500,
+    price: 67500,
+  },
+  {
+    id: 'DUET-04',
+    label: 'Duet Class',
+    courseKey: 'duet',
+    day: 'Saturday',
+    start: '14:00',
+    end: '15:00',
+    minutes: 60,
+    lessons: 8,
+    unitPrice: 7500,
+    price: 60000,
+  },
+  {
+    id: 'SOLO-01',
+    label: 'Solo Class · 30 min',
+    courseKey: 'solo30',
+    day: 'Friday',
+    start: '16:30',
+    end: '17:00',
+    minutes: 30,
+    lessons: 9,
+    unitPrice: 4000,
+    price: 36000,
+  },
+  {
+    id: 'SOLO-02',
+    label: 'Solo Class · 60 min',
+    courseKey: 'solo60',
+    day: 'Monday',
+    start: '18:00',
+    end: '19:00',
+    minutes: 60,
+    lessons: 10,
+    unitPrice: 9000,
+    price: 90000,
+  },
+] as const
+export type CoursePackage = (typeof coursePackages)[number]
+export function coursePackage(id: string) {
+  return coursePackages.find((item) => item.id === id)
+}
+export function packageDescription(item: CoursePackage) {
+  return `${item.label}${item.label === item.id ? '' : ` · ${item.id}`} · ${item.day} ${item.start}–${item.end}`
+}
+export function packageItem(item: CoursePackage) {
+  return {
+    course_key: item.courseKey,
+    description: packageDescription(item),
+    credit_count: item.lessons,
+    lesson_duration_minutes: item.minutes,
+    quantity: 1,
+    unit_amount_cents: null,
+  }
+}

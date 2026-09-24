@@ -1,12 +1,19 @@
 'use server'
 
+import { releasePackageCheckout } from '@/lib/billing/package-payment.server'
+import { issuePackage } from '@/lib/billing/package-sales.server'
 import { revalidatePath } from 'next/cache'
 import { requirePayloadAdministrator } from '@/lib/staff/auth'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { billPath, readItems, readAgreedTotal } from '@/lib/billing/model'
 import { stripeContext, stripeSettings } from '@/lib/stripe/config'
 
-export type BillingActionState = { error?: string; success?: string; billId?: string }
+export type BillingActionState = {
+  error?: string
+  success?: string
+  billId?: string
+  requestId?: string
+}
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function manageBill(
@@ -53,6 +60,37 @@ export async function manageBill(
       p_reference: reference || null,
       p_reason: reason || null,
     }
+    if (operation === 'issue' && form.get('bill_kind') === 'package') {
+      const billId = await issuePackage({
+        owner,
+        id,
+        actor: String(staff.id),
+        packageId: String(form.get('package_id') ?? ''),
+        admin: true,
+        amount: readAgreedTotal(form),
+        due: due || null,
+      })
+      revalidatePath('/account')
+      revalidatePath(billPath(billId))
+      revalidatePath(`/admin/students/${owner}`)
+      return { billId, requestId: id, success: 'Package payment request saved.' }
+    }
+    if (operation === 'cancelled' && form.get('package_bill') === 'yes') {
+      await releasePackageCheckout(owner, id)
+      const result = await createSupabaseAdminClient().rpc('app_cancel_package', {
+        p_owner: owner,
+        p_id: id,
+        p_actor: String(staff.id),
+      })
+      if (result.error)
+        return {
+          error: 'This bill may have an active online payment. Reconcile it before cancellation.',
+        }
+      revalidatePath('/account')
+      revalidatePath(billPath(id))
+      revalidatePath(`/admin/students/${owner}`)
+      return { success: 'Unpaid package bill cancelled.' }
+    }
     const courses =
       operation === 'issue' && form.get('bill_kind') === 'courses' ? await stripeContext() : null
     const { error, data } = courses
@@ -88,6 +126,7 @@ export async function manageBill(
     revalidatePath(`/admin/students/${owner}`)
     return {
       billId: operation === 'issue' ? id : undefined,
+      requestId: id,
       success:
         operation === 'issue'
           ? 'Bill issued. Its charges are now locked.'
@@ -98,7 +137,7 @@ export async function manageBill(
       error:
         error instanceof Error &&
         operation === 'issue' &&
-        /^(The bill total|Enter a whole number|Enter at least one lesson|Enter a fee name|Enter a course name|Enter a valid price|Check the item|Use a shorter|Add between|Choose )/.test(
+        /^(Could not create the package bill|The bill total|Enter a whole number|Enter at least one lesson|Enter a fee name|Enter a course name|Enter a valid price|Check the item|Use a shorter|Add between|Choose )/.test(
           error.message,
         )
           ? error.message

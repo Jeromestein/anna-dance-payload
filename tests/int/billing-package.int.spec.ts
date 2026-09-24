@@ -149,7 +149,7 @@ describe('lesson package and test visibility', () => {
     render(
       createElement(IssueBill, { owner: 'owner', ownerName: 'Jason', bills: [], id, test: true }),
     )
-    fireEvent.change(screen.getByLabelText('Group Class · 60 minutes'), { target: { value: '10' } })
+    expect(screen.queryByRole('option', { name: 'Custom lesson counts' })).toBeNull()
     fireEvent.change(screen.getByLabelText('Total to collect (USD)'), { target: { value: '300' } })
     fireEvent.click(screen.getByRole('button', { name: 'Review payment details' }))
     expect(screen.getByText('10 lessons included')).toBeDefined()

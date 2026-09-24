@@ -1,3 +1,4 @@
+import { coursePackage, packageItem } from './packages'
 import { courseOption } from './courses'
 
 export type BillItem = {
@@ -12,6 +13,10 @@ export type BillItem = {
   position?: number
 }
 export type Bill = {
+  package_id?: string | null
+  package_catalog?: string | null
+  payment_preference?: 'cash' | null
+
   pricing_mode?: 'itemized' | 'agreed_total'
   id: string
   bill_number: string
@@ -48,7 +53,7 @@ export type Bill = {
   app_payment_items: BillItem[]
 }
 export const billSelect =
-  'id,pricing_mode,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(id,description,quantity,unit_amount_cents,position,course_key,stripe_product_id,credit_count,lesson_duration_minutes),app_bill_acknowledgements(note,accepted_at)'
+  'id,package_id,package_catalog,payment_preference,pricing_mode,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(id,description,quantity,unit_amount_cents,position,course_key,stripe_product_id,credit_count,lesson_duration_minutes),app_bill_acknowledgements(note,accepted_at)'
 export const statusLabels: Record<Bill['status'], string> = {
   payment_due: 'Unpaid',
   pending_verification: 'Pending verification',
@@ -93,6 +98,12 @@ export function parseCents(value: string) {
   return Number(whole) * 100 + Number(fraction.padEnd(2, '0'))
 }
 export function readItems(form: FormData): BillItem[] {
+  if (form.get('bill_kind') === 'package') {
+    const item = coursePackage(String(form.get('package_id') ?? ''))
+    if (!item) throw new Error('Choose a course package.')
+    readAgreedTotal(form)
+    return [packageItem(item)]
+  }
   if (form.get('bill_kind') === 'other') {
     const name = String(form.get('fee_name') ?? '').trim()
     const note = String(form.get('fee_note') ?? '').trim()

@@ -9,12 +9,14 @@ import { PageHero } from "@/components/page-hero";
 import { getPublicClasses } from "@/lib/classes";
 import { classCurriculum } from "@/lib/class-curriculum";
 import { getStudentAccountAccess } from "@/lib/auth/student-access";
-import { consultationBooking, getProgramBookings } from "@/lib/cal/booking-options";
+import { ProgramClassOptions } from "@/components/program-class-options";
+import { getProgramClassOptions } from "@/lib/program-class-options";
 
 export const metadata: Metadata = { title: "Classes" };
 export const dynamic = "force-dynamic";
 
 const danceStyles = ["Chinese Dance", "Ballet", "Jazz", "Contemporary", "K-pop", "Acro Dance"];
+const excludedProgramHighlights = new Set(["Weekly, 60 minutes", "Minimum 2 hours per week"]);
 
 export default async function ClassesPage() {
   const [classes, staffUser, isAuthenticated] = await Promise.all([
@@ -60,6 +62,7 @@ export default async function ClassesPage() {
         <div className="program-list" role="region" aria-label="Class programs" tabIndex={0}>
           {classes.map((item, index) => {
             const curriculum = classCurriculum[item.title];
+            const classOptions = isAuthenticated ? getProgramClassOptions(item.title) : [];
             return (
               <article className="program-row" key={item.id}>
                 <span className="program-index">0{index + 1}</span>
@@ -71,23 +74,22 @@ export default async function ClassesPage() {
                   <p>{item.description}</p>
                   <div className="program-content-footer">
                     <ul>
-                      {item.features.map((feature) => <li key={feature}>{feature}</li>)}
+                      {item.features
+                        .filter((feature) => !excludedProgramHighlights.has(feature.trim()))
+                        .map((feature) => <li key={feature}>{feature}</li>)}
                     </ul>
-                    <div className="program-booking-actions">
-                      {isAuthenticated ? getProgramBookings().map((booking) => (
-                        <Link key={booking.slug} href={`/schedule?class=${booking.slug}#book`} className="program-action"
-                          aria-label={`${booking.slug === consultationBooking.slug ? "Book a Free Placement" : `Book ${booking.title}`} for ${item.title}`}>
-                          <span>{booking.slug === consultationBooking.slug ? 'Book a Free Placement' : `Book ${booking.title}`}</span>
-                          <ArrowIcon />
-                        </Link>
-                      )) : (
+                    {classOptions.length === 0 && (
+                      <div className="program-booking-actions">
                         <Link href="/schedule" className="program-action" aria-label={`Book a Free Placement for ${item.title}`}>
                           <span>Book a Free Placement</span>
                           <ArrowIcon />
                         </Link>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
+                  {isAuthenticated && classOptions.length > 0 && (
+                    <ProgramClassOptions program={item.title} options={classOptions} />
+                  )}
                 </div>
                 {curriculum?.objectives ? (
                   <div className="program-details">

@@ -12,6 +12,7 @@ import {
 } from '@/lib/billing/model'
 import { BillShareTools } from './billing-share-tools'
 import styles from './billing.module.css'
+import { coursePackages, coursePackage, packageDescription } from '@/lib/billing/packages'
 import { courseOptions } from '@/lib/billing/courses'
 
 export function IssueBill({
@@ -31,7 +32,9 @@ export function IssueBill({
 }) {
   const [state, action, pending] = useActionState(manageBill, {})
   const [requestId, setRequestId] = useState(id)
-  const [kind, setKind] = useState('courses')
+  const [kind, setKind] = useState('package')
+  const [selectedPackage, setSelectedPackage] = useState<string>(coursePackages[0].id)
+  const [packagePrice, setPackagePrice] = useState((coursePackages[0].price / 100).toFixed(2))
   const [review, setReview] = useState<BillItem[] | null>(null)
   const [validation, setValidation] = useState('')
   const [courses, setCourses] = useState(() =>
@@ -41,10 +44,10 @@ export function IssueBill({
   const [reviewDue, setReviewDue] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const saved = state.billId === requestId && state.success
-  const savedBill = saved ? bills.find((bill) => bill.id === requestId) : undefined
+  const saved = Boolean(state.billId && state.success && state.requestId === requestId)
+  const savedBill = saved ? bills.find((bill) => bill.id === state.billId) : undefined
   const total =
-    kind === 'courses'
+    kind === 'courses' || kind === 'package'
       ? agreedTotal
       : review?.reduce((sum, item) => sum + item.quantity * (item.unit_amount_cents ?? 0), 0)
   function edit() {
@@ -64,7 +67,7 @@ export function IssueBill({
           const checked = readItems(data)
           if (!review) {
             setReview(checked)
-            if (kind === 'courses') setAgreedTotal(readAgreedTotal(data))
+            if (kind === 'courses' || kind === 'package') setAgreedTotal(readAgreedTotal(data))
             setReviewDue(String(data.get('due') || 'Not set'))
             setValidation('')
             requestAnimationFrame(() => headingRef.current?.focus())
@@ -91,10 +94,55 @@ export function IssueBill({
           <label>
             Payment type
             <select name="bill_kind" value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="courses">Course purchase</option>
+              <option value="package">Full-term course package</option>
               <option value="other">Other fees</option>
             </select>
           </label>
+          {kind === 'package' && (
+            <fieldset>
+              <legend>Course package and amount</legend>
+              <label>
+                Course package
+                <select
+                  name="package_id"
+                  value={selectedPackage}
+                  onChange={(event) => {
+                    setSelectedPackage(event.target.value)
+                    setPackagePrice(
+                      ((coursePackage(event.target.value)?.price ?? 0) / 100).toFixed(2),
+                    )
+                  }}
+                >
+                  {coursePackages.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {packageDescription(item)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p>
+                {coursePackage(selectedPackage)?.lessons} lessons for one student. Full-term list
+                price: {money(coursePackage(selectedPackage)?.price ?? 0, 'usd')}.
+              </p>
+              <label>
+                Total to collect (USD)
+                <input
+                  name="total_price"
+                  type="number"
+                  min="0.50"
+                  max="100000"
+                  step="0.01"
+                  required
+                  value={packagePrice}
+                  onChange={(event) => setPackagePrice(event.target.value)}
+                />
+              </label>
+              <p>
+                For an agreed discount, enter the final amount here. The included lessons stay the
+                same.
+              </p>
+            </fieldset>
+          )}
           {kind === 'courses' && (
             <fieldset>
               <legend>Total and included lessons</legend>
@@ -178,17 +226,19 @@ export function IssueBill({
               Due date (optional)
               <input type="date" name="due" />
             </label>
-            <label>
-              Replaces an earlier payment request (optional)
-              <select name="replaces">
-                <option value="">None</option>
-                {bills.map((bill) => (
-                  <option key={bill.id} value={bill.id}>
-                    {bill.bill_number} · {money(bill.amount_cents, bill.currency)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {kind !== 'package' && (
+              <label>
+                Replaces an earlier payment request (optional)
+                <select name="replaces">
+                  <option value="">None</option>
+                  {bills.map((bill) => (
+                    <option key={bill.id} value={bill.id}>
+                      {bill.bill_number} · {money(bill.amount_cents, bill.currency)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </details>
         </div>
         {review && (
@@ -198,7 +248,9 @@ export function IssueBill({
                 <li key={i}>
                   <span>
                     {item.description}
-                    {kind === 'courses' && <small>{itemDetail(item, 'usd')}</small>}
+                    {(kind === 'courses' || kind === 'package') && (
+                      <small>{itemDetail(item, 'usd')}</small>
+                    )}
                   </span>
                 </li>
               ))}
@@ -208,7 +260,7 @@ export function IssueBill({
             </p>
             {reviewDue !== 'Not set' && <p>Due date: {reviewDue}</p>}
             <p>
-              {kind === 'courses'
+              {kind === 'courses' || kind === 'package'
                 ? 'Lesson dates are arranged separately. '
                 : 'This payment does not include lesson credits. '}
               The payment details and total cannot be changed after creation. Creating a request

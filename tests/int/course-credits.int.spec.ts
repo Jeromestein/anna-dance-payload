@@ -90,7 +90,7 @@ describe('negotiated total and included course credits', () => {
       checkoutItems({ amount_cents: 1, currency: 'usd' }, readItems(courseForm())),
     ).toThrow()
   })
-  it('reviews one total and course counts without per-course price inputs', () => {
+  it('reviews a discounted package total with fixed lessons and no per-course price inputs', () => {
     render(
       createElement(IssueBill, {
         owner: 'owner',
@@ -100,28 +100,16 @@ describe('negotiated total and included course credits', () => {
         test: true,
       }),
     )
+    expect(screen.queryByRole('option', { name: 'Custom lesson counts' })).toBeNull()
+    fireEvent.change(screen.getByLabelText('Course package'), { target: { value: 'SOLO-01' } })
     fireEvent.change(screen.getByLabelText('Total to collect (USD)'), {
       target: { value: '173.29' },
     })
-    expect(
-      (screen.getByRole('button', { name: 'Review payment details' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true)
     expect(screen.queryByRole('button', { name: 'Add course' })).toBeNull()
-    for (const label of [
-      'Group Class · 60 minutes',
-      'Duet Class · 60 minutes',
-      'Solo Class · 30 minutes',
-      'Solo Class · 60 minutes',
-    ]) {
-      expect((screen.getByLabelText(label) as HTMLInputElement).value).toBe('0')
-    }
-    fireEvent.change(screen.getByLabelText('Solo Class · 30 minutes'), { target: { value: '3' } })
-    fireEvent.change(screen.getByLabelText('Group Class · 60 minutes'), { target: { value: '6' } })
+    expect(screen.queryByLabelText('Solo Class · 30 minutes')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Review payment details' }))
     expect(screen.getByText('$173.29 USD')).toBeDefined()
-    expect(screen.getByText('3 lessons included')).toBeDefined()
-    expect(screen.getByText('6 lessons included')).toBeDefined()
+    expect(screen.getByText('9 lessons included')).toBeDefined()
     expect(screen.queryByLabelText('Unit price (USD)')).toBeNull()
     expect(screen.queryByText('$0.00')).toBeNull()
   })

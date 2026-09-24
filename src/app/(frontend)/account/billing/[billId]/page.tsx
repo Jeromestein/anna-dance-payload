@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { BillDetails } from '@/components/billing-records'
+import { BillingPaymentStatus } from '@/components/billing-payment-status'
+import { PackagePaymentMethod } from '@/components/package-purchase'
 import { StripeCheckout } from '@/components/stripe-billing-controls'
 import { billPath, money, statusLabels } from '@/lib/billing/model'
 import { loadBill } from '@/lib/billing/load'
@@ -65,19 +67,22 @@ export default async function BillPage({
             For <strong>{profile?.name || 'your account'}</strong>
           </p>
           <span className={styles.billStatus}>
-            {pending
-              ? 'Awaiting payment confirmation'
-              : overdue
-                ? 'Unpaid · overdue'
-                : statusLabels[bill.status]}
+            {bill.payment_preference === 'cash' && bill.status === 'payment_due'
+              ? 'Awaiting cash payment'
+              : pending
+                ? 'Awaiting payment confirmation'
+                : overdue
+                  ? 'Unpaid · overdue'
+                  : statusLabels[bill.status]}
           </span>
         </header>
         <BillDetails bill={bill} bills={[bill]} expanded>
           <div className={styles.billPayment}>
+            {bill.package_id && bill.status === 'payment_due' && !pending && (
+              <PackagePaymentMethod id={bill.id} cash={bill.payment_preference === 'cash'} />
+            )}
             {pending ? (
-              <p role="status">
-                Payment is being verified. Please do not pay again. Check the status shortly.
-              </p>
+              <BillingPaymentStatus />
             ) : bill.status === 'payment_due' && readiness === 'ready' ? (
               <>
                 <p>Review the items and quantities above. One payment covers this entire bill.</p>

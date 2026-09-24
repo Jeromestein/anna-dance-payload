@@ -1,6 +1,7 @@
 import 'server-only'
 
-import { billPath, billSelect, money, itemDetail, type Bill } from '@/lib/billing/model'
+import { billPath, money, itemDetail, type Bill } from '@/lib/billing/model'
+import { queryBilling } from '@/lib/billing/query.server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { siteOrigin } from '@/lib/stripe/config'
 import { renderBillingEmail } from './templates'
@@ -15,12 +16,9 @@ type Notice = {
 
 export async function billingNotices(owner: string, id: string, requestPayment = false) {
   const db = createSupabaseAdminClient()
-  const billResult = await db
-    .from('app_payments')
-    .select(billSelect)
-    .eq('user_profile_id', owner)
-    .eq('id', id)
-    .single()
+  const billResult = await queryBilling((columns) =>
+    db.from('app_payments').select(columns).eq('user_profile_id', owner).eq('id', id).single(),
+  )
   if (billResult.error || !billResult.data) throw new Error('Bill not found.')
   const bill = billResult.data as unknown as Bill
   if (requestPayment) {

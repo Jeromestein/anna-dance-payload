@@ -25,21 +25,24 @@ function BillAction({
       <input type="hidden" name="owner" value={owner} />
       <input type="hidden" name="id" value={bill.id} />
       <input type="hidden" name="operation" value={operation} />
+      {bill.package_id && <input type="hidden" name="package_bill" value="yes" />}
       <h4>{operation === 'paid' ? 'Record verified full payment' : 'Cancel unpaid bill'}</h4>
       {operation === 'paid' && (
         <label>
           Payment method
-          <select name="channel" required>
-            <option value="stripe">Stripe</option>
+          <select name="channel" required defaultValue={bill.package_id ? 'cash' : 'stripe'}>
+            {!bill.package_id && <option value="stripe">Stripe</option>}
             <option value="cash">Cash</option>
-            <option value="bank_transfer">Bank transfer</option>
-            <option value="other">Other</option>
+            {!bill.package_id && <option value="bank_transfer">Bank transfer</option>}
+            {!bill.package_id && <option value="other">Other</option>}
           </select>
         </label>
       )}
       {operation !== 'cancelled' && (
         <label>
-          Payment reference (Stripe: use PaymentIntent ID)
+          {bill.package_id
+            ? 'Cash receipt reference'
+            : 'Payment reference (Stripe: use PaymentIntent ID)'}
           <input name="reference" required maxLength={200} />
         </label>
       )}
@@ -129,18 +132,20 @@ export function BillingAdmin({
       {bills.map((bill) => (
         <BillDetails key={bill.id} bill={bill} bills={bills}>
           {['payment_due', 'pending_verification'].includes(bill.status) &&
-            bill.stripe_livemode == null && (
+            (bill.stripe_livemode == null || bill.payment_preference === 'cash') && (
               <BillAction owner={owner} bill={bill} operation="paid" />
             )}
-          {bill.status === 'payment_due' && bill.stripe_livemode == null && (
-            <BillAction owner={owner} bill={bill} operation="cancelled" />
-          )}
+          {bill.status === 'payment_due' &&
+            (bill.stripe_livemode == null || Boolean(bill.package_id)) && (
+              <BillAction owner={owner} bill={bill} operation="cancelled" />
+            )}
           {bill.stripe_livemode === false && bill.checkout_available && (
             <StripeCheckout id={bill.id} owner={owner} test staffTest />
           )}
-          {(bill.payment_channel === 'stripe' || bill.stripe_livemode != null) && (
-            <StripeStatusRefresh owner={owner} id={bill.id} />
-          )}
+          {bill.payment_preference !== 'cash' &&
+            (bill.payment_channel === 'stripe' || bill.stripe_livemode != null) && (
+              <StripeStatusRefresh owner={owner} id={bill.id} />
+            )}
           <BillShareTools
             bill={bill}
             owner={owner}

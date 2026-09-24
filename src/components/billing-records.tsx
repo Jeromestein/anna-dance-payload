@@ -45,7 +45,9 @@ export function BillDetails({
           <strong>{money(bill.amount_cents, bill.currency)}</strong>
           <small>
             {bill.stripe_livemode === false ? 'TEST · ' : ''}
-            {statusLabels[bill.status] ?? 'Verification needed'}
+            {bill.payment_preference === 'cash' && bill.status === 'payment_due'
+              ? 'Awaiting cash payment'
+              : (statusLabels[bill.status] ?? 'Verification needed')}
           </small>
         </span>
       </summary>
