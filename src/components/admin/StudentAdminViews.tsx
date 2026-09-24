@@ -1,3 +1,4 @@
+import { currentLeaveTimes, leaveDateLabel, type LeaveTimes } from '@/lib/leave/model'
 import { StudentDetailsFields } from '@/components/student-details-fields'
 import { STUDENT_DETAILS_SELECT, type StudentDetails } from '@/lib/students/profile'
 import { StudentSchedule } from './StudentSchedule'
@@ -41,7 +42,7 @@ type StudentDirectoryProfile = {
   created_at: string
 }
 
-type StudentProfile = StudentDirectoryProfile & StudentDetails
+type StudentProfile = StudentDirectoryProfile & StudentDetails & LeaveTimes
 
 type StoredScheduleEntry = {
   id: string
@@ -322,7 +323,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
     supabase
       .from('app_user_profiles')
       .select(
-        `id, email, name, phone, guardian_name, guardian_phone, created_at, profile_complete,${STUDENT_DETAILS_SELECT}`,
+        `id, email, name, phone, guardian_name, guardian_phone, created_at, profile_complete,first_leave_at,second_leave_at,${STUDENT_DETAILS_SELECT}`,
       )
       .eq('id', id)
       .maybeSingle<StudentProfile>(),
@@ -406,6 +407,19 @@ export async function StudentDetailView(props: AdminViewServerProps) {
           </p>
         )}
 
+        <section className="student-admin__notice" aria-labelledby="admin-leave-heading">
+          <h2 id="admin-leave-heading">Leave requests</h2>
+          <p>
+            {2 - currentLeaveTimes(data, new Date()).length} of 2 requests remaining. Resets January
+            1 and June 1, New York time.
+          </p>
+          {currentLeaveTimes(data, new Date()).map((time, index) => (
+            <p key={time}>
+              Request {index + 1}: {leaveDateLabel(time)}
+            </p>
+          ))}
+          <p>Request details are sent by email.</p>
+        </section>
         <MobileStudentAdminTabs>
           <div
             className={previewStyles.summary}

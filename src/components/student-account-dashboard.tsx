@@ -1,3 +1,5 @@
+import { StudentLeave } from '@/components/student-leave'
+import type { LeaveData } from '@/lib/leave/model'
 import { isStudentProfileComplete } from '@/lib/students/profile'
 import { CourseCredits } from '@/components/course-credits'
 import type { CourseCreditData } from '@/lib/account/course-credits'
@@ -12,6 +14,8 @@ import { type AccountScheduleEntry, formatScheduleEntry } from '@/lib/account/sc
 import styles from './student-account-dashboard.module.css'
 
 type StudentAccountDashboardProps = {
+  leave?: LeaveData
+  now?: string
   credits?: CourseCreditData
   bills: Bill[]
   billingUnavailable: boolean
@@ -24,6 +28,8 @@ type StudentAccountDashboardProps = {
 }
 
 export function StudentAccountDashboard({
+  leave,
+  now,
   credits,
   bills,
   billingUnavailable,
@@ -63,6 +69,7 @@ export function StudentAccountDashboard({
             and health notes. If there are no allergies or relevant health conditions, enter N/A.
           </p>
         )}
+        {leave && now && <StudentLeave data={leave} now={now} />}
         <MobileAccountTabs
           initialTab={
             !isStudentProfileComplete(profile) || error || message ? 'profile' : 'overview'

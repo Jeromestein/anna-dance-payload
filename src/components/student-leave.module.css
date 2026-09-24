@@ -1,0 +1,88 @@
+.card {
+  margin: 0 0 24px;
+  padding: 26px;
+  border: 1px solid var(--card-border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--card-shadow);
+}
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.heading h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+.heading p {
+  margin: 8px 0 0;
+  color: var(--rose-dark);
+  font-weight: 600;
+}
+.help {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  margin: 12px 0 0;
+}
+.times {
+  padding-left: 20px;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+.form {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+}
+.form label {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.form textarea {
+  width: 100%;
+  min-height: 130px;
+  padding: 14px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}
+.form button {
+  justify-self: start;
+}
+.card button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.error {
+  color: #a1193d;
+}
+.warning {
+  color: #785000;
+}
+.success {
+  color: #176141;
+}
+@media (max-width: 620px) {
+  .card {
+    padding: 22px 20px;
+  }
+  .heading {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .heading button,
+  .form button {
+    width: 100%;
+  }
+}
