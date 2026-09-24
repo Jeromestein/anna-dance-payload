@@ -59,7 +59,7 @@ export default async function SchedulePage({
               each week for 60 minutes.
             </p>
             <Link href="#book" className="text-link">
-              {title} <ArrowIcon />
+              Book a Free Placement <ArrowIcon />
             </Link>
           </aside>
           <div

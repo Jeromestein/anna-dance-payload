@@ -52,9 +52,9 @@ export default async function HomePage() {
             <div className="hero-copy-block">
               <p className="hero-copy">Our dance program brings Chinese dance together with Acro Dance, Jazz, K-pop, Contemporary, and other movement styles to create fresh, original choreography for performances, showcases, and competitions.</p>
               <p className="hero-copy">With colorful costumes, expressive props, and a wide range of movement experiences, each class opens a new world of dance for children. As they explore different styles, perform with beautiful costumes, and learn to use unique props, they discover more ways to express themselves—and more reasons to love dancing.</p>
-              <p className="hero-copy">Through patient, professional instruction, we help every dancer build strong foundations, develop technique, grow in confidence, and shine on stage.</p>
+              <p className="hero-copy">Through patient, professional instruction, we help every dancer build strong foundations, develop technique, grow in confidence, and shine on stage. We create opportunities for every student to perform, compete, celebrate their progress along the way.</p>
               <div className="hero-actions">
-                <Link href="/schedule#book" className="button button-light">Request placement <ArrowIcon /></Link>
+                <Link href="/schedule#book" className="button button-light">Book a Free Placement <ArrowIcon /></Link>
                 <Link href="/classes" className="hero-text-link">Explore programs</Link>
               </div>
             </div>

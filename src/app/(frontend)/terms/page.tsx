@@ -139,7 +139,7 @@ export default function TermsPage() {
             <ul>
               <li>
                 Competition students must complete at least two hours of dance training per week,
-                including at least one Technique/Ensemble Class.
+                including at least one group class.
               </li>
               <li>
                 Students may apply for solo, duet, or trio participation only after fulfilling their

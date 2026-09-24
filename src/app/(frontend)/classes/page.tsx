@@ -76,13 +76,13 @@ export default async function ClassesPage() {
                     <div className="program-booking-actions">
                       {isAuthenticated ? getProgramBookings().map((booking) => (
                         <Link key={booking.slug} href={`/schedule?class=${booking.slug}#book`} className="program-action"
-                          aria-label={`Book ${booking.title} for ${item.title}`}>
-                          <span>{booking.slug === consultationBooking.slug ? 'Book a free consultation' : `Book ${booking.title}`}</span>
+                          aria-label={`${booking.slug === consultationBooking.slug ? "Book a Free Placement" : `Book ${booking.title}`} for ${item.title}`}>
+                          <span>{booking.slug === consultationBooking.slug ? 'Book a Free Placement' : `Book ${booking.title}`}</span>
                           <ArrowIcon />
                         </Link>
                       )) : (
-                        <Link href="/schedule" className="program-action" aria-label={`Get started with ${item.title}`}>
-                          <span>Book a free trial</span>
+                        <Link href="/schedule" className="program-action" aria-label={`Book a Free Placement for ${item.title}`}>
+                          <span>Book a Free Placement</span>
                           <ArrowIcon />
                         </Link>
                       )}

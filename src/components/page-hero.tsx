@@ -43,7 +43,7 @@ export function PageHero({
         <p className="eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
         <p className="page-hero-description">{description}</p>
-        {showCta && <Link href="/schedule#book" className="text-link">Request placement <ArrowIcon /></Link>}
+        {showCta && <Link href="/schedule#book" className="text-link">Book a Free Placement <ArrowIcon /></Link>}
       </div>
     </section>
   );

@@ -44,7 +44,7 @@ function SiteHeaderContent({ isAuthenticated, pathname }: SiteHeaderProps & { pa
             {isAuthenticated ? 'My Account' : 'Log in'}
           </Link>
           <Link href="/schedule" className="button button-small desktop-cta">
-            Schedule
+            Book a Free Placement
           </Link>
         </div>
 
@@ -71,7 +71,7 @@ function SiteHeaderContent({ isAuthenticated, pathname }: SiteHeaderProps & { pa
             {isAuthenticated ? 'My Account' : 'Log in'}
           </Link>
           <Link href="/schedule" className="button">
-            Schedule
+            Book a Free Placement
           </Link>
         </nav>
       )}

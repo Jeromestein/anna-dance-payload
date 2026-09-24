@@ -137,7 +137,7 @@ export function StudentScheduleCalendar({
         <strong>No upcoming appointments</strong>
         <p>Your linked consultations and lessons will appear here.</p>
         <Link className="button button-secondary" href="/schedule#book">
-          Book a consultation
+          Book a Free Placement
         </Link>
       </div>
     )

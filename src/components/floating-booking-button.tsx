@@ -14,7 +14,7 @@ export function FloatingBookingButton() {
     <Link
       href="/schedule"
       className="floating-booking-button"
-      aria-label="View class schedule"
+      aria-label="Book a Free Placement"
     >
       <span className="floating-booking-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="21" height="21" fill="none">
@@ -23,7 +23,7 @@ export function FloatingBookingButton() {
         </svg>
       </span>
       <span className="floating-booking-copy">
-        <strong>Book a consultation</strong>
+        <strong>Book a Free Placement</strong>
         <small>Ages 3+ · Teacher-guided</small>
       </span>
       <span className="floating-booking-arrow" aria-hidden="true">→</span>
