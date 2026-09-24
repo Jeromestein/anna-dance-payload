@@ -1702,7 +1702,7 @@ textarea:focus-visible {
 }
 .schedule-booking-options {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   width: 100%;
   margin: 0 0 24px;
@@ -4388,7 +4388,7 @@ body:has(.legal-page) .floating-booking-button {
     margin-top: 12px;
   }
   .schedule-booking-options {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

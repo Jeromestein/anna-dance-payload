@@ -5,7 +5,10 @@ import { CalBooking } from '@/components/cal-booking'
 import { GoogleSignInButton } from '@/app/(frontend)/login/google-sign-in-button'
 
 vi.mock('@calcom/embed-react', () => ({
-  default: () => createElement('div', { 'data-testid': 'booking-tool' }, 'Booking tool'),
+  default: ({ config }: { config: Record<string, string> }) => createElement('div', {
+    'data-testid': 'booking-tool',
+    'data-config': JSON.stringify(config),
+  }, 'Booking tool'),
   getCalApi: async () => vi.fn(),
 }))
 vi.mock('@/lib/supabase/client', () => ({ createClient: vi.fn() }))
@@ -51,6 +54,26 @@ describe('Website terms consent', () => {
     fireEvent.click(screen.getByRole('checkbox'))
     await waitFor(() => expect(screen.queryByTestId('booking-tool')).not.toBeNull())
     expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(JSON.parse(screen.getByTestId('booking-tool').getAttribute('data-config')!)).toMatchObject({
+      name: 'Test', email: 'test@example.com', 'metadata[bookingIntentId]': 'test',
+    })
+    fireEvent.click(screen.getByRole('checkbox'))
+    expect(screen.queryByTestId('booking-tool')).toBeNull()
+  })
+
+  it('lets guests book after consent without login or account metadata', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ status: 'public' }),
+    }))
+    render(createElement(CalBooking))
+    expect(screen.queryByTestId('booking-tool')).toBeNull()
+    fireEvent.click(screen.getByRole('checkbox'))
+    await waitFor(() => expect(screen.queryByTestId('booking-tool')).not.toBeNull())
+    expect(screen.queryByRole('link', { name: 'Log in to book' })).toBeNull()
+    expect(JSON.parse(screen.getByTestId('booking-tool').getAttribute('data-config')!)).toEqual({
+      layout: 'month_view', useSlotsViewOnSmallScreen: 'true',
+    })
     fireEvent.click(screen.getByRole('checkbox'))
     expect(screen.queryByTestId('booking-tool')).toBeNull()
   })

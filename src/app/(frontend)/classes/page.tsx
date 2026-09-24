@@ -74,7 +74,7 @@ export default async function ClassesPage() {
                       {item.features.map((feature) => <li key={feature}>{feature}</li>)}
                     </ul>
                     <div className="program-booking-actions">
-                      {isAuthenticated ? getProgramBookings(item.title).map((booking) => (
+                      {isAuthenticated ? getProgramBookings().map((booking) => (
                         <Link key={booking.slug} href={`/schedule?class=${booking.slug}#book`} className="program-action"
                           aria-label={`Book ${booking.title} for ${item.title}`}>
                           <span>{booking.slug === consultationBooking.slug ? 'Book a free consultation' : `Book ${booking.title}`}</span>

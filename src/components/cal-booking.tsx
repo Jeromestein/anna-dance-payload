@@ -1,7 +1,6 @@
 'use client'
 
 import Cal, { getCalApi } from '@calcom/embed-react'
-import Link from 'next/link'
 import { TermsConsent } from './terms-consent'
 import { useEffect, useState } from 'react'
 
@@ -24,13 +23,11 @@ type ContextState =
 type CalBookingProps = {
   calLink?: string
   namespace?: string
-  loginNext?: string
 }
 
 export function CalBooking({
   calLink = defaultCalLink,
   namespace = defaultNamespace,
-  loginNext = '/schedule#book',
 }: CalBookingProps = {}) {
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [context, setContext] = useState<ContextState>({ status: 'loading' })
@@ -63,7 +60,7 @@ export function CalBooking({
   }, [termsAccepted])
 
   useEffect(() => {
-    if (!termsAccepted || context.status !== 'linked') return
+    if (!termsAccepted || (context.status !== 'linked' && context.status !== 'public')) return
 
     void (async () => {
       const cal = await getCalApi({ namespace })
@@ -88,32 +85,28 @@ export function CalBooking({
       {!termsAccepted && <p>Please agree to the Website Terms of Use to continue booking.</p>}
       {termsAccepted && (
         <div className="booking-account-context" aria-live="polite">
-          {context.status === 'loading' && <span>Preparing secure account matching…</span>}
+          {context.status === 'loading' && <span>Preparing your booking…</span>}
           {context.status === 'linked' && (
             <span>
               Signed in as <strong>{context.email}</strong>. This booking will appear in My Account.
             </span>
           )}
           {context.status === 'public' && (
-            <div className="booking-login-required">
-              <span>Please log in to book an appointment online.</span>
-              <Link className="button" href={`/login?next=${encodeURIComponent(loginNext)}`}>
-                Log in to book
-              </Link>
-              <a href="tel:+17014009213">Call 701-400-9213</a>
-            </div>
+            <span>Book as a guest using your name and email. No login required.</span>
           )}
           {context.status === 'unavailable' && (
             <span>Online class booking is temporarily unavailable. Please call 701-400-9213.</span>
           )}
           {bookingReceived && (
             <strong className="booking-sync-status">
-              Appointment received. Your account will update after secure confirmation.
+              {context.status === 'linked'
+                ? 'Appointment received. Your account will update after secure confirmation.'
+                : 'Appointment received. Please check your email for confirmation.'}
             </strong>
           )}
         </div>
       )}
-      {termsAccepted && context.status === 'linked' && (
+      {termsAccepted && (context.status === 'linked' || context.status === 'public') && (
         <div className="cal-booking-shell">
           <Cal
             namespace={namespace}
@@ -122,9 +115,13 @@ export function CalBooking({
             config={{
               layout: 'month_view',
               useSlotsViewOnSmallScreen: 'true',
-              name: context.name,
-              email: context.email,
-              'metadata[bookingIntentId]': context.intentId,
+              ...(context.status === 'linked'
+                ? {
+                    name: context.name,
+                    email: context.email,
+                    'metadata[bookingIntentId]': context.intentId,
+                  }
+                : {}),
             }}
           />
         </div>

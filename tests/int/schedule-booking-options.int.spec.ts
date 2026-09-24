@@ -3,29 +3,25 @@ import { consultationBooking, getProgramBookings, getScheduleBooking, paidClassB
 import { isAllowedCalEventType } from '@/lib/cal/booking-sync'
 
 describe('Schedule booking access', () => {
-  it('always selects free consultation for visitors, including paid query parameters', () => {
+  it('always selects free consultation, including old paid query parameters', () => {
     for (const option of paidClassBookings) {
-      expect(getScheduleBooking(false, option.slug)).toBe(consultationBooking)
+      expect(getScheduleBooking(option.slug)).toBe(consultationBooking)
     }
-    expect(getScheduleBooking(false)).toBe(consultationBooking)
+    expect(getScheduleBooking()).toBe(consultationBooking)
   })
 
-  it('offers free trial and four paid classes and defaults signed-in students to free trial', () => {
-    expect(scheduleBookings).toHaveLength(5)
+  it('offers only free trial for all visitors and signed-in students', () => {
+    expect(scheduleBookings).toEqual([consultationBooking])
     for (const option of scheduleBookings) {
-      expect(getScheduleBooking(true, option.slug)).toBe(option)
+      expect(getScheduleBooking(option.slug)).toBe(option)
     }
     for (const query of [undefined, 'trial-class-consultation', 'group-class-sync-test', 'unknown', ['solo-class']]) {
-      expect(getScheduleBooking(true, query)).toBe(consultationBooking)
+      expect(getScheduleBooking(query)).toBe(consultationBooking)
     }
   })
 
-  it('links programs to matching bookings and keeps unconfigured programs on consultation', () => {
-    expect(getProgramBookings('Level-Based Group Classes').map(({ slug }) => slug)).toEqual(['level-class'])
-    expect(getProgramBookings('Competition Solo & Duet').map(({ slug }) => slug)).toEqual(['solo-class-30min', 'solo-class', 'duet-class'])
-    for (const title of ['Technique & Fundamentals', 'Seasonal Summer Camps', 'New program']) {
-      expect(getProgramBookings(title)).toEqual([consultationBooking])
-    }
+  it('links programs only to free trial booking', () => {
+    expect(getProgramBookings()).toEqual([consultationBooking])
   })
 
   it('recognizes all official classes for signed webhook processing with older environment settings', () => {
