@@ -2383,7 +2383,8 @@ body:has(.auth-page) .floating-booking-button {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-.auth-form input {
+.auth-form input,
+.auth-form textarea {
   width: 100%;
   min-height: 56px;
   margin-top: 8px;
@@ -2397,7 +2398,8 @@ body:has(.auth-page) .floating-booking-button {
 .auth-form input::placeholder {
   color: rgba(66, 99, 109, 0.62);
 }
-.auth-form input:focus {
+.auth-form input:focus,
+.auth-form textarea:focus {
   border-color: var(--rose);
   box-shadow: 0 0 0 3px rgba(199, 71, 131, 0.1);
 }
@@ -2654,7 +2656,8 @@ body:has(.profile-section) .site-footer {
   letter-spacing: 0.02em;
 }
 .profile-fields input,
-.profile-fields select {
+.profile-fields select,
+.profile-fields textarea {
   width: 100%;
   min-height: 54px;
   margin-top: 8px;
@@ -2679,7 +2682,8 @@ body:has(.profile-section) .site-footer {
     5px 5px;
 }
 .profile-fields input:focus,
-.profile-fields select:focus {
+.profile-fields select:focus,
+.profile-fields textarea:focus {
   border-color: var(--rose);
   box-shadow: 0 0 0 3px rgba(199, 71, 131, 0.1);
 }
@@ -4423,4 +4427,21 @@ body:has(.legal-page) .floating-booking-button {
   body:has(.account-page) .site-footer {
     padding-bottom: calc(82px + env(safe-area-inset-bottom));
   }
+}
+
+/* Shared enrollment details in registration and account forms. */
+.auth-form textarea,
+.profile-fields textarea {
+  padding: 14px 18px;
+  resize: vertical;
+  min-height: 120px;
+}
+.student-details-wide { grid-column: 1 / -1; }
+.student-details-help,
+.auth-form small {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  font-weight: 400;
 }

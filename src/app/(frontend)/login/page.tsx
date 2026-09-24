@@ -1,3 +1,4 @@
+import { StudentDetailsFields } from '@/components/student-details-fields'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -69,7 +70,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <h1>{isSignup ? 'Create your account' : 'Log in'}</h1>
             <p className="auth-card-copy">
               {isSignup
-                ? 'Create the student’s account with Google or email. Contact information is optional.'
+                ? 'Create the student’s account with Google or email. Student contact details, date of birth, address, and health notes are required.'
                 : 'Continue with Google or use the email and password connected to your account.'}
             </p>
           </header>
@@ -127,7 +128,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
             {isSignup && (
               <label htmlFor="student_phone">
-                Phone number <span className="auth-field-optional">Optional</span>
+                Phone number *
                 <input
                   id="student_phone"
                   name="student_phone"
@@ -135,9 +136,19 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   autoComplete="tel"
                   inputMode="tel"
                   maxLength={24}
-                  placeholder="Student’s phone number"
+                  placeholder="Student or parent / guardian phone"
+                  required
                 />
               </label>
+            )}
+
+            {isSignup && (
+              <>
+                <p className="student-details-help">
+                  You may use a parent or guardian’s phone number. * Required fields.
+                </p>
+                <StudentDetailsFields prefix="signup" />
+              </>
             )}
 
             <label htmlFor="password">

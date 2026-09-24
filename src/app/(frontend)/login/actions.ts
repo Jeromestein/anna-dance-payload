@@ -1,5 +1,8 @@
 'use server'
 
+import { readStudentDetails, studentDetailsError } from '@/lib/students/profile'
+import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase/admin'
+
 import type { AuthError } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -56,7 +59,7 @@ function readUserProfile(formData: FormData, nextPath: string) {
     redirectToLogin('signup', 'error', 'Enter the student’s full name.', nextPath)
   }
 
-  if (studentPhone && !isValidPhone(studentPhone)) {
+  if (!isValidPhone(studentPhone)) {
     redirectToLogin('signup', 'error', 'Enter a valid student phone number.', nextPath)
   }
 
@@ -142,6 +145,17 @@ export async function signup(formData: FormData) {
   ensureConfigured(mode, nextPath)
   const credentials = readCredentials(formData, mode, nextPath)
   const userProfile = readUserProfile(formData, nextPath)
+  const details = readStudentDetails(formData)
+  const detailsError = studentDetailsError(details)
+  if (detailsError) redirectToLogin(mode, 'error', detailsError, nextPath)
+  if (!isSupabaseAdminConfigured()) {
+    redirectToLogin(
+      mode,
+      'error',
+      'Registration is being configured. Please try again shortly.',
+      nextPath,
+    )
+  }
   const supabase = await createClient()
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
   const { data, error } = await supabase.auth.signUp({
@@ -156,7 +170,18 @@ export async function signup(formData: FormData) {
     redirectToLogin(mode, 'error', authErrorMessage(error, mode), nextPath)
   }
 
+  let profileSaveFailed = false
   if (hasNewEmailIdentity(data.user)) {
+    // Store enrollment details only in the profile, not in Auth metadata or JWTs.
+    const admin = createSupabaseAdminClient()
+    const { data: saved, error: saveError } = await admin
+      .from('app_user_profiles')
+      .update({ ...details, updated_at: new Date().toISOString() })
+      .eq('id', data.user.id)
+      .eq('profile_complete', false)
+      .select('id')
+      .maybeSingle()
+    profileSaveFailed = Boolean(saveError || !saved)
     await sendStudentRegistrationNotification({
       userId: data.user.id,
       studentName: userProfile.name,
@@ -170,13 +195,20 @@ export async function signup(formData: FormData) {
 
   if (data.session) {
     revalidatePath('/', 'layout')
+    if (profileSaveFailed) {
+      redirect(
+        '/account?error=Please+complete+your+student+Profile.+We+could+not+save+all+your+details.',
+      )
+    }
     redirect(nextPath)
   }
 
   redirectToLogin(
     mode,
     'message',
-    'Check your email and follow the confirmation link to finish creating your account.',
+    profileSaveFailed
+      ? 'Your account was created, but we could not save all your student details. Confirm your email, then sign in and complete your Profile.'
+      : 'Check your email and follow the confirmation link to finish creating your account.',
     nextPath,
   )
 }

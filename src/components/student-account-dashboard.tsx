@@ -1,3 +1,4 @@
+import { isStudentProfileComplete } from '@/lib/students/profile'
 import { CourseCredits } from '@/components/course-credits'
 import type { CourseCreditData } from '@/lib/account/course-credits'
 import type { EditableStudentProfile } from '@/components/student-profile-form'
@@ -56,7 +57,17 @@ export function StudentAccountDashboard({
           <a href="#profile">Profile</a>
         </nav>
 
-        <MobileAccountTabs>
+        {!isStudentProfileComplete(profile) && (
+          <p className="auth-alert" role="status">
+            Please complete your Profile with the student’s phone number, address, date of birth,
+            and health notes. If there are no allergies or relevant health conditions, enter N/A.
+          </p>
+        )}
+        <MobileAccountTabs
+          initialTab={
+            !isStudentProfileComplete(profile) || error || message ? 'profile' : 'overview'
+          }
+        >
           <div className={styles.summaryGrid} id="overview" data-account-tab="overview">
             <article className={styles.summaryCard}>
               <span className={styles.summaryLabel}>Next appointment</span>

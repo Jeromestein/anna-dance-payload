@@ -3,12 +3,18 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
+import {
+  readStudentDetails,
+  studentDetailsError,
+  type StudentDetails,
+} from '@/lib/students/profile'
+
 import { isValidName, isValidOptionalName, isValidPhone } from '@/lib/auth/validation'
 import { requirePayloadAdministrator } from '@/lib/staff/auth'
 import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
-type StudentProfileValues = {
+type StudentProfileValues = StudentDetails & {
   name: string
   phone: string | null
   guardian_name: string | null
@@ -34,7 +40,7 @@ function readStudentProfile(formData: FormData, path: string): StudentProfileVal
   if (!isValidName(name)) {
     redirectWithStatus(path, 'error', 'Enter the student’s full name.')
   }
-  if (phone && !isValidPhone(phone)) {
+  if (!isValidPhone(phone)) {
     redirectWithStatus(path, 'error', 'Enter a valid phone number.')
   }
   if (!isValidOptionalName(guardianName)) {
@@ -44,7 +50,12 @@ function readStudentProfile(formData: FormData, path: string): StudentProfileVal
     redirectWithStatus(path, 'error', 'Enter a valid parent or guardian phone number.')
   }
 
+  const details = readStudentDetails(formData)
+  const detailsError = studentDetailsError(details)
+  if (detailsError) redirectWithStatus(path, 'error', detailsError)
+
   return {
+    ...details,
     name,
     phone: phone || null,
     guardian_name: guardianName || null,
@@ -134,6 +145,7 @@ export async function updateManagedStudentProfile(formData: FormData) {
 
   revalidatePath(path)
   revalidatePath('/admin/students')
+  revalidatePath('/account')
   redirectWithStatus(path, 'message', 'The Student profile has been saved.')
 }
 

@@ -65,7 +65,8 @@ export default function PrivacyPage() {
             <p>Depending on how you interact with us, we may collect:</p>
             <ul>
               <li><strong>Parent or guardian details,</strong> such as name, email address, phone number, and relationship to the student.</li>
-              <li><strong>Student details,</strong> such as name, age, dance experience, interests, goals, availability, and placement information provided by an adult.</li>
+              <li><strong>Student details,</strong> such as name, date of birth, home address, phone number, dance experience, interests, goals, availability, and placement information provided by an adult.</li>
+              <li><strong>Health notes,</strong> including allergies and relevant health conditions provided during registration or in the student Profile to help staff support safe participation. If none apply, families enter N/A.</li>
               <li><strong>Inquiry and booking details,</strong> including the program of interest, messages, consultation selections, and communications with us.</li>
               <li><strong>Account information,</strong> including an email address, profile details, authentication records, and account preferences. Passwords are handled by our authentication provider and are not visible to Academy staff.</li>
               <li><strong>Enrollment and consent records,</strong> when those features are offered, including class selection, term details, signed policy versions, and media preferences.</li>
@@ -75,8 +76,8 @@ export default function PrivacyPage() {
             <p>
               Please do not send sensitive health, medical, accessibility, or
               learning information through the general contact form. If such
-              information is needed to support a student safely, contact us first
-              so we can arrange an appropriate way to provide it.
+              information is needed to support a student safely, provide it through the student registration form or your account Profile,
+              where it is available to the account holder and authorized administrators.
             </p>
           </section>
 

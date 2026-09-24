@@ -1,3 +1,4 @@
+import { STUDENT_DETAILS_SELECT, type StudentDetails } from '@/lib/students/profile'
 import { loadCourseCredits } from '@/lib/account/course-credits.server'
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
@@ -18,7 +19,7 @@ type AccountPageProps = {
   }>
 }
 
-type StoredStudentProfile = {
+type StoredStudentProfile = StudentDetails & {
   email: string
   name: string
   phone: string | null
@@ -51,7 +52,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const metadata = data.claims.user_metadata
   const { data: storedProfile, error: profileError } = await supabase
     .from('app_user_profiles')
-    .select('email, name, phone, guardian_name, guardian_phone')
+    .select(`email, name, phone, guardian_name, guardian_phone,${STUDENT_DETAILS_SELECT}`)
     .eq('id', studentId)
     .maybeSingle<StoredStudentProfile>()
   const { data: storedSchedule, error: scheduleError } = await supabase
@@ -66,6 +67,13 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const credits = await loadCourseCredits(supabase, studentId)
 
   const profile: EditableStudentProfile = {
+    date_of_birth: storedProfile?.date_of_birth ?? null,
+    address_line1: storedProfile?.address_line1 ?? null,
+    address_line2: storedProfile?.address_line2 ?? null,
+    city: storedProfile?.city ?? null,
+    state: storedProfile?.state ?? null,
+    postal_code: storedProfile?.postal_code ?? null,
+    health_notes: storedProfile?.health_notes ?? null,
     id: studentId,
     email: storedProfile?.email ?? authEmail,
     name:

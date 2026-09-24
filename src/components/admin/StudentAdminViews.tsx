@@ -1,3 +1,5 @@
+import { StudentDetailsFields } from '@/components/student-details-fields'
+import { STUDENT_DETAILS_SELECT, type StudentDetails } from '@/lib/students/profile'
 import { StudentSchedule } from './StudentSchedule'
 import { courseDateKey, courseDateLabel, courseTimeRange } from '@/lib/account/schedule-planning'
 import { loadCourseCredits } from '@/lib/account/course-credits.server'
@@ -28,7 +30,8 @@ import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supa
 import { MobileStudentAdminTabs } from './MobileStudentAdminTabs'
 import previewStyles from './student-account-preview.module.css'
 
-type StudentProfile = {
+type StudentDirectoryProfile = {
+  profile_complete: boolean
   id: string
   email: string
   name: string
@@ -37,6 +40,8 @@ type StudentProfile = {
   guardian_phone: string | null
   created_at: string
 }
+
+type StudentProfile = StudentDirectoryProfile & StudentDetails
 
 type StoredScheduleEntry = {
   id: string
@@ -96,7 +101,7 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
-function StudentDirectory({ students }: { students: StudentProfile[] }) {
+function StudentDirectory({ students }: { students: StudentDirectoryProfile[] }) {
   return (
     <>
       <div className="table student-admin__table-wrap">
@@ -117,6 +122,7 @@ function StudentDirectory({ students }: { students: StudentProfile[] }) {
                   <Link className="student-admin__name-link" href={`/admin/students/${student.id}`}>
                     {student.name}
                   </Link>
+                  {!student.profile_complete && <small>Profile incomplete</small>}
                 </td>
                 <td>
                   <a href={`mailto:${student.email}`}>{student.email}</a>
@@ -161,6 +167,7 @@ function StudentDirectory({ students }: { students: StudentProfile[] }) {
               <span className="student-admin__identity">
                 <strong>{student.name}</strong>
                 <span>{student.email}</span>
+                {!student.profile_complete && <small>Profile incomplete</small>}
               </span>
               <span className="student-admin__chevron" aria-hidden="true">
                 ›
@@ -200,7 +207,7 @@ export async function StudentListView(props: AdminViewServerProps) {
   const supabase = createSupabaseAdminClient()
   let studentsQuery = supabase
     .from('app_user_profiles')
-    .select('id, email, name, phone, guardian_name, guardian_phone, created_at', {
+    .select('id, email, name, phone, guardian_name, guardian_phone, created_at, profile_complete', {
       count: 'exact',
     })
   const searchFilter = buildStudentSearchFilter(query)
@@ -211,7 +218,7 @@ export async function StudentListView(props: AdminViewServerProps) {
     .range(from, to)
 
   const error = studentsResult.error
-  const students = (studentsResult.data ?? []) as StudentProfile[]
+  const students = (studentsResult.data ?? []) as StudentDirectoryProfile[]
   const filteredCount = studentsResult.count ?? 0
   const totalPages = Math.max(1, Math.ceil(filteredCount / STUDENTS_PAGE_SIZE))
 
@@ -314,7 +321,9 @@ export async function StudentDetailView(props: AdminViewServerProps) {
   const [profileResult, scheduleResult] = await Promise.all([
     supabase
       .from('app_user_profiles')
-      .select('id, email, name, phone, guardian_name, guardian_phone, created_at')
+      .select(
+        `id, email, name, phone, guardian_name, guardian_phone, created_at, profile_complete,${STUDENT_DETAILS_SELECT}`,
+      )
       .eq('id', id)
       .maybeSingle<StudentProfile>(),
     supabase
@@ -476,7 +485,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
 
             <div className="student-admin__form-heading">
               <h2>Personal information</h2>
-              <p>These details belong to the Student using this login.</p>
+              <p>These details belong to the Student using this login. * Required fields.</p>
             </div>
 
             <div className="student-admin__fields">
@@ -492,7 +501,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
                 />
               </label>
               <label htmlFor="student-phone">
-                Phone number <span>Optional</span>
+                Phone number *
                 <input
                   id="student-phone"
                   name="phone"
@@ -500,7 +509,9 @@ export async function StudentDetailView(props: AdminViewServerProps) {
                   inputMode="tel"
                   maxLength={24}
                   defaultValue={data.phone ?? ''}
+                  required
                 />
+                <small>You may use a parent or guardian’s phone number.</small>
               </label>
               <label htmlFor="student-email">
                 Email
@@ -515,6 +526,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
                   readOnly
                 />
               </label>
+              <StudentDetailsFields profile={data} prefix="admin-student" />
             </div>
 
             <fieldset className="student-admin__guardian">

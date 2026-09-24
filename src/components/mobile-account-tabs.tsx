@@ -8,6 +8,7 @@ type AccountTabId = 'overview' | 'payments' | 'schedule' | 'profile'
 
 type MobileAccountTabsProps = {
   children: ReactNode
+  initialTab?: AccountTabId
 }
 
 const tabs: Array<{ id: AccountTabId; label: string }> = [
@@ -57,8 +58,8 @@ function TabIcon({ tab }: { tab: AccountTabId }) {
   )
 }
 
-export function MobileAccountTabs({ children }: MobileAccountTabsProps) {
-  const [activeTab, setActiveTab] = useState<AccountTabId>('overview')
+export function MobileAccountTabs({ children, initialTab = 'overview' }: MobileAccountTabsProps) {
+  const [activeTab, setActiveTab] = useState<AccountTabId>(initialTab)
   const contentRef = useRef<HTMLDivElement>(null)
 
   function selectTab(tab: AccountTabId) {

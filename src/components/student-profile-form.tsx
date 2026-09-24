@@ -1,6 +1,8 @@
+import { StudentDetailsFields } from '@/components/student-details-fields'
+import type { StudentDetails } from '@/lib/students/profile'
 import { logoutStudent, updateStudentProfile } from '@/actions/student-profiles'
 
-export type EditableStudentProfile = {
+export type EditableStudentProfile = StudentDetails & {
   id: string
   email: string
   name: string
@@ -60,7 +62,7 @@ export function StudentProfileForm({
         <div className="profile-card-heading">
           <div>
             <h2>Personal information</h2>
-            <p>These details belong to the Student using this login.</p>
+            <p>These details belong to the Student using this login. * Required fields.</p>
           </div>
         </div>
 
@@ -79,7 +81,7 @@ export function StudentProfileForm({
           </label>
 
           <label htmlFor="phone">
-            Phone number <span className="profile-field-optional">Optional</span>
+            Phone number *
             <input
               id="phone"
               name="phone"
@@ -88,7 +90,9 @@ export function StudentProfileForm({
               inputMode="tel"
               maxLength={24}
               defaultValue={profile.phone ?? ''}
+              required
             />
+            <small>You may use a parent or guardian’s phone number.</small>
           </label>
 
           <label htmlFor="profile_email">
@@ -96,6 +100,7 @@ export function StudentProfileForm({
             <input id="profile_email" type="email" value={profile.email} readOnly />
             <small>Saved with this profile and used to log in.</small>
           </label>
+          <StudentDetailsFields profile={profile} prefix="profile" />
         </div>
 
         <fieldset className="profile-guardian-fields">

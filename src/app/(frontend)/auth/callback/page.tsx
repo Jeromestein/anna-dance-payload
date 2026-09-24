@@ -32,6 +32,19 @@ export default function AuthCallbackPage() {
         } catch {
           // Notification delivery is independent of successful authentication.
         }
+        const { data: sessionData } = await supabase.auth.getSession()
+        const userId = sessionData.session?.user.id
+        if (userId) {
+          const { data: profile, error: profileError } = await supabase
+            .from('app_user_profiles')
+            .select('profile_complete')
+            .eq('id', userId)
+            .maybeSingle()
+          if (profileError || !profile?.profile_complete) {
+            window.location.replace('/account')
+            return
+          }
+        }
         window.location.replace(safeNextPath)
       }
 

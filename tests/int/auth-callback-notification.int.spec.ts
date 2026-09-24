@@ -6,9 +6,15 @@ const auth = vi.hoisted(() => ({
   setSession: vi.fn(),
   exchangeCodeForSession: vi.fn(),
   getSession: vi.fn(),
+  profile: vi.fn(),
 }))
 
-vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({ auth }) }))
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth,
+    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: auth.profile }) }) }),
+  }),
+}))
 
 import AuthCallbackPage from '@/app/(frontend)/auth/callback/page'
 
@@ -36,6 +42,7 @@ beforeEach(() => {
   auth.setSession.mockResolvedValue({ error: null })
   auth.exchangeCodeForSession.mockResolvedValue({ error: null })
   auth.getSession.mockResolvedValue({ data: { session: { user: { id: 'student' } } } })
+  auth.profile.mockResolvedValue({ data: { profile_complete: true }, error: null })
   send.mockResolvedValue(new Response(null, { status: 204 }))
   vi.stubGlobal('fetch', send)
 })
@@ -68,6 +75,12 @@ describe('Successful Auth callback notification', () => {
   it('still redirects after a non-successful notification response', async () => {
     send.mockResolvedValue(new Response(null, { status: 503 }))
     visit('?code=test-code&next=https%3A%2F%2Funtrusted.example')
+    await waitFor(() => expect(redirect).toHaveBeenCalledWith('/account'))
+  })
+
+  it('routes incomplete Google profiles to Account even with another destination', async () => {
+    auth.profile.mockResolvedValue({ data: { profile_complete: false }, error: null })
+    visit('?code=test-code&next=%2Fschedule')
     await waitFor(() => expect(redirect).toHaveBeenCalledWith('/account'))
   })
 
