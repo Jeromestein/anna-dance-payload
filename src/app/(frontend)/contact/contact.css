@@ -149,6 +149,38 @@
   min-height: 190px;
 }
 
+.contact-opportunity {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--card-border);
+}
+
+.contact-opportunity h2 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
+  line-height: 1.3;
+  letter-spacing: -.025em;
+}
+
+.contact-opportunity p {
+  margin: 0 0 12px;
+  color: var(--ink-soft);
+  font-size: .9rem;
+  line-height: 1.65;
+}
+
+.contact-opportunity > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--rose-dark);
+  font-size: .85rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 @media (max-width: 1000px) {
   .contact-section {
     padding: 116px 0 72px;
