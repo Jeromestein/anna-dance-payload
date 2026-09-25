@@ -3,7 +3,8 @@ export const LEAVE_ALLOWANCE = 2
 
 export type LeavePeriod = { start: string; end: string; nextReset: string }
 export type LeaveTimes = { first_leave_at: string | null; second_leave_at: string | null }
-export type LeaveData = LeaveTimes & { unavailable?: boolean }
+export type LeaveCourse = LeaveTimes & { package_id: string; course_name: string }
+export type LeaveData = { courses: LeaveCourse[]; unavailable?: boolean }
 
 export function leavePeriod(instant: string | Date): LeavePeriod {
   const date = new Intl.DateTimeFormat('en-CA', {

@@ -23,6 +23,7 @@ const owner = '00000000-0000-4000-8000-000000000001'
 function form(reason = 'Please excuse the class on October 1.') {
   const f = new FormData()
   f.set('reason', reason)
+  f.set('package_id', 'level-1')
   return f
 }
 beforeEach(() => {
@@ -37,7 +38,11 @@ beforeEach(() => {
   })
   mocks.single.mockResolvedValue({ data: { name: 'Test Student' }, error: null })
   mocks.rpc.mockResolvedValue({
-    data: { submitted_at: new Date().toISOString(), remaining: 1 },
+    data: {
+      submitted_at: new Date().toISOString(),
+      remaining: 1,
+      course_name: 'Level 1 · Saturday',
+    },
     error: null,
   })
   mocks.send.mockResolvedValue(true)
@@ -47,13 +52,28 @@ describe('Simple two-timestamp student leave', () => {
   it('saves once and emails the text without passing text to the database', async () => {
     const result = await submitStudentLeave({}, form())
     expect(result.success).toBeTruthy()
-    expect(mocks.rpc).toHaveBeenCalledWith('app_record_student_leave', {
+    expect(mocks.rpc).toHaveBeenCalledWith('app_record_course_leave', {
+      p_package: 'level-1',
       p_owner: owner,
       p_expected_first: null,
       p_expected_second: null,
     })
     expect(mocks.send.mock.calls[0][0].emails[0].text).toContain('October 1')
     expect(mocks.send.mock.calls[0][0].emails).toHaveLength(2)
+    expect(mocks.send.mock.calls[0][0].emails[0].subject).toContain('Level 1 · Saturday')
+  })
+  it('requires a course before recording', async () => {
+    const missing = form()
+    missing.delete('package_id')
+    expect((await submitStudentLeave({}, missing)).error).toContain('Choose a course')
+    expect(mocks.rpc).not.toHaveBeenCalled()
+  })
+  it('rejects an ineligible course without emailing', async () => {
+    mocks.rpc.mockResolvedValue({
+      error: { message: 'Choose an enrolled course with lessons remaining' },
+    })
+    expect((await submitStudentLeave({}, form())).error).toContain('unavailable for leave')
+    expect(mocks.send).not.toHaveBeenCalled()
   })
   it('requires a verified session', async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null } })

@@ -86,3 +86,24 @@
     width: 100%;
   }
 }
+
+.course {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+.course label {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.course select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}

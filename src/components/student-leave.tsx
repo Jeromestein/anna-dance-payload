@@ -15,6 +15,8 @@ import styles from './student-leave.module.css'
 export function StudentLeave({ data, now }: { data: LeaveData; now: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [selected, setSelected] = useState(data.courses[0]?.package_id ?? '')
+  const course = data.courses.find((item) => item.package_id === selected) ?? data.courses[0]
   const [state, action, pending] = useActionState<LeaveActionState, FormData>(
     async (previous, form) =>
       form.get('reset') === 'yes' ? {} : submitStudentLeave(previous, form),
@@ -23,8 +25,8 @@ export function StudentLeave({ data, now }: { data: LeaveData; now: string }) {
   const [clock, setClock] = useState(now)
   const effectiveNow = new Date(Math.max(Date.parse(now), Date.parse(clock))).toISOString()
   const period = leavePeriod(effectiveNow)
-  const times = currentLeaveTimes(data, effectiveNow)
-  const remaining = 2 - times.length
+  const times = course ? currentLeaveTimes(course, effectiveNow) : []
+  const remaining = course ? 2 - times.length : 0
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -45,13 +47,15 @@ export function StudentLeave({ data, now }: { data: LeaveData; now: string }) {
           <p>
             {data.unavailable
               ? 'Leave balance is temporarily unavailable.'
-              : `${remaining} of 2 requests remaining`}
+              : !course
+                ? 'No paid courses with lessons remaining.'
+                : `${remaining} of 2 requests remaining`}
           </p>
         </div>
         <button
           type="button"
           className="button button-secondary"
-          disabled={data.unavailable || remaining === 0 || pending}
+          disabled={pending || (!state.retryToken && (data.unavailable || remaining === 0))}
           aria-expanded={open}
           aria-controls="leave-request-form"
           onClick={() => {
@@ -66,9 +70,35 @@ export function StudentLeave({ data, now }: { data: LeaveData; now: string }) {
           Request leave
         </button>
       </div>
+      {data.courses.length > 1 ? (
+        <div className={styles.course}>
+          <label htmlFor="leave-course">Course</label>
+          <select
+            id="leave-course"
+            value={course?.package_id ?? ''}
+            disabled={pending || Boolean(state.retryToken)}
+            onChange={(event) => {
+              setSelected(event.target.value)
+              setOpen(false)
+              const reset = new FormData()
+              reset.set('reset', 'yes')
+              startTransition(() => action(reset))
+            }}
+          >
+            {data.courses.map((item) => (
+              <option key={item.package_id} value={item.package_id}>
+                {item.course_name} — {2 - currentLeaveTimes(item, effectiveNow).length} of 2
+                remaining
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : course ? (
+        <p className={styles.help}>{course.course_name}</p>
+      ) : null}
       <p className={styles.help}>
-        {leavePeriodLabel(period)} · Resets January 1 and June 1, New York time. Unused requests do
-        not carry over.
+        Two requests per course. {leavePeriodLabel(period)} · Resets January 1 and June 1, New York
+        time. Unused requests do not carry over.
       </p>
       {times.length > 0 && (
         <ul className={styles.times}>
@@ -81,8 +111,9 @@ export function StudentLeave({ data, now }: { data: LeaveData; now: string }) {
       )}
       {open && (
         <form action={action} className={styles.form} id="leave-request-form">
-          <input type="hidden" name="first_leave_at" value={data.first_leave_at ?? ''} />
-          <input type="hidden" name="second_leave_at" value={data.second_leave_at ?? ''} />
+          <input type="hidden" name="package_id" value={course?.package_id ?? ''} />
+          <input type="hidden" name="first_leave_at" value={course?.first_leave_at ?? ''} />
+          <input type="hidden" name="second_leave_at" value={course?.second_leave_at ?? ''} />
           {state.retryToken ? (
             <input type="hidden" name="retry_token" value={state.retryToken} />
           ) : null}

@@ -1,3 +1,4 @@
+import { loadStudentLeave } from '@/lib/leave/load.server'
 import { currentLeaveTimes, leaveDateLabel, type LeaveTimes } from '@/lib/leave/model'
 import { StudentDetailsFields } from '@/components/student-details-fields'
 import { STUDENT_DETAILS_SELECT, type StudentDetails } from '@/lib/students/profile'
@@ -342,6 +343,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
 
   const routeError = getSearchParam(props.searchParams?.error)
   const message = getSearchParam(props.searchParams?.message)
+  const leave = await loadStudentLeave(supabase, id)
   const billing = await loadBills(supabase, id)
   const credits = await loadCourseCredits(supabase, id, stripeAvailability().mode === 'test')
   if (billing.bills.length) {
@@ -409,15 +411,33 @@ export async function StudentDetailView(props: AdminViewServerProps) {
 
         <section className="student-admin__notice" aria-labelledby="admin-leave-heading">
           <h2 id="admin-leave-heading">Leave requests</h2>
-          <p>
-            {2 - currentLeaveTimes(data, new Date()).length} of 2 requests remaining. Resets January
-            1 and June 1, New York time.
-          </p>
-          {currentLeaveTimes(data, new Date()).map((time, index) => (
-            <p key={time}>
-              Request {index + 1}: {leaveDateLabel(time)}
-            </p>
-          ))}
+          <p>Two requests per course. Resets January 1 and June 1, New York time.</p>
+          {leave.unavailable ? (
+            <p>Leave balances are temporarily unavailable.</p>
+          ) : leave.courses.length === 0 ? (
+            <p>No paid courses with lessons remaining.</p>
+          ) : (
+            leave.courses.map((course) => (
+              <div key={course.package_id}>
+                <strong>{course.course_name}</strong>
+                <p>{2 - currentLeaveTimes(course, new Date(now)).length} of 2 requests remaining</p>
+                {currentLeaveTimes(course, new Date(now)).map((time, index) => (
+                  <p key={time}>
+                    Request {index + 1}: {leaveDateLabel(time)}
+                  </p>
+                ))}
+              </div>
+            ))
+          )}
+          {data.first_leave_at && (
+            <details>
+              <summary>Previous account-wide requests (no course assigned)</summary>
+              <p>These records are retained separately and do not reduce a course balance.</p>
+              {[data.first_leave_at, data.second_leave_at].filter(Boolean).map((time) => (
+                <p key={time!}>{leaveDateLabel(time!)}</p>
+              ))}
+            </details>
+          )}
           <p>Request details are sent by email.</p>
         </section>
         <MobileStudentAdminTabs>

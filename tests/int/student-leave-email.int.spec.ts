@@ -22,6 +22,7 @@ function receipt() {
     expiresAt: Date.now() + 10000,
     emails: leaveEmailPayloads({
       name: 'Test Student',
+      courseName: 'Level 1 · Saturday',
       email: 'student@example.invalid',
       reason: 'October 1: <script>alert(1)</script>',
       submittedAt: '2026-09-24T19:00:00Z',
@@ -37,8 +38,12 @@ describe('Leave email delivery', () => {
     const bodies = send.mock.calls.map((call) => JSON.parse(call[1].body))
     expect(bodies[0].to).toEqual(['student@example.invalid'])
     expect(bodies[1].to).toEqual(['admin@example.invalid'])
-    expect(bodies[0].subject).toBe('Leave Request Recorded — Test Student · Anna Dance Academy')
-    expect(bodies[1].subject).toBe('Student Leave Request — Test Student · Anna Dance Academy')
+    expect(bodies[0].subject).toBe(
+      'Leave Request Recorded — Test Student · Level 1 · Saturday · Anna Dance Academy',
+    )
+    expect(bodies[1].subject).toBe(
+      'Student Leave Request — Test Student · Level 1 · Saturday · Anna Dance Academy',
+    )
     expect(bodies[0].html).not.toContain('<script>')
     expect(bodies[0].text).toContain('<script>')
   })

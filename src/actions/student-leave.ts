@@ -45,6 +45,8 @@ export async function submitStudentLeave(
     const reason = String(form.get('reason') ?? '').trim()
     const reasonError = leaveReasonError(reason)
     if (reasonError) return { error: reasonError }
+    const course = String(form.get('package_id') ?? '').trim()
+    if (!course || course.length > 100) return { error: 'Choose a course for your leave request.' }
     const first = String(form.get('first_leave_at') ?? '') || null
     const second = String(form.get('second_leave_at') ?? '') || null
     if ([first, second].some((value) => value !== null && !Number.isFinite(Date.parse(value))))
@@ -61,7 +63,8 @@ export async function submitStudentLeave(
     const profile = await admin.from('app_user_profiles').select('name').eq('id', user.id).single()
     if (profile.error || !profile.data)
       return { error: 'We could not load your student profile. Please try again.' }
-    const recorded = await admin.rpc('app_record_student_leave', {
+    const recorded = await admin.rpc('app_record_course_leave', {
+      p_package: course,
       p_owner: user.id,
       p_expected_first: first,
       p_expected_second: second,
@@ -69,8 +72,10 @@ export async function submitStudentLeave(
     if (recorded.error || !recorded.data) {
       revalidatePath('/account')
       const errors: Record<string, string> = {
+        'Choose an enrolled course with lessons remaining':
+          'This course is unavailable for leave. Choose a paid course with lessons remaining.',
         'No leave requests remain in this period':
-          'You have used both leave requests for this period.',
+          'You have used both leave requests for this course in this period.',
         'Leave balance changed; refresh before submitting':
           'Your leave balance changed. Refresh the page to check whether your request was already recorded before submitting again.',
       }
@@ -89,6 +94,7 @@ export async function submitStudentLeave(
       expiresAt: Date.now() + 22 * 3600000,
       emails: leaveEmailPayloads({
         name: profile.data.name,
+        courseName: recorded.data.course_name as string,
         email: user.email,
         reason,
         submittedAt,

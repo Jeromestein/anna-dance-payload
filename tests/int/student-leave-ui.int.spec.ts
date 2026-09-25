@@ -9,8 +9,48 @@ afterEach(() => {
   cleanup()
   vi.clearAllMocks()
 })
-const data = { first_leave_at: null, second_leave_at: null }
+const course = {
+  package_id: 'level-1',
+  course_name: 'Level 1 Saturday',
+  first_leave_at: null,
+  second_leave_at: null,
+}
+const data = { courses: [course] }
 describe('Simple Account leave form', () => {
+  it('disables leave without an eligible course', () => {
+    render(createElement(StudentLeave, { data: { courses: [] }, now: '2026-09-24T12:00:00Z' }))
+    expect(screen.getByText('No paid courses with lessons remaining.')).toBeTruthy()
+    expect(
+      (screen.getByRole('button', { name: 'Request leave' }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+  })
+  it('keeps exhausted and available courses independent', async () => {
+    render(
+      createElement(StudentLeave, {
+        data: {
+          courses: [
+            {
+              ...course,
+              first_leave_at: '2026-06-02T12:00:00Z',
+              second_leave_at: '2026-07-02T12:00:00Z',
+            },
+            { ...course, package_id: 'DUET-01', course_name: 'Duet Monday' },
+          ],
+        },
+        now: '2026-09-24T12:00:00Z',
+      }),
+    )
+    expect(screen.getByText('0 of 2 requests remaining')).toBeTruthy()
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'DUET-01' } })
+    expect(screen.getByText('2 of 2 requests remaining')).toBeTruthy()
+    await waitFor(() =>
+      expect(
+        (screen.getByRole('button', { name: 'Request leave' }) as HTMLButtonElement).disabled,
+      ).toBe(false),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Request leave' }))
+    expect((document.querySelector('[name=package_id]') as HTMLInputElement).value).toBe('DUET-01')
+  })
   it('does not consume a request when the button is opened', () => {
     render(createElement(StudentLeave, { data, now: '2026-09-24T12:00:00Z' }))
     fireEvent.click(screen.getByRole('button', { name: 'Request leave' }))
@@ -22,7 +62,7 @@ describe('Simple Account leave form', () => {
     const view = render(createElement(StudentLeave, { data, now: '2026-09-24T12:00:00Z' }))
     view.rerender(
       createElement(StudentLeave, {
-        data: { ...data, first_leave_at: '2026-09-24T12:05:00Z' },
+        data: { courses: [{ ...course, first_leave_at: '2026-09-24T12:05:00Z' }] },
         now: '2026-09-24T12:05:01Z',
       }),
     )
@@ -32,7 +72,15 @@ describe('Simple Account leave form', () => {
   it('disables submission after both times fall in the current cycle', () => {
     render(
       createElement(StudentLeave, {
-        data: { first_leave_at: '2026-06-02T12:00:00Z', second_leave_at: '2026-07-02T12:00:00Z' },
+        data: {
+          courses: [
+            {
+              ...course,
+              first_leave_at: '2026-06-02T12:00:00Z',
+              second_leave_at: '2026-07-02T12:00:00Z',
+            },
+          ],
+        },
         now: '2026-09-24T12:00:00Z',
       }),
     )

@@ -22,12 +22,14 @@ function escapeHtml(value: string) {
 }
 export function leaveEmailPayloads(input: {
   name: string
+  courseName: string
   email: string
   reason: string
   submittedAt: string
   remaining: number
 }): [LeaveEmailPayload, LeaveEmailPayload] {
   const config = leaveEmailConfig()
+  const courseName = input.courseName.replace(/\s+/g, ' ').trim()
   const studentName = input.name.replace(/\s+/g, ' ').trim()
   return [input.email, config.admin].map((to, index) => {
     const text = [
@@ -35,8 +37,9 @@ export function leaveEmailPayloads(input: {
       index ? 'A student has submitted a leave request.' : 'Your leave request has been recorded.',
       `Student: ${input.name}`,
       `Account: ${input.email}`,
+      `Course: ${input.courseName}`,
       `Submitted: ${leaveDateLabel(input.submittedAt)}`,
-      `Requests remaining this period: ${input.remaining} of 2`,
+      `Requests remaining for this course this period: ${input.remaining} of 2`,
       'Leave request:',
       input.reason,
       'Please coordinate any schedule or makeup arrangements with the Academy.',
@@ -45,8 +48,8 @@ export function leaveEmailPayloads(input: {
       from: config.from,
       to: [to],
       subject: index
-        ? `Student Leave Request — ${studentName} · Anna Dance Academy`
-        : `Leave Request Recorded — ${studentName} · Anna Dance Academy`,
+        ? `Student Leave Request — ${studentName} · ${courseName} · Anna Dance Academy`
+        : `Leave Request Recorded — ${studentName} · ${courseName} · Anna Dance Academy`,
       text,
       html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:28px;color:#063b4a"><h1 style="font-size:24px">Anna Dance Academy</h1><div style="white-space:pre-wrap;line-height:1.7">${escapeHtml(text)}</div></div>`,
     }

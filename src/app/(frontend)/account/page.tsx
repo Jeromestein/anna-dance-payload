@@ -1,4 +1,4 @@
-import type { LeaveTimes } from '@/lib/leave/model'
+import { loadStudentLeave } from '@/lib/leave/load.server'
 import { STUDENT_DETAILS_SELECT, type StudentDetails } from '@/lib/students/profile'
 import { loadCourseCredits } from '@/lib/account/course-credits.server'
 import type { Metadata } from 'next'
@@ -20,14 +20,13 @@ type AccountPageProps = {
   }>
 }
 
-type StoredStudentProfile = StudentDetails &
-  LeaveTimes & {
-    email: string
-    name: string
-    phone: string | null
-    guardian_name: string | null
-    guardian_phone: string | null
-  }
+type StoredStudentProfile = StudentDetails & {
+  email: string
+  name: string
+  phone: string | null
+  guardian_name: string | null
+  guardian_phone: string | null
+}
 
 function getMetadataString(metadata: unknown, key: string) {
   if (!metadata || typeof metadata !== 'object') return ''
@@ -54,9 +53,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const metadata = data.claims.user_metadata
   const { data: storedProfile, error: profileError } = await supabase
     .from('app_user_profiles')
-    .select(
-      `email, name, phone, guardian_name, guardian_phone,first_leave_at,second_leave_at,${STUDENT_DETAILS_SELECT}`,
-    )
+    .select(`email, name, phone, guardian_name, guardian_phone,${STUDENT_DETAILS_SELECT}`)
     .eq('id', studentId)
     .maybeSingle<StoredStudentProfile>()
   const { data: storedSchedule, error: scheduleError } = await supabase
@@ -69,6 +66,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   const billing = await loadBills(supabase, studentId)
   const credits = await loadCourseCredits(supabase, studentId)
+  const leave = await loadStudentLeave(supabase, studentId)
 
   const profile: EditableStudentProfile = {
     date_of_birth: storedProfile?.date_of_birth ?? null,
@@ -95,11 +93,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   return (
     <StudentAccountDashboard
-      leave={{
-        first_leave_at: storedProfile?.first_leave_at ?? null,
-        second_leave_at: storedProfile?.second_leave_at ?? null,
-        unavailable: Boolean(profileError || !storedProfile),
-      }}
+      leave={leave}
       now={new Date().toISOString()}
       credits={credits}
       bills={billing.bills}
