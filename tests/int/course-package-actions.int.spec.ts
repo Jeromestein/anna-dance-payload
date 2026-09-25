@@ -1,6 +1,11 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { issuePackage } from '@/lib/billing/package-sales.server'
-import { purchasePackage, changePackagePaymentMethod } from '@/actions/course-package'
+import {
+  purchasePackage,
+  changePackagePaymentMethod,
+  cancelPackagePurchase,
+} from '@/actions/course-package'
+import { releasePackageCheckout } from '@/lib/billing/package-payment.server'
 import { manageBill } from '@/actions/billing'
 vi.mock('@/lib/billing/package-payment.server', () => ({
   releasePackageCheckout: vi.fn().mockResolvedValue(undefined),
@@ -21,6 +26,7 @@ const owner = '00000000-0000-4000-8000-000000000001'
 const bill = '80000000-0000-4000-8000-000000000001'
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(releasePackageCheckout).mockResolvedValue(undefined)
   vi.stubEnv('STRIPE_MODE', 'test')
   m.claims.mockResolvedValue({ data: { claims: { sub: owner } }, error: null })
   m.staff.mockResolvedValue({ id: 'admin' })
@@ -118,6 +124,45 @@ describe('Package authorization and server prices', () => {
     expect(m.rpc).toHaveBeenCalledWith(
       'app_purchase_package',
       expect.objectContaining({ p_live: false, p_cash: true }),
+    )
+  })
+})
+
+describe('Student order cancellation', () => {
+  it('uses the authenticated owner and closes checkout before cancellation', async () => {
+    expect(
+      await cancelPackagePurchase({}, form({ id: bill, owner: bill, confirmed: 'yes' })),
+    ).toEqual({})
+    expect(releasePackageCheckout).toHaveBeenCalledWith(owner, bill)
+    expect(m.rpc).toHaveBeenCalledWith('app_cancel_package', {
+      p_owner: owner,
+      p_id: bill,
+      p_actor: owner,
+    })
+    expect(vi.mocked(releasePackageCheckout).mock.invocationCallOrder[0]).toBeLessThan(
+      m.rpc.mock.invocationCallOrder[0],
+    )
+  })
+  it('rejects anonymous requests and missing confirmation before touching checkout', async () => {
+    expect(await cancelPackagePurchase({}, form({ id: bill }))).toHaveProperty('error')
+    m.claims.mockResolvedValue({ data: null, error: null })
+    expect(await cancelPackagePurchase({}, form({ id: bill, confirmed: 'yes' }))).toHaveProperty(
+      'error',
+    )
+    expect(releasePackageCheckout).not.toHaveBeenCalled()
+    expect(m.rpc).not.toHaveBeenCalled()
+  })
+  it('does not cancel when payment is complete, cannot be verified, or belongs to another student', async () => {
+    vi.mocked(releasePackageCheckout).mockRejectedValue(new Error('Payment cannot be released'))
+    expect(await cancelPackagePurchase({}, form({ id: bill, confirmed: 'yes' }))).toHaveProperty(
+      'error',
+    )
+    expect(m.rpc).not.toHaveBeenCalled()
+  })
+  it('reports a concurrent checkout or payment blocking database cancellation', async () => {
+    m.rpc.mockResolvedValue({ data: null, error: { message: 'Resolve payment' } })
+    expect(await cancelPackagePurchase({}, form({ id: bill, confirmed: 'yes' }))).toHaveProperty(
+      'error',
     )
   })
 })

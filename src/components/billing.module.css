@@ -782,6 +782,24 @@
   opacity: 0.6;
   cursor: wait;
 }
+.cancelAction,
+.form button.cancelAction,
+.billPayment .form button.cancelAction {
+  background: #fff1f2;
+  border-color: #d58d98;
+  color: #9f2341;
+}
+.cancelAction:hover:not(:disabled),
+.form button.cancelAction:hover:not(:disabled),
+.billPayment .form button.cancelAction:hover:not(:disabled) {
+  background: #ffe1e6;
+  border-color: #9f2341;
+}
+.cancelAction:focus-visible,
+.form button.cancelAction:focus-visible {
+  outline: 2px solid #9f2341;
+  outline-offset: 3px;
+}
 @media (max-width: 600px) {
   .billPage {
     padding: 110px 14px 70px;

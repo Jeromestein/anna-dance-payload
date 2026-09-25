@@ -10,6 +10,42 @@ import { billPath } from '@/lib/billing/model'
 import { uuidPattern } from '@/lib/stripe/billing'
 
 export type PackageActionState = { error?: string }
+export async function cancelPackagePurchase(
+  _previous: PackageActionState,
+  form: FormData,
+): Promise<PackageActionState> {
+  const client = await createClient()
+  const auth = await client.auth.getClaims()
+  const owner = auth.data?.claims.sub
+  if (auth.error || !owner) return { error: 'Please sign in.' }
+  const id = String(form.get('id') ?? '')
+  if (!uuidPattern.test(id) || form.get('confirmed') !== 'yes')
+    return { error: 'Confirm the order you want to cancel.' }
+  try {
+    // Reconcile/expire Checkout before the locked database cancellation. A paid
+    // or concurrently reserved order must never be cancelled from this form.
+    await releasePackageCheckout(owner, id)
+    const { error } = await createSupabaseAdminClient().rpc('app_cancel_package', {
+      p_owner: owner,
+      p_id: id,
+      p_actor: owner,
+    })
+    if (error) throw new Error('Cancellation rejected')
+  } catch {
+    revalidatePath(billPath(id))
+    revalidatePath('/account')
+    return {
+      error:
+        'This order could not be cancelled. Payment may already be processing or confirmed. Check its status or contact the academy.',
+    }
+  }
+  revalidatePath(billPath(id))
+  revalidatePath('/account')
+  revalidatePath('/classes/[packageId]', 'page')
+  revalidatePath(`/admin/students/${owner}`)
+  return {}
+}
+
 export async function purchasePackage(
   _previous: PackageActionState,
   form: FormData,

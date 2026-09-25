@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 import {
   balanceDue,
   billPath,
@@ -9,6 +10,7 @@ import {
   type Bill,
 } from '@/lib/billing/model'
 import { StripeCheckout } from './stripe-billing-controls'
+import { PackageCancel } from './package-cancel'
 import styles from './billing.module.css'
 
 function date(value: string) {
@@ -197,6 +199,9 @@ export function BillDetails({
             <a href={billPath(bill.id)}>View this bill</a>
           </p>
         )}
+        {!children && bill.package_id && bill.status === 'payment_due' && (
+          <PackageCancel id={bill.id} />
+        )}
         {children}
       </div>
     </details>
@@ -212,11 +217,26 @@ export function BillingRecords({ bills, unavailable }: { bills: Bill[]; unavaila
         payment history will appear here.
       </p>
     )
+  const current = bills.filter((bill) => bill.status !== 'cancelled')
+  const cancelled = bills.filter((bill) => bill.status === 'cancelled')
   return (
     <div className={styles.records}>
-      {bills.map((bill) => (
+      {!current.length && (
+        <p>
+          No payment is due. You can choose a course from <Link href="/classes">Classes</Link>.
+        </p>
+      )}
+      {current.map((bill) => (
         <BillDetails key={bill.id} bill={bill} bills={bills} />
       ))}
+      {cancelled.length > 0 && (
+        <details>
+          <summary>Cancelled orders ({cancelled.length})</summary>
+          {cancelled.map((bill) => (
+            <BillDetails key={bill.id} bill={bill} bills={bills} />
+          ))}
+        </details>
+      )}
     </div>
   )
 }

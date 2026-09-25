@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { BillDetails } from '@/components/billing-records'
 import { BillingPaymentStatus } from '@/components/billing-payment-status'
 import { PackagePaymentMethod } from '@/components/package-purchase'
+import { PackageCancel } from '@/components/package-cancel'
 import { StripeCheckout } from '@/components/stripe-billing-controls'
 import { billPath, money, statusLabels } from '@/lib/billing/model'
 import { loadBill } from '@/lib/billing/load'
@@ -78,6 +79,12 @@ export default async function BillPage({
         </header>
         <BillDetails bill={bill} bills={[bill]} expanded>
           <div className={styles.billPayment}>
+            {bill.status === 'cancelled' && (
+              <p role="status">
+                This order has been cancelled. No payment is due.{' '}
+                <Link href="/classes">Choose a course</Link>.
+              </p>
+            )}
             {bill.package_id && bill.status === 'payment_due' && !pending && (
               <PackagePaymentMethod id={bill.id} cash={bill.payment_preference === 'cash'} />
             )}
@@ -108,6 +115,9 @@ export default async function BillPage({
                 academy.
               </p>
             ) : null}
+            {bill.package_id && bill.status === 'payment_due' && !pending && (
+              <PackageCancel id={bill.id} />
+            )}
           </div>
         </BillDetails>
       </article>

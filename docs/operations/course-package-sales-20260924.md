@@ -83,3 +83,11 @@ python3 tests/fixtures/course-package-sales-concurrency.py "$TEST_SOCKET" "$TEST
 The concurrency script accepts only temporary `/tmp/anna-package-pg.*` sockets and `package_test*` databases. Never run these fixtures against the application database.
 
 Before production acceptance, deploy the code and verify deployment-specific configuration and real email delivery to an approved test recipient. Keep the configured live-payment opt-in unchanged until a deliberate release.
+
+### Student cancellation of unpaid orders
+
+Students can select **Cancel order** from an expanded Billing record or its detail page, then confirm or keep the order. Only their own unpaid course-package orders are eligible. Paid, refunded, and payment-verification records do not offer cancellation. Cancelled orders have no balance due and appear in a collapsed **Cancelled orders** history; students can select the course again from Classes. Cancellation also discards any previously agreed discounted price for that order.
+
+The server verifies ownership, reconciles or expires any existing Stripe Checkout, and calls the existing locked `app_cancel_package` RPC. A completed payment, unresolved checkout reservation, or concurrent status change prevents cancellation. This feature requires no additional database migration.
+
+Verified in the Codex in-app browser using synthetic local records on port 3005: cancelling an unpaid cash order, reopening the same course to create a new order, and cancelling that new unpaid online order after opening Stripe sandbox Checkout. Both orders reached Cancelled with $0 due; Stripe independently reported the former session as `expired` and `unpaid`. Billing displayed both records inside its initially collapsed cancellation history. No live payment or production record was changed. Focused regression tests, TypeScript, and targeted ESLint passed.
