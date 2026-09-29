@@ -54,15 +54,16 @@ describe('Package authorization and server prices', () => {
       ),
     ).rejects.toThrow(`REDIRECT:/account/billing/${bill}`)
     expect(m.rpc).toHaveBeenCalledWith(
-      'app_purchase_package',
+      'app_purchase_package_with_terms',
       expect.objectContaining({
         p_owner: owner,
         p_total: 36000,
         p_live: false,
-        p_admin: false,
+        p_terms: 'website-terms-2026-09-10',
         p_item: expect.objectContaining({ credit_count: 9, lesson_duration_minutes: 30 }),
       }),
     )
+    expect(m.rpc.mock.calls[0][1]).not.toHaveProperty('p_admin')
   })
   it('rejects anonymous purchase before any database write', async () => {
     m.claims.mockResolvedValue({ data: null, error: null })

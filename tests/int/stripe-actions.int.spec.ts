@@ -9,10 +9,22 @@ const m = vi.hoisted(() => ({
   checkout: vi.fn(),
   ctx: vi.fn(),
   issue: vi.fn(),
+  accepted: vi.fn(),
   redirect: vi.fn(),
 }))
 vi.mock('next/navigation', () => ({ redirect: m.redirect }))
-vi.mock('@/lib/supabase/admin', () => ({ createSupabaseAdminClient: () => ({ rpc: m.issue }) }))
+vi.mock('@/lib/supabase/admin', () => ({
+  createSupabaseAdminClient: () => ({
+    rpc: m.issue,
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({ maybeSingle: m.accepted }),
+        }),
+      }),
+    }),
+  }),
+}))
 vi.mock('@/lib/staff/auth', () => ({ requirePayloadAdministrator: m.auth }))
 vi.mock('@/lib/stripe/billing', () => ({
   requestFullRefund: m.refund,
@@ -53,6 +65,7 @@ beforeEach(() => {
   m.refund.mockResolvedValue({ message: 'Verified refund' })
   m.ctx.mockResolvedValue({ livemode: false, account: 'acct_test' })
   m.issue.mockResolvedValue({ data: id })
+  m.accepted.mockResolvedValue({ data: null, error: null })
   m.rpc.mockResolvedValue({})
   m.claims.mockResolvedValue({ data: { claims: { sub: owner } } })
   m.checkout.mockResolvedValue('https://checkout.stripe.com/test')
@@ -106,6 +119,29 @@ describe('Stripe action boundaries', () => {
     m.issue.mockResolvedValue({ error: { message: 'wrong owner' } })
     m.checkout.mockClear()
     expect((await checkoutStripeBill({}, f)).error).toBeDefined()
+    expect(m.checkout).not.toHaveBeenCalled()
+  })
+  it('accepts a saved consent for the same bill without a second checkbox', async () => {
+    m.accepted.mockResolvedValue({
+      data: { terms_version: 'website-terms-2026-09-10' },
+      error: null,
+    })
+    const f = form()
+    f.delete('termsAccepted')
+    f.set('note', 'Please confirm dates.')
+    await expect(checkoutStripeBill({}, f)).rejects.toThrow('NEXT_REDIRECT')
+    expect(m.issue).toHaveBeenCalledWith('app_accept_bill', {
+      p_owner: owner,
+      p_id: id,
+      p_terms: 'website-terms-2026-09-10',
+      p_note: 'Please confirm dates.',
+    })
+    expect(m.checkout).toHaveBeenCalledWith(owner, id)
+  })
+  it('refuses checkout when saved consent cannot be verified', async () => {
+    m.accepted.mockResolvedValue({ data: null, error: { message: 'unavailable' } })
+    expect((await checkoutStripeBill({}, form())).error).toBeDefined()
+    expect(m.issue).not.toHaveBeenCalled()
     expect(m.checkout).not.toHaveBeenCalled()
   })
   it('never creates test bills using live credentials', async () => {

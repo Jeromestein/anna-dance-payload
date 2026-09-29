@@ -17,7 +17,7 @@ export function PackagePurchase({ packageId, online }: { packageId: string; onli
         {pending ? 'Preparing…' : 'Pay Online'}
       </button>
       <button name="method" value="cash" disabled={pending}>
-        Pay in Cash
+        Switch to Cash Payment
       </button>
       {!online && (
         <p>
@@ -43,7 +43,7 @@ export function PackagePaymentMethod({ id, cash }: { id: string; cash: boolean }
         </p>
       )}
       <button disabled={pending}>
-        {pending ? 'Saving…' : cash ? 'Switch to Online Payment' : 'Pay in Cash'}
+        {pending ? 'Saving…' : cash ? 'Switch to Online Payment' : 'Switch to Cash Payment'}
       </button>
       {state.error && <p role="alert">{state.error}</p>}
     </form>

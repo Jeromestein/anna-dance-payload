@@ -54,11 +54,11 @@ export type Bill = {
   website_refunds_disabled?: boolean
   email_notices?: Array<{ kind: string; status: string; sent_at: string | null }>
   teacher_note?: string
-  app_bill_acknowledgements?: { note: string; accepted_at: string } | null
+  app_bill_acknowledgements?: { note: string; accepted_at: string; terms_version: string } | null
   app_payment_items: BillItem[]
 }
 export const billSelect =
-  'id,card_surcharge_cents,card_payment_kind,package_id,package_catalog,payment_preference,pricing_mode,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(id,description,quantity,unit_amount_cents,position,course_key,stripe_product_id,credit_count,lesson_duration_minutes),app_bill_acknowledgements(note,accepted_at)'
+  'id,card_surcharge_cents,card_payment_kind,package_id,package_catalog,payment_preference,pricing_mode,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(id,description,quantity,unit_amount_cents,position,course_key,stripe_product_id,credit_count,lesson_duration_minutes),app_bill_acknowledgements(note,accepted_at,terms_version)'
 export const statusLabels: Record<Bill['status'], string> = {
   payment_due: 'Unpaid',
   pending_verification: 'Pending verification',

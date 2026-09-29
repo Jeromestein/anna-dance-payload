@@ -64,6 +64,29 @@ describe('Stripe fee amounts and disclosure', () => {
     expect(screen.queryByText('Stripe processing fee (3%)')).toBeNull()
     expect(screen.getByRole('button', { name: 'Pay $100.00' })).toBeTruthy()
   })
+  it('uses a saved course consent without asking the student to agree again', () => {
+    render(
+      createElement(StripeCheckout, {
+        id: 'bill',
+        amountLabel: '$103.00',
+        acknowledgement: {
+          note: '',
+          accepted_at: '2026-09-29T00:00:00Z',
+          terms_version: 'website-terms-2026-09-10',
+        },
+      }),
+    )
+    expect(screen.queryByRole('checkbox', { name: /Website Terms of Use/ })).toBeNull()
+    expect(screen.getByText(/agreement to the Website Terms of Use was saved/)).toBeTruthy()
+    expect(
+      (screen.getByRole('textbox', { name: /Message for the teacher/ }) as HTMLTextAreaElement)
+        .readOnly,
+    ).toBe(false)
+  })
+  it('still asks for terms on a bill without saved consent', () => {
+    render(createElement(StripeCheckout, { id: 'bill', amountLabel: '$100.00' }))
+    expect(screen.getByRole('checkbox', { name: /Website Terms of Use/ })).toBeTruthy()
+  })
 })
 
 describe('Admin payment-link fee preview', () => {

@@ -7,6 +7,7 @@ import {
   type CardPaymentKind,
 } from '@/lib/billing/card-surcharge'
 import { money } from '@/lib/billing/model'
+import { websiteTermsVersion } from '@/lib/billing/terms'
 import {
   checkoutStripeBill,
   createStripeTestBill,
@@ -29,10 +30,11 @@ export function StripeCheckout({
   staffTest?: boolean
   test?: boolean
   amountLabel?: string
-  acknowledgement?: { note: string; accepted_at: string } | null
+  acknowledgement?: { note: string; accepted_at: string; terms_version: string } | null
   surcharge?: { subtotal: number; currency: string; kind?: CardPaymentKind | null }
 }) {
   const [state, action, pending] = useActionState(checkoutStripeBill, {})
+  const termsAccepted = acknowledgement?.terms_version === websiteTermsVersion
   const fee = surcharge ? cardSurchargeCents(surcharge.subtotal) : 0
   const totalLabel = surcharge ? money(surcharge.subtotal + fee, surcharge.currency) : amountLabel
   return (
@@ -74,24 +76,28 @@ export function StripeCheckout({
               name="note"
               maxLength={500}
               defaultValue={acknowledgement?.note ?? ''}
-              readOnly={Boolean(acknowledgement)}
+              readOnly={Boolean(acknowledgement?.note)}
             />
           </label>
           <p>
-            {acknowledgement
+            {acknowledgement?.note
               ? 'Your message has been saved. Contact the academy if you need to change it.'
               : 'Your message will be saved when you open checkout.'}
           </p>
-          <label className={styles.confirm}>
-            <input type="checkbox" required name="termsAccepted" value="yes" />
-            <span>
-              I have reviewed the course details and total and agree to the{' '}
-              <a href="/terms" target="_blank" rel="noreferrer">
-                Website Terms of Use
-              </a>
-              .
-            </span>
-          </label>
+          {termsAccepted ? (
+            <p>Your agreement to the Website Terms of Use was saved for this bill.</p>
+          ) : (
+            <label className={styles.confirm}>
+              <input type="checkbox" required name="termsAccepted" value="yes" />
+              <span>
+                I have reviewed the course details and total and agree to the{' '}
+                <a href="/terms" target="_blank" rel="noreferrer">
+                  Website Terms of Use
+                </a>
+                .
+              </span>
+            </label>
+          )}
           <p>
             The full enrollment agreement and liability waiver must be signed separately before
             participation.

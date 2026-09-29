@@ -65,6 +65,7 @@ export async function purchasePackage(
       actor: owner,
       packageId: String(form.get('package_id') ?? ''),
       cash: method === 'cash',
+      acceptedTerms: true,
     })
   } catch {
     return { error: 'We could not prepare your bill. Please try again or contact the academy.' }

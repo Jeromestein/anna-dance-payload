@@ -87,7 +87,8 @@ describe('Full-term packages', () => {
       true,
     )
     expect(
-      (screen.getByRole('button', { name: 'Pay in Cash' }) as HTMLButtonElement).disabled,
+      (screen.getByRole('button', { name: 'Switch to Cash Payment' }) as HTMLButtonElement)
+        .disabled,
     ).toBe(false)
     expect(screen.queryByRole('spinbutton')).toBeNull()
     expect(screen.getByRole('checkbox')).toBeDefined()
@@ -96,5 +97,7 @@ describe('Full-term packages', () => {
     render(createElement(PackagePaymentMethod, { id: 'bill', cash: true }))
     expect(screen.getByRole('status').textContent).toContain('after staff confirms receipt')
     expect(screen.getByRole('button', { name: 'Switch to Online Payment' })).toBeDefined()
+    render(createElement(PackagePaymentMethod, { id: 'bill', cash: false }))
+    expect(screen.getByRole('button', { name: 'Switch to Cash Payment' })).toBeDefined()
   })
 })

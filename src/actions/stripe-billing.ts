@@ -15,6 +15,7 @@ import {
 import { randomUUID } from 'node:crypto'
 import { parseCents } from '@/lib/billing/model'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import { websiteTermsVersion } from '@/lib/billing/terms'
 
 export type StripeActionState = { error?: string; success?: string }
 function values(form: FormData) {
@@ -156,14 +157,23 @@ export async function checkoutStripeBill(
       const auth = await client.auth.getClaims()
       if (auth.error || !auth.data?.claims.sub) return { error: 'Sign in to pay your bill.' }
       owner = auth.data.claims.sub
-      if (form.get('termsAccepted') !== 'yes')
+      const db = createSupabaseAdminClient()
+      const { data: accepted, error: acceptanceError } = await db
+        .from('app_bill_acknowledgements')
+        .select('terms_version')
+        .eq('payment_id', id)
+        .eq('user_profile_id', owner)
+        .maybeSingle()
+      if (acceptanceError)
+        return { error: 'Could not verify your bill confirmation. Refresh and try again.' }
+      if (accepted?.terms_version !== websiteTermsVersion && form.get('termsAccepted') !== 'yes')
         return { error: 'Review your bill and agree to the website terms before paying.' }
       const note = String(form.get('note') ?? '').trim()
       if (note.length > 500) return { error: 'Keep your message within 500 characters.' }
-      const acknowledgement = await createSupabaseAdminClient().rpc('app_accept_bill', {
+      const acknowledgement = await db.rpc('app_accept_bill', {
         p_owner: owner,
         p_id: id,
-        p_terms: 'website-terms-2026-09-10',
+        p_terms: websiteTermsVersion,
         p_note: note,
       })
       if (acknowledgement.error)
