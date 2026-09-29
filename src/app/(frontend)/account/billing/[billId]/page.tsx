@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/server'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { checkoutReadiness, uuidPattern } from '@/lib/stripe/billing'
 import styles from '@/components/billing.module.css'
+import { billSubtotal } from '@/lib/billing/card-surcharge'
 
 export const metadata: Metadata = { title: 'Your bill', robots: { index: false, follow: false } }
 
@@ -107,6 +108,15 @@ export default async function BillPage({
                   id={bill.id}
                   test={bill.stripe_livemode === false}
                   amountLabel={money(bill.amount_cents, bill.currency)}
+                  surcharge={
+                    bill.surcharge_available
+                      ? {
+                          subtotal: billSubtotal(bill),
+                          currency: bill.currency,
+                          kind: bill.card_payment_kind,
+                        }
+                      : undefined
+                  }
                 />
               </>
             ) : bill.status === 'payment_due' && bill.checkout_available ? (

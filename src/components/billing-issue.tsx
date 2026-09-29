@@ -13,6 +13,11 @@ import {
 import { BillShareTools } from './billing-share-tools'
 import styles from './billing.module.css'
 import { coursePackages, coursePackage, packageDescription } from '@/lib/billing/packages'
+import {
+  cardSurchargeCents,
+  cardSurchargeLabel,
+  cardSurchargeDisclosure,
+} from '@/lib/billing/card-surcharge'
 import { courseOptions } from '@/lib/billing/courses'
 
 export function IssueBill({
@@ -22,6 +27,7 @@ export function IssueBill({
   id,
   test,
   paymentOrigin,
+  surchargeEnabled = false,
 }: {
   owner: string
   ownerName: string
@@ -29,6 +35,7 @@ export function IssueBill({
   id: string
   test: boolean
   paymentOrigin?: string
+  surchargeEnabled?: boolean
 }) {
   const [state, action, pending] = useActionState(manageBill, {})
   const [requestId, setRequestId] = useState(id)
@@ -50,6 +57,7 @@ export function IssueBill({
     kind === 'courses' || kind === 'package'
       ? agreedTotal
       : review?.reduce((sum, item) => sum + item.quantity * (item.unit_amount_cents ?? 0), 0)
+  const fee = surchargeEnabled && total && total >= 50 ? cardSurchargeCents(total) : 0
   function edit() {
     setReview(null)
     setValidation('')
@@ -89,6 +97,12 @@ export function IssueBill({
         For <strong>{ownerName}</strong>
         {test && ' · SANDBOX — no real money'}
       </p>
+      {surchargeEnabled && (
+        <p>
+          Enter the original price. A 3% Stripe processing fee is added automatically; do not
+          include it in the price below.
+        </p>
+      )}
       <fieldset disabled={pending || Boolean(saved)} className={styles.issueFields}>
         <div hidden={Boolean(review)}>
           <label>
@@ -125,7 +139,9 @@ export function IssueBill({
                 price: {money(coursePackage(selectedPackage)?.price ?? 0, 'usd')}.
               </p>
               <label>
-                Total to collect (USD)
+                {surchargeEnabled
+                  ? 'Original price before Stripe fee (USD)'
+                  : 'Total to collect (USD)'}
                 <input
                   name="total_price"
                   type="number"
@@ -147,7 +163,9 @@ export function IssueBill({
             <fieldset>
               <legend>Total and included lessons</legend>
               <label>
-                Total to collect (USD)
+                {surchargeEnabled
+                  ? 'Original price before Stripe fee (USD)'
+                  : 'Total to collect (USD)'}
                 <input
                   name="total_price"
                   type="number"
@@ -199,7 +217,9 @@ export function IssueBill({
                 <input name="fee_name" required maxLength={100} />
               </label>
               <label>
-                Total to collect (USD)
+                {surchargeEnabled
+                  ? 'Original price before Stripe fee (USD)'
+                  : 'Total to collect (USD)'}
                 <input
                   name="total_price"
                   type="number"
@@ -256,8 +276,26 @@ export function IssueBill({
               ))}
             </ul>
             <p className={styles.issueTotal}>
-              Total <strong>{money(total ?? 0, 'usd')} USD</strong>
+              {surchargeEnabled ? 'Original price' : 'Total'}{' '}
+              <strong>{money(total ?? 0, 'usd')} USD</strong>
             </p>
+            {surchargeEnabled && (
+              <>
+                <dl className={styles.totals}>
+                  <div>
+                    <dt>{cardSurchargeLabel}</dt>
+                    <dd>{money(fee, 'usd')}</dd>
+                  </div>
+                  <div>
+                    <dt>Total to pay through Stripe</dt>
+                    <dd>
+                      <strong>{money((total ?? 0) + fee, 'usd')}</strong>
+                    </dd>
+                  </div>
+                </dl>
+                <p>{cardSurchargeDisclosure}</p>
+              </>
+            )}
             {reviewDue !== 'Not set' && <p>Due date: {reviewDue}</p>}
             <p>
               {kind === 'courses' || kind === 'package'

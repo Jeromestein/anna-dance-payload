@@ -5,6 +5,13 @@ import { queryBilling } from '@/lib/billing/query.server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { siteOrigin } from '@/lib/stripe/config'
 import { renderBillingEmail } from './templates'
+import {
+  billSubtotal,
+  billPaymentQuote,
+  cardSurchargeDisclosure,
+  cardSurchargeLabel,
+} from '@/lib/billing/card-surcharge'
+import { cardSurchargeEnabled } from '@/lib/stripe/surcharge.server'
 
 type Notice = {
   id: string
@@ -21,6 +28,7 @@ export async function billingNotices(owner: string, id: string, requestPayment =
   )
   if (billResult.error || !billResult.data) throw new Error('Bill not found.')
   const bill = billResult.data as unknown as Bill
+  bill.surcharge_available = cardSurchargeEnabled() && bill.card_surcharge_cents !== undefined
   if (requestPayment) {
     if (bill.status !== 'payment_due') throw new Error('This bill is no longer awaiting payment.')
     const queued = await db.rpc('app_queue_bill_request', { p_owner: owner, p_id: id })
@@ -70,6 +78,7 @@ export async function billingNotices(owner: string, id: string, requestPayment =
     const request = notice.kind === 'request'
     const refund = notice.kind === 'refunded_customer' || notice.kind === 'refunded_admin'
     const admin = notice.kind === 'paid_admin' || notice.kind === 'refunded_admin'
+    const quote = billPaymentQuote(bill)
     const payload = {
       from,
       to: [test ? (admin ? testAdminTo! : testTo!) : admin ? adminTo : user.email],
@@ -99,7 +108,11 @@ export async function billingNotices(owner: string, id: string, requestPayment =
         admin ? `Account email: ${user.email}` : '',
         `Bill: ${bill.bill_number}`,
         refund ? '' : summary,
-        `${refund ? 'Refund amount' : 'Total'}: ${money(bill.amount_cents, bill.currency)}`,
+        quote.fee
+          ? `Bill subtotal: ${money(billSubtotal(bill), bill.currency)}\n${cardSurchargeLabel}: ${money(quote.fee, bill.currency)}`
+          : '',
+        request && bill.surcharge_available ? cardSurchargeDisclosure : '',
+        `${refund ? 'Refund amount' : 'Total'}: ${money(quote.total, bill.currency)}`,
         refund ? 'Destination: Original payment method.' : '',
         refund
           ? 'Your bank or payment provider may need additional time to show the refund. This confirmation does not mean it has already appeared on your statement.'

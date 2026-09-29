@@ -1,5 +1,7 @@
+import { billPaymentQuote } from './card-surcharge'
 import { coursePackage, packageItem } from './packages'
 import { courseOption } from './courses'
+import type { CardPaymentKind } from './card-surcharge'
 
 export type BillItem = {
   id?: string
@@ -13,6 +15,9 @@ export type BillItem = {
   position?: number
 }
 export type Bill = {
+  card_surcharge_cents?: number
+  card_payment_kind?: CardPaymentKind | null
+  surcharge_available?: boolean
   package_id?: string | null
   package_catalog?: string | null
   payment_preference?: 'cash' | null
@@ -53,7 +58,7 @@ export type Bill = {
   app_payment_items: BillItem[]
 }
 export const billSelect =
-  'id,package_id,package_catalog,payment_preference,pricing_mode,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(id,description,quantity,unit_amount_cents,position,course_key,stripe_product_id,credit_count,lesson_duration_minutes),app_bill_acknowledgements(note,accepted_at)'
+  'id,card_surcharge_cents,card_payment_kind,package_id,package_catalog,payment_preference,pricing_mode,bill_number,amount_cents,currency,status,paid_amount_cents,due_date,created_at,paid_at,refunded_at,refund_reference,refund_reason,payment_channel,transaction_reference,replaces_payment_id,stripe_livemode,refund_state,stripe_refunded_amount_cents,refund_requested_at,stripe_synced_at,app_payment_items(id,description,quantity,unit_amount_cents,position,course_key,stripe_product_id,credit_count,lesson_duration_minutes),app_bill_acknowledgements(note,accepted_at)'
 export const statusLabels: Record<Bill['status'], string> = {
   payment_due: 'Unpaid',
   pending_verification: 'Pending verification',
@@ -71,7 +76,7 @@ export function money(cents: number, currency: string) {
 }
 export function balanceDue(bill: Bill) {
   return bill.status === 'payment_due'
-    ? Math.max(0, bill.amount_cents - (bill.paid_amount_cents ?? 0))
+    ? Math.max(0, billPaymentQuote(bill).total - (bill.paid_amount_cents ?? 0))
     : 0
 }
 export function billingSummary(bills: Bill[], unavailable = false) {

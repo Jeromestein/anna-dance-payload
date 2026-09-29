@@ -255,3 +255,19 @@ describe('billing email delivery', () => {
     expect(m.fetch).not.toHaveBeenCalled()
   })
 })
+
+
+it('shows original price plus 3% in both payment-request email formats before checkout', async () => {
+  vi.stubEnv('STRIPE_CARD_SURCHARGE_ENABLED', 'true')
+  bill.status = 'payment_due'
+  bill.card_surcharge_cents = 0
+  notices[0].kind = 'request'
+  await billingNotices('owner', 'bill', true)
+  const payload = JSON.parse(m.fetch.mock.calls[0][1].body)
+  expect(payload.text).toContain('Bill subtotal: $100.01')
+  expect(payload.text).toContain('Stripe processing fee (3%): $3.00')
+  expect(payload.text).toContain('Total: $103.01')
+  expect(payload.html).toContain('$103.01')
+  expect(payload.html).toContain('Stripe processing fee (3%)')
+  expect(bill.amount_cents).toBe(10001)
+})

@@ -5,9 +5,13 @@ import { billPath, itemDetail, type BillItem } from '@/lib/billing/model'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { stripeContext, siteOrigin } from './config'
 import { paymentSnapshot } from './snapshot'
+import { cardSurchargeEnabled } from './surcharge.server'
+import { cardSurchargeDisclosure, type CardPaymentKind } from '@/lib/billing/card-surcharge'
 
 type Context = Awaited<ReturnType<typeof stripeContext>>
 type StoredBill = {
+  card_surcharge_cents?: number
+  card_payment_kind?: CardPaymentKind | null
   pricing_mode?: string
   cal_booking_id?: number | null
   id: string
@@ -262,22 +266,35 @@ export async function checkoutReadiness(
 export async function startCheckout(owner: string, id: string) {
   const ctx = await stripeContext()
   if (!ctx.enabled) throw new Error('Online payments are not enabled.')
-  let bill = await stripeBillRPC('reserve_checkout', owner, id, {
+  const surcharge = cardSurchargeEnabled()
+  const kind: CardPaymentKind | undefined = surcharge ? 'stripe' : undefined
+  const reservation = {
     account: ctx.account,
     livemode: ctx.livemode,
-  })
+    ...(surcharge ? { cardKind: kind } : {}),
+  }
+  let bill = await stripeBillRPC('reserve_checkout', owner, id, reservation)
   if (bill.stripe_checkout_session_id) {
     const current = await ctx.stripe.checkout.sessions.retrieve(bill.stripe_checkout_session_id)
     if (current.livemode !== ctx.livemode) throw new Error('Checkout environment mismatch.')
-    if (current.status === 'open' && current.url) return current.url
-    if (current.status !== 'expired')
+    const sameKind = (bill.card_payment_kind ?? null) === (kind ?? null)
+    if (current.status === 'open' && current.url && sameKind) return current.url
+    if (current.status === 'open' && !sameKind) {
+      // Stripe must confirm expiration before the database can release a price.
+      // A completed or ambiguous session must never produce a second charge.
+      if (current.client_reference_id !== id) throw new Error('Checkout needs review.')
+      const expired = await ctx.stripe.checkout.sessions.expire(current.id)
+      if (expired.status !== 'expired' || expired.livemode !== ctx.livemode)
+        throw new Error('Stripe could not confirm checkout expiration. Please refresh your bill.')
+    } else if (current.status !== 'expired')
       throw new Error('Payment is being verified. Do not pay again.')
     await stripeBillRPC('expire_checkout', owner, id, { session: current.id })
-    bill = await stripeBillRPC('reserve_checkout', owner, id, {
-      account: ctx.account,
-      livemode: ctx.livemode,
-    })
+    bill = await stripeBillRPC('reserve_checkout', owner, id, reservation)
   }
+  if ((bill.card_payment_kind ?? null) !== (kind ?? null))
+    throw new Error(
+      'Checkout needs a status check before changing payment method. Please refresh your bill.',
+    )
   // Stripe may prune idempotency keys after 24 hours. Never recreate an unknown
   // session after that window; reconcile it explicitly first.
   if (
@@ -307,13 +324,20 @@ export async function startCheckout(owner: string, id: string) {
       metadata,
       payment_intent_data: { metadata },
       line_items: lineItems,
-      ...(bill.pricing_mode === 'agreed_total'
+      ...(bill.pricing_mode === 'agreed_total' || bill.card_payment_kind
         ? {
             custom_text: {
               submit: {
-                message: storedItems
-                  .map((i) => `${i.description}: ${itemDetail(i, bill.currency)}`)
-                  .join('; '),
+                message: [
+                  bill.pricing_mode === 'agreed_total'
+                    ? storedItems
+                        .map((i) => `${i.description}: ${itemDetail(i, bill.currency)}`)
+                        .join('; ')
+                    : '',
+                  bill.card_payment_kind ? cardSurchargeDisclosure : '',
+                ]
+                  .filter(Boolean)
+                  .join('. '),
               },
             },
           }

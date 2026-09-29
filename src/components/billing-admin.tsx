@@ -5,6 +5,7 @@ import { IssueBill } from './billing-issue'
 import { BillShareTools } from './billing-share-tools'
 import { manageBill } from '@/actions/billing'
 import { money, type Bill } from '@/lib/billing/model'
+import { billSubtotal } from '@/lib/billing/card-surcharge'
 import { BillDetails } from './billing-records'
 import { StripeCheckout, StripeStatusRefresh } from './stripe-billing-controls'
 import { BillingRefund, RefundLauncher } from './billing-refund'
@@ -75,7 +76,7 @@ export function BillingAdmin({
   newBillId: string
   paymentOrigin?: string
   ownerName: string
-  stripeConfig?: { enabled: boolean; mode: 'test' | 'live' | null }
+  stripeConfig?: { enabled: boolean; mode: 'test' | 'live' | null; surchargeEnabled?: boolean }
 }) {
   const [creating, setCreating] = useState(false)
   const createPanelId = useId()
@@ -119,6 +120,7 @@ export function BillingAdmin({
           ownerName={ownerName}
           bills={bills}
           id={newBillId}
+          surchargeEnabled={stripeConfig.surchargeEnabled}
           test={stripeConfig.mode === 'test'}
           paymentOrigin={paymentOrigin}
         />
@@ -140,7 +142,21 @@ export function BillingAdmin({
               <BillAction owner={owner} bill={bill} operation="cancelled" />
             )}
           {bill.stripe_livemode === false && bill.checkout_available && (
-            <StripeCheckout id={bill.id} owner={owner} test staffTest />
+            <StripeCheckout
+              id={bill.id}
+              owner={owner}
+              test
+              staffTest
+              surcharge={
+                bill.surcharge_available
+                  ? {
+                      subtotal: billSubtotal(bill),
+                      currency: bill.currency,
+                      kind: bill.card_payment_kind,
+                    }
+                  : undefined
+              }
+            />
           )}
           {bill.payment_preference !== 'cash' &&
             (bill.payment_channel === 'stripe' || bill.stripe_livemode != null) && (

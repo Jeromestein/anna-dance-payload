@@ -8,6 +8,8 @@ import { billPath, money } from '@/lib/billing/model'
 import { stripeAvailability } from '@/lib/stripe/config'
 import { PackagePurchase } from '@/components/package-purchase'
 import styles from '@/components/billing.module.css'
+import { cardSurchargeDisclosure } from '@/lib/billing/card-surcharge'
+import { cardSurchargeEnabled } from '@/lib/stripe/surcharge.server'
 
 export const metadata: Metadata = {
   title: 'Choose your course',
@@ -64,6 +66,9 @@ export default async function PackagePage({ params }: { params: Promise<{ packag
             Full term <strong>{money(item.price, 'usd')}</strong>
           </p>
           <p>The academy will confirm the term dates and arrange your lessons.</p>
+          {availability.enabled && cardSurchargeEnabled() && (
+            <p>{cardSurchargeDisclosure} Cash payments have no added fee.</p>
+          )}
           {existing.error || profile.error ? (
             <p role="alert">
               Enrollment is temporarily unavailable. Please contact the academy or try again later.

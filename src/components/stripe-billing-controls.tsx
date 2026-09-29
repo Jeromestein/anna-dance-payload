@@ -1,6 +1,13 @@
 'use client'
 import { useActionState } from 'react'
 import {
+  cardSurchargeCents,
+  cardSurchargeDisclosure,
+  cardSurchargeLabel,
+  type CardPaymentKind,
+} from '@/lib/billing/card-surcharge'
+import { money } from '@/lib/billing/model'
+import {
   checkoutStripeBill,
   createStripeTestBill,
   importStripePayment,
@@ -15,6 +22,7 @@ export function StripeCheckout({
   test = false,
   amountLabel,
   acknowledgement,
+  surcharge,
 }: {
   id: string
   owner?: string
@@ -22,8 +30,11 @@ export function StripeCheckout({
   test?: boolean
   amountLabel?: string
   acknowledgement?: { note: string; accepted_at: string } | null
+  surcharge?: { subtotal: number; currency: string; kind?: CardPaymentKind | null }
 }) {
   const [state, action, pending] = useActionState(checkoutStripeBill, {})
+  const fee = surcharge ? cardSurchargeCents(surcharge.subtotal) : 0
+  const totalLabel = surcharge ? money(surcharge.subtotal + fee, surcharge.currency) : amountLabel
   return (
     <form action={action} className={styles.form}>
       <input type="hidden" name="id" value={id} />
@@ -34,6 +45,27 @@ export function StripeCheckout({
         </>
       )}
       {test && <p>Test payment only. Use a Stripe test card; no real money moves.</p>}
+      {surcharge && (
+        <>
+          <p>{cardSurchargeDisclosure}</p>
+          <dl className={styles.totals} aria-live="polite">
+            <div>
+              <dt>Bill subtotal</dt>
+              <dd>{money(surcharge.subtotal, surcharge.currency)}</dd>
+            </div>
+            <div>
+              <dt>{cardSurchargeLabel}</dt>
+              <dd>{money(fee, surcharge.currency)}</dd>
+            </div>
+            <div>
+              <dt>Total to pay</dt>
+              <dd>
+                <strong>{totalLabel}</strong>
+              </dd>
+            </div>
+          </dl>
+        </>
+      )}
       {!staffTest && (
         <>
           <label>
@@ -70,9 +102,9 @@ export function StripeCheckout({
         {pending
           ? 'Opening checkout…'
           : test
-            ? `Pay test bill${amountLabel ? ` — ${amountLabel}` : ''}`
-            : amountLabel
-              ? `Pay ${amountLabel}`
+            ? `Pay test bill${totalLabel ? ` — ${totalLabel}` : ''}`
+            : totalLabel
+              ? `Pay ${totalLabel}`
               : 'Pay bill'}
       </button>
       {state.error && <p role="alert">{state.error}</p>}

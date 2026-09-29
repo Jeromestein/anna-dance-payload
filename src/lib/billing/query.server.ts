@@ -6,12 +6,16 @@ import { billSelect } from './model'
 export async function queryBilling<T extends { error: { code?: string; message?: string } | null }>(
   query: (columns: string) => PromiseLike<T>,
 ): Promise<T> {
-  const result = await query(billSelect)
-  if (
-    result.error?.code === '42703' &&
-    /package_id|package_catalog|payment_preference/.test(result.error.message ?? '')
-  ) {
-    return query(billSelect.replace('package_id,package_catalog,payment_preference,', ''))
+  let columns = billSelect
+  let result = await query(columns)
+  for (let attempt = 0; attempt < 2 && result.error?.code === '42703'; attempt++) {
+    const missing = result.error.message ?? ''
+    if (/card_surcharge_cents|card_payment_kind/.test(missing))
+      columns = columns.replace('card_surcharge_cents,card_payment_kind,', '')
+    else if (/package_id|package_catalog|payment_preference/.test(missing))
+      columns = columns.replace('package_id,package_catalog,payment_preference,', '')
+    else break
+    result = await query(columns)
   }
   return result
 }

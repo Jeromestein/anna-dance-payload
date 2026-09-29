@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { stripeAvailability } from '@/lib/stripe/config'
 import { type Bill } from './model'
 import { queryBilling } from './query.server'
+import { cardSurchargeEnabled } from '@/lib/stripe/surcharge.server'
 
 export async function loadBills(client: SupabaseClient, owner: string) {
   const { data, error, count } = await queryBilling((columns) =>
@@ -23,6 +24,7 @@ export async function loadBills(client: SupabaseClient, owner: string) {
 function decorateBill(bill: Bill, availability = stripeAvailability()): Bill {
   return {
     ...bill,
+    surcharge_available: cardSurchargeEnabled() && bill.card_surcharge_cents !== undefined,
     checkout_available:
       availability.enabled &&
       bill.payment_preference !== 'cash' &&

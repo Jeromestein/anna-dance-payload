@@ -2,6 +2,21 @@ import { describe, expect, it, vi } from 'vitest'
 import { queryBilling } from '@/lib/billing/query.server'
 import { billSelect } from '@/lib/billing/model'
 describe('Additive package rollout', () => {
+  it('keeps fee-free historical bills readable before the surcharge migration', async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: '42703',
+          message: 'column app_payments.card_surcharge_cents does not exist',
+        },
+      })
+      .mockResolvedValueOnce({ data: [{ id: 'old-bill' }], error: null })
+    expect(await queryBilling(query)).toMatchObject({ data: [{ id: 'old-bill' }] })
+    expect(query.mock.calls[1][0]).not.toContain('card_surcharge_cents')
+    expect(query.mock.calls[1][0]).toContain('package_id')
+  })
   it('keeps historical bills readable when package columns do not exist yet', async () => {
     const query = vi
       .fn()

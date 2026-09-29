@@ -15,6 +15,12 @@ import {
 } from 'react-email'
 
 import { billPath, money, itemDetail, itemAmount, type Bill } from '@/lib/billing/model'
+import {
+  billSubtotal,
+  billPaymentQuote,
+  cardSurchargeDisclosure,
+  cardSurchargeLabel,
+} from '@/lib/billing/card-surcharge'
 import { EmailBrandLogo, emailBrandLogoStyles, emailWebsite } from './email-brand-logo'
 
 const website = emailWebsite
@@ -291,6 +297,7 @@ export function BillingEmail({
   owner,
   teacherNote,
 }: BillingEmailProps) {
+  const quote = billPaymentQuote(bill)
   const request = kind === 'request'
   const refund = kind === 'refunded_customer' || kind === 'refunded_admin'
   const admin = kind === 'paid_admin' || kind === 'refunded_admin'
@@ -428,8 +435,18 @@ export function BillingEmail({
             margin: 0,
           }}
         >
-          {money(bill.amount_cents, bill.currency)}
+          {money(quote.total, bill.currency)}
         </Text>
+        {Boolean(quote.fee) && (
+          <Text style={{ ...paragraph, margin: '6px 0 0', fontSize: 13 }}>
+            Bill subtotal: {money(billSubtotal(bill), bill.currency)}
+            <br />
+            {cardSurchargeLabel}: {money(quote.fee, bill.currency)}
+          </Text>
+        )}
+        {request && bill.surcharge_available && (
+          <Text style={paragraph}>{cardSurchargeDisclosure}</Text>
+        )}
         {refund && (
           <Text style={{ ...paragraph, margin: '6px 0 0', fontSize: 13 }}>
             Destination: Original payment method.

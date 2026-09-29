@@ -16,6 +16,7 @@ import { isAdministratorUser } from '@/access/staff'
 import { siteOrigin, stripeAvailability } from '@/lib/stripe/config'
 import { loadBills } from '@/lib/billing/load'
 import { billingSummary } from '@/lib/billing/model'
+import { cardSurchargeEnabled } from '@/lib/stripe/surcharge.server'
 import { BillingAdmin } from '@/components/billing-admin'
 import { type AccountScheduleEntry, mapStoredScheduleEntry } from '@/lib/account/schedule'
 import {
@@ -475,7 +476,7 @@ export async function StudentDetailView(props: AdminViewServerProps) {
               </header>
               <BillingAdmin
                 paymentOrigin={paymentOrigin}
-                stripeConfig={stripeAvailability()}
+                stripeConfig={{ ...stripeAvailability(), surchargeEnabled: cardSurchargeEnabled() }}
                 newBillId={crypto.randomUUID()}
                 ownerName={data.name}
                 owner={id}

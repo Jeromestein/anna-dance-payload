@@ -12,6 +12,7 @@ import {
 import { StripeCheckout } from './stripe-billing-controls'
 import { PackageCancel } from './package-cancel'
 import styles from './billing.module.css'
+import { billSubtotal, billPaymentQuote, cardSurchargeLabel } from '@/lib/billing/card-surcharge'
 
 function date(value: string) {
   return new Intl.DateTimeFormat('en-US', {
@@ -30,6 +31,7 @@ export function BillDetails({
   children?: ReactNode
   expanded?: boolean
 }) {
+  const quote = billPaymentQuote(bill)
   const replaced = bills.find((b) => b.id === bill.replaces_payment_id)
   const replacements = bills.filter((b) => b.replaces_payment_id === bill.id)
   return (
@@ -44,7 +46,7 @@ export function BillDetails({
           <small>{date(bill.created_at)}</small>
         </span>
         <span>
-          <strong>{money(bill.amount_cents, bill.currency)}</strong>
+          <strong>{money(quote.total, bill.currency)}</strong>
           <small>
             {bill.stripe_livemode === false ? 'TEST · ' : ''}
             {bill.payment_preference === 'cash' && bill.status === 'payment_due'
@@ -88,9 +90,21 @@ export function BillDetails({
           <p>Historical item details are unavailable. Contact the academy for details.</p>
         )}
         <dl className={styles.totals}>
+          {Boolean(quote.fee) && (
+            <>
+              <div>
+                <dt>Bill subtotal</dt>
+                <dd>{money(billSubtotal(bill), bill.currency)}</dd>
+              </div>
+              <div>
+                <dt>{cardSurchargeLabel}</dt>
+                <dd>{money(quote.fee, bill.currency)}</dd>
+              </div>
+            </>
+          )}
           <div>
             <dt>Total</dt>
-            <dd>{money(bill.amount_cents, bill.currency)}</dd>
+            <dd>{money(quote.total, bill.currency)}</dd>
           </div>
           <div>
             <dt>Paid</dt>
@@ -103,7 +117,7 @@ export function BillDetails({
           {bill.status === 'refunded' && (
             <div>
               <dt>Fully refunded</dt>
-              <dd>{money(bill.amount_cents, bill.currency)}</dd>
+              <dd>{money(quote.total, bill.currency)}</dd>
             </div>
           )}
           <div>
@@ -171,7 +185,16 @@ export function BillDetails({
             acknowledgement={bill.app_bill_acknowledgements}
             id={bill.id}
             test={bill.stripe_livemode === false}
-            amountLabel={money(bill.amount_cents, bill.currency)}
+            amountLabel={money(quote.total, bill.currency)}
+            surcharge={
+              bill.surcharge_available
+                ? {
+                    subtotal: billSubtotal(bill),
+                    currency: bill.currency,
+                    kind: bill.card_payment_kind,
+                  }
+                : undefined
+            }
           />
         )}
         {bill.app_bill_acknowledgements?.note && (

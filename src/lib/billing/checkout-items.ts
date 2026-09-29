@@ -2,8 +2,40 @@ import type Stripe from 'stripe'
 import type { BillItem } from './model'
 import { itemDetail } from './model'
 import { courseOption } from './courses'
+import { billSubtotal, cardSurchargeCents, cardSurchargeLabel } from './card-surcharge'
 
 export function checkoutItems(
+  bill: {
+    pricing_mode?: string
+    amount_cents: number
+    currency: string
+    card_surcharge_cents?: number
+    card_payment_kind?: string | null
+  },
+  items: BillItem[],
+): Stripe.Checkout.SessionCreateParams.LineItem[] {
+  const subtotal = billSubtotal(bill)
+  const fee = bill.card_surcharge_cents ?? 0
+  if (
+    bill.card_payment_kind === 'stripe'
+      ? bill.currency !== 'usd' || fee !== cardSurchargeCents(subtotal)
+      : fee !== 0
+  )
+    throw new Error('Payment fee needs review.')
+  const lines = baseCheckoutItems({ ...bill, amount_cents: subtotal }, items)
+  if (fee)
+    lines.push({
+      quantity: 1,
+      price_data: {
+        currency: bill.currency,
+        unit_amount: fee,
+        product_data: { name: cardSurchargeLabel },
+      },
+    })
+  return lines
+}
+
+function baseCheckoutItems(
   bill: { pricing_mode?: string; amount_cents: number; currency: string },
   items: BillItem[],
 ): Stripe.Checkout.SessionCreateParams.LineItem[] {
